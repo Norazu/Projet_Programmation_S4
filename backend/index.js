@@ -25,6 +25,9 @@ io.on("connection", (socket) => {
   socket.on("newAccount", (nom,mdp) =>{
     
   })
+  socket.on('mess',data => {
+    io.emit('messagerie',data); 
+});
 });
 
 server.listen(3001, () => {
