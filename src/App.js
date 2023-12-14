@@ -8,14 +8,25 @@ function App() {
   function connect(){
     var nom = document.getElementById("name").value;
     var mdp = document.getElementById("password").value;
-    alert("votre nom est " + nom + "votre mdp est " + mdp)
-    socket.emit("connexion",{nom},{mdp});
+    socket.emit("connexion",nom,mdp);
   }
   function createAccount(){
     var nom = document.getElementById("name").value; 
     var mdp = document.getElementById("password").value;
-    socket.emit("newAccount",{nom},{mdp});
+    socket.emit("newAccount",nom,mdp);
   }
+  useEffect(() => {
+    socket.on("userNotRegistered", value => {
+      window.alert("Nom d'utilisateur ou mot de passe incorrect ou compte inexistant");
+    });
+    socket.on("userAlreadyRegistered", value => {
+      window.alert("Vous avez déjà un compte, veuillez vous connecter");
+    });
+    return () => {
+      socket.off("userNotRegistered").off();
+      socket.off("userAlreadyRegistered").off();
+    }
+  });
   return (
     <div className="App">
       <input id="name" type="text" placeholder="Nom"/>

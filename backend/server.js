@@ -4,6 +4,23 @@ const http = require("http");
 const { Server } = require("socket.io");
 const cors = require("cors");
 const { time } = require("console");
+const mysql = require("mysql");
+const jsSHA = require("jssha");
+
+var connexiondb = mysql.createConnection({
+  host : 'mysql.etu.umontpellier.fr',
+  user : 'e20220003375',
+  password : 'augustin',
+  database : 'e20220003375'
+});
+
+connexiondb.connect(function(err) {
+  if (err) {
+    console.error('error connecting: ' + err.stack);
+    return;
+  }
+  console.log('connected as id ' + connexiondb.threadId);
+});
 
 app.use(cors());
 
@@ -22,14 +39,54 @@ const io = new Server(server, {
 
 io.on("connection", (socket) => {
   console.log(`User Connected: ${socket.id}`);
-
-  socket.on("connexion", (nom, mdp) => {
-    
+  
+  socket.on("connexion", (nom,mdp) => {
+    const shaObj = new jsSHA("SHA-256", "TEXT", { encoding : "UTF8" });
+    shaObj.update(mdp);
+    const hashMDP = shaObj.getHash("HEX");
+    connexiondb.query("SELECT idJoueur,pseudo FROM joueurs WHERE pseudo='" + nom + "' AND hashMDP='" + hashMDP + "'", function(err, result) {
+      if (err) {
+        console.error('error on query: ' + err.stack);
+        return;
+      }
+      if (result.length == 0) {
+        socket.emit("userNotRegistered");
+      } else {
+        console.log(`user connected ${nom}, ${hashMDP}`);
+      }
+    });
   });
 
   socket.on("newAccount", (nom,mdp) =>{
-    
-  })
+    var exists = false;
+    connexiondb.query("SELECT pseudo FROM joueurs", function(err, result) {
+      if (err) {
+        console.error('error on query: ' + err.stack);
+        return;
+      } else {
+        for (var row of result) {
+          if (nom === row.pseudo) {
+            exists = true;
+            socket.emit("userAlreadyRegistered");
+          }
+        }
+      }
+    });
+    if (!exists){
+      const shaObj = new jsSHA("SHA-256", "TEXT", { encoding : "UTF8" });
+      shaObj.update(mdp);
+      const hashMDP = shaObj.getHash("HEX");
+      connexiondb.query("INSERT INTO joueurs (pseudo, hashMDP) VALUES ('"+ nom + "','" + hashMDP + "')", function(err, result) {
+        if (err) {
+          console.error('error on insertion: ' + err.stack);
+          return;
+        } else {
+          console.log(`account created : ${nom}, ${hashMDP}`)
+        }
+      });
+    }
+  });
+  
   socket.on('mess',data => {
     console.log(data + " : data envoyée à "+socket.id)
     io.emit('messagerie',data); 
@@ -98,7 +155,6 @@ io.on("connection", (socket) => {
     console.log(winner);
     bataille = [];
   }
-
 });
 
 server.listen(3001, () => {
