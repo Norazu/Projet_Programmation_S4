@@ -15,6 +15,18 @@ function App() {
     var mdp = document.getElementById("password").value;
     socket.emit("newAccount",{nom},{mdp});
   }
+  useEffect(() => {
+    socket.on("userNotRegistered", value => {
+      window.alert("Nom d'utilisateur ou mot de passe incorrect ou compte inexistant");
+    });
+    socket.on("userAlreadyRegistered", value => {
+      window.alert("Vous avez déjà un compte, veuillez vous connecter");
+    });
+    return () => {
+      socket.off("userNotRegistered").off();
+      socket.off("userAlreadyRegistered").off();
+    }
+  });
   return (
     <div className="App">
       <input id="name" type="text" placeholder="Nom"/>

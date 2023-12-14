@@ -35,7 +35,7 @@ function Home() {
   }
 
   function creationPartie() {
-    socket.emit("creationPartie", {type:1},{nbMinJoueurs:2},{nbMaxJoueurs:10},{idCreateur:1})
+    socket.emit("creationPartie", 1,2,10,1)
 
   }
 

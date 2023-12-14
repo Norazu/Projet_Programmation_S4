@@ -33,6 +33,13 @@ const io = new Server(server, {
   },
 });
 
+connexiondb.query("INSERT INTO jeux (nomJeu) VALUES ('bataille ouverte')", function(err, result){
+  if (err) {
+    console.error('error on query: ' + err.stack);
+    return;
+  }
+});
+
 io.on("connection", (socket) => {
   console.log(`User Connected: ${socket.id}`);
 
@@ -52,15 +59,19 @@ io.on("connection", (socket) => {
       if (err) {
         console.error('error on query: ' + err.stack);
         return;
+      } else {
+        console.log("partie crée avec succès");
       }
   })
-  connexiondb.query("SELECT MAX(idGame) FROM parties WHERE idCreateur='" + idCreateur+"'", function(err, result) {
+  connexiondb.query("SELECT MAX(idGame) AS maxId FROM parties WHERE idCreateur='" + idCreateur + "'", function(err, result) {
     if (err) {
       console.error('error on query: ' + err.stack);
       return;
+    } else{
+      console.log(result[0].maxId);
     }
   
-  socket.emit('codePartieCree', result)
+  socket.emit('codePartieCree', result[0].maxId)
 })
 
 });
