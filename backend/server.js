@@ -53,6 +53,7 @@ io.on("connection", (socket) => {
         socket.emit("userNotRegistered");
       } else {
         console.log(`user connected ${nom}, ${hashMDP}`);
+        socket.emit("connected");
       }
     });
   });

@@ -1,7 +1,5 @@
-import io from "socket.io-client";
 import { useEffect, useState } from "react";
-
-const socket = io.connect("http://localhost:3001");
+import { socket } from "./socket.js";
 
 var playerId = "001";
 
@@ -145,12 +143,6 @@ function Main() {
     );
 }
 
-function Chatroom(){
-    return(
-        <h2>Messagerie</h2>
-    );
-}
-
 function Game(){
     return(
         <div>
@@ -158,7 +150,6 @@ function Game(){
             <PlayerList/>
             <Timer/>
             <Main/>
-            <Chatroom/>
         </div>
     );
 }
