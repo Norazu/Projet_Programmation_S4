@@ -122,7 +122,7 @@ function Main() {
             if(selectedCard == null){
                 setSelectedCard(cardList[0])
             }
-            socket.emit("submitCard", { playerId, selectedCard });
+            socket.emit("submitCard", playerId, selectedCard);
         });
 
         return () => {
