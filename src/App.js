@@ -1,13 +1,14 @@
 import "./App.css";
-import io from "socket.io-client";
-import { useEffect, useState } from "react";
 
-const socket = io.connect("http://localhost:3001");
+import { useEffect, useState } from "react";
+import { socket } from "./socket.js";
+
 
 function App() {
   function connect(){
     var nom = document.getElementById("name").value;
     var mdp = document.getElementById("password").value;
+    alert("votre nom est " + nom + "votre mdp est " + mdp)
     socket.emit("connexion",{nom},{mdp});
   }
   function createAccount(){

@@ -26,6 +26,7 @@ io.on("connection", (socket) => {
     
   })
   socket.on('mess',data => {
+    console.log(data + " : data envoyée à "+socket.id)
     io.emit('messagerie',data); 
 });
 });
