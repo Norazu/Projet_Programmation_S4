@@ -39,7 +39,7 @@ const io = new Server(server, {
 
 io.on("connection", (socket) => {
   console.log(`User Connected: ${socket.id}`);
-
+  
   socket.on("connexion", (nom,mdp) => {
     const shaObj = new jsSHA("SHA-256", "TEXT", { encoding : "UTF8" });
     shaObj.update(mdp);
@@ -86,7 +86,7 @@ io.on("connection", (socket) => {
       });
     }
   });
-
+  
   socket.on('mess',data => {
     console.log(data + " : data envoyée à "+socket.id)
     io.emit('messagerie',data); 
