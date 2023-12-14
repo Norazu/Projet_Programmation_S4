@@ -8,12 +8,12 @@ function App() {
   function connect(){
     var nom = document.getElementById("name").value;
     var mdp = document.getElementById("password").value;
-    socket.emit("connexion",{nom},{mdp});
+    socket.emit("connexion",nom,mdp);
   }
   function createAccount(){
     var nom = document.getElementById("name").value;
     var mdp = document.getElementById("password").value;
-    socket.emit("newAccount",{nom},{mdp});
+    socket.emit("newAccount",nom,mdp);
   }
   useEffect(() => {
     socket.on("userNotRegistered", value => {
