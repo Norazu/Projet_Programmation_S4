@@ -147,7 +147,7 @@ function Main() {
 
 function Chatroom(){
     return(
-        <h2>Chatroom</h2>
+        <h2>Messagerie</h2>
     );
 }
 
