@@ -39,7 +39,7 @@ function defCode() {
 }
 
 class partie {
-  constructor(typeJeu, idCreateur, nbMinJoueurs, nbMaxJoueurs, nbJoueurs, listeJoueurs, timer) {
+  constructor(typeJeu, idCreateur, nbMinJoueurs, nbMaxJoueurs, nbJoueurs, listeJoueurs, timer, cartes) {
     this.typeJeu = typeJeu;
     this.idCreateur = idCreateur;
     this.nbMinJoueurs = nbMinJoueurs;
@@ -47,6 +47,7 @@ class partie {
     this.nbJoueurs = nbJoueurs;
     this.listeJoueurs = listeJoueurs;
     this.timer = timer;
+    this.cartes = cartes;
   }
 }
 
@@ -114,7 +115,7 @@ io.on("connection", (socket) => {
 
   socket.on('creationPartie', (type, nbMinJoueurs, nbMaxJoueurs, idCreateur) => {
     codepartie = defCode();
-    listeParties[codepartie] = new partie(type, idCreateur, nbMinJoueurs, nbMaxJoueurs, 1, [idCreateur],0);
+    listeParties[codepartie] = new partie(type, idCreateur, nbMinJoueurs, nbMaxJoueurs, 1, [idCreateur],0,{});
     console.log("partie " + codepartie + " créée");
     socket.emit('goToGame', codepartie.toString());
     socket.emit("setGameId", codepartie.toString());
@@ -145,8 +146,12 @@ io.on("connection", (socket) => {
     io.emit('messagerie', data);
   });
 
-  socket.on("getCards", playerId => {
-    socket.emit("cardsList", cartes[playerId]);
+  socket.on("getCards", (playerId,gameId) => {
+    if(listeParties[gameId]!=undefined){
+      if(listeParties[gameId].cartes[playerId]!=null){
+        socket.emit("cardsList", listeParties[gameId].cartes[playerId]);
+      }
+    }
   });
 
   function countdown(){
@@ -216,6 +221,42 @@ io.on("connection", (socket) => {
     console.log(winner);
     bataille[gameId] = [];
   }
+
+  function shuffle(playerList){
+    var cardListe = [];
+    const couleurs = ["hearts","spades","diamonds","clubs"];
+    const valeurs = ["ace","2","3","4","5","6","7","8","9","10","jack","king","queen"];
+    couleurs.forEach(couleur => {
+      valeurs.forEach(valeur => {
+        cardListe.push(valeur+"_of_"+couleur);
+        //console.log(valeur+"_of_"+couleur)
+      });    
+    });
+    for (let i = cardListe.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const temp = cardListe[i];
+      cardListe[i] = cardListe[j];
+      cardListe[j] = temp;
+    }
+  console.log("la liste des cartes est :"+cardListe+"          La longueur de la liste est"+cardListe.length);
+    var max = playerList.length;
+    var i = 0;
+    var cartes = {};
+    playerList.forEach(player => {
+      cartes[player] = [];
+    });
+  
+    cardListe.forEach(card => {
+      cartes[playerList[i]].push(card);
+      i = (i+1)%max;
+    });
+    return cartes;
+  }
+
+  socket.on("launchGame",(gameId)=>{
+    listeParties[gameId].cartes = shuffle(listeParties[gameId].listeJoueurs);
+    io.to(gameId).emit("shuffleDone");
+  });
 
 });
 

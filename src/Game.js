@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { socket } from "./socket.js";
 
-var playerId = "001";
+var playerId = 1;
 var playerGameId = "";
 
 function Sauvegarde(){
@@ -105,14 +105,19 @@ function Main() {
     const [selectedCard, setSelectedCard] = useState(null);
 
     useEffect(() => {
-        socket.emit("getCards", playerId);
+        socket.emit("getCards", playerId, playerGameId);
 
         socket.on("cardsList", (list) => {
             setCardList(list);
         });
 
+        socket.on("shuffleDone",()=>{
+            socket.emit("getCards",playerId, playerGameId);
+        });
+
         return () => {
             socket.off("cardsList");
+            socket.off("shuffleDone");
         };
     }, []);
 
@@ -150,12 +155,24 @@ function Main() {
     );
 }
 
+function Plateau(){
+    function launchGame(){
+        socket.emit("launchGame",playerGameId);
+    }
+    return (
+        <div>
+            <button onClick={launchGame}>Lancer la partie</button>
+        </div>
+    );
+}
+
 function Game(){
     return(
         <div>
             <Sauvegarde/>
             <PlayerList/>
             <Timer/>
+            <Plateau/>
             <Main/>
         </div>
     );
