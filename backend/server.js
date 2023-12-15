@@ -30,6 +30,25 @@ var playersList = [["player1",10]];
 var cartes = {"001":["2_of_clubs","5_of_hearts","jack_of_spades"]};
 var bataille = [];
 
+function defCode(){
+  code = Math.floor(Math.random() * 9999);
+  while(code in listeParties)
+    code=Math.floor(Math.random() * 9999);
+  return code
+}
+
+class partie{
+  constructor(typeJeu, idCreateur, nbMinJoueurs, nbMaxJoueurs, nbJoueurs) {
+    this.typeJeu=typeJeu;
+    this.idCreateur=idCreateur;
+    this.nbMinJoueurs=nbMinJoueurs;
+    this.nbMaxJoueurs=nbMaxJoueurs;
+    this.nbJoueurs=nbJoueurs;
+  }
+} 
+
+let listeParties={};
+
 const io = new Server(server, {
   cors: {
     origin: "http://localhost:3000",
@@ -89,6 +108,29 @@ io.on("connection", (socket) => {
     }
   });
   
+  socket.on('creationPartie', (type,nbMinJoueurs,nbMaxJoueurs,idCreateur)=>{
+    codepartie=defCode();
+    listeParties[codepartie]=new partie(type,idCreateur,nbMinJoueurs,nbMaxJoueurs,1);
+    console.log("partie " + codepartie + " créée");
+    socket.emit('goToGame', codepartie);
+    socket.join(codepartie.toString());
+  });
+
+  socket.on("joinGame", (idJoueur, idRoom)=>{
+    var idRoomInt = parseInt(idRoom);
+    if (idRoomInt in listeParties){
+      if(listeParties[idRoomInt].nbJoueurs == listeParties[idRoomInt].nbMaxJoueurs){
+        socket.emit("roomComplete");
+      } else {
+        listeParties[idRoomInt].nbJoueurs += 1;
+        socket.join(idRoom);
+      }
+      socket.emit('goToGame', idRoomInt);
+    } else {
+      socket.emit("roomDontExist");
+    }
+  });
+
   socket.on('mess',data => {
     console.log(data + " : data envoyée à "+socket.id)
     io.emit('messagerie',data); 
