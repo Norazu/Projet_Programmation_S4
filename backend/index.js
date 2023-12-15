@@ -80,6 +80,7 @@ io.on("connection", (socket) => {
 
     socket.emit('codePartieCree', codepartie);
     socket.join(codepartie.toString());
+    
     /*connexiondb.query("INSERT INTO parties (typeJeu, nbMinJoueurs, nbMaxJoueurs, idCreateur) VALUES ('" + type + "','" + nbMinJoueurs + "','" + nbMaxJoueurs +"','" +idCreateur + "')", function(err, result) {
       if (err) {
         console.error('error on query: ' + err.stack);
