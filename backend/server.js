@@ -207,7 +207,6 @@ io.on("connection", (socket) => {
         default:
           cardValue = parseInt(card);
       }
-
       if (winnerCardValue < cardValue) {
         winnerCardValue = cardValue;
         winner = player[0];
@@ -217,7 +216,6 @@ io.on("connection", (socket) => {
     console.log(winner);
     bataille[gameId] = [];
   }
-
 
 });
 

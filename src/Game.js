@@ -123,9 +123,11 @@ function Main() {
     useEffect(() => {
         socket.on("choosingEnd",()=>{
             if(selectedCard == null){
-                setSelectedCard(cardList[0])
+                setSelectedCard(cardList[0]);
+                socket.emit("submitCard", playerId, cardList[0], playerGameId);
+            } else {
+                socket.emit("submitCard", playerId, selectedCard, playerGameId);
             }
-            socket.emit("submitCard", playerId, selectedCard, playerGameId);
         });
 
         return () => {
