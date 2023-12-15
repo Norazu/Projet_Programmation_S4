@@ -5,7 +5,7 @@ const { Server } = require("socket.io");
 const cors = require("cors");
 const { time } = require("console");
 const mysql = require("mysql");
-const jsSHA = require("jssha");
+const jsSHA = require("jssha"); 
 
 var connexiondb = mysql.createConnection({
   host : 'mysql.etu.umontpellier.fr',
@@ -34,6 +34,7 @@ const io = new Server(server, {
   cors: {
     origin: "http://localhost:3000",
     methods: ["GET", "POST"],
+    credentials : 'true'
   },
 });
 
