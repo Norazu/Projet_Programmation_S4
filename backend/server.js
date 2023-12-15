@@ -5,18 +5,20 @@ const { Server } = require("socket.io");
 const cors = require("cors");
 const { time } = require("console");
 const mysql = require("mysql");
-const jsSHA = require("jssha"); 
+const jsSHA = require("jssha");
+
+var timerIsRunning = false;
 
 var timerIsRunning = false;
 
 var connexiondb = mysql.createConnection({
-  host : 'mysql.etu.umontpellier.fr',
-  user : 'e20220003375',
-  password : 'augustin',
-  database : 'e20220003375'
+  host: 'mysql.etu.umontpellier.fr',
+  user: 'e20220003375',
+  password: 'augustin',
+  database: 'e20220003375'
 });
 
-connexiondb.connect(function(err) {
+connexiondb.connect(function (err) {
   if (err) {
     console.error('error connecting: ' + err.stack);
     return;
@@ -31,15 +33,15 @@ const server = http.createServer(app);
 var cartes = { "001": ["2_of_clubs", "5_of_hearts", "jack_of_spades"] };
 var bataille = {};
 
-function defCode(){
+function defCode() {
   code = Math.floor(Math.random() * 9999);
-  while(code in listeParties)
-    code=Math.floor(Math.random() * 9999);
+  while (code in listeParties)
+    code = Math.floor(Math.random() * 9999);
   return code
 }
 
 class partie {
-  constructor(typeJeu, idCreateur, nbMinJoueurs, nbMaxJoueurs, nbJoueurs, listeJoueurs, timer) {
+  constructor(typeJeu, idCreateur, nbMinJoueurs, nbMaxJoueurs, nbJoueurs, listeJoueurs, timer, cartes) {
     this.typeJeu = typeJeu;
     this.idCreateur = idCreateur;
     this.nbMinJoueurs = nbMinJoueurs;
@@ -47,27 +49,29 @@ class partie {
     this.nbJoueurs = nbJoueurs;
     this.listeJoueurs = listeJoueurs;
     this.timer = timer;
-  }
-} 
+    this.cartes = cartes;
 
-let listeParties={};
+  }
+}
+
+let listeParties = {};
 
 const io = new Server(server, {
   cors: {
     origin: "http://localhost:3000",
     methods: ["GET", "POST"],
-    credentials : 'true'
+    credentials: 'true'
   },
 });
 
 io.on("connection", (socket) => {
   console.log(`User Connected: ${socket.id}`);
-  
-  socket.on("connexion", (nom,mdp) => {
-    const shaObj = new jsSHA("SHA-256", "TEXT", { encoding : "UTF8" });
+
+  socket.on("connexion", (nom, mdp) => {
+    const shaObj = new jsSHA("SHA-256", "TEXT", { encoding: "UTF8" });
     shaObj.update(mdp);
     const hashMDP = shaObj.getHash("HEX");
-    connexiondb.query("SELECT idJoueur,pseudo FROM joueurs WHERE pseudo='" + nom + "' AND hashMDP='" + hashMDP + "'", function(err, result) {
+    connexiondb.query("SELECT idJoueur,pseudo FROM joueurs WHERE pseudo='" + nom + "' AND hashMDP='" + hashMDP + "'", function (err, result) {
       if (err) {
         console.error('error on query: ' + err.stack);
         return;
@@ -75,15 +79,16 @@ io.on("connection", (socket) => {
       if (result.length == 0) {
         socket.emit("userNotRegistered");
       } else {
+
         console.log(`user connected ${nom}, ${hashMDP}`);
         socket.emit("connected");
       }
     });
   });
 
-  socket.on("newAccount", (nom,mdp) =>{
+  socket.on("newAccount", (nom, mdp) => {
     var exists = false;
-    connexiondb.query("SELECT pseudo FROM joueurs", function(err, result) {
+    connexiondb.query("SELECT pseudo FROM joueurs", function (err, result) {
       if (err) {
         console.error('error on query: ' + err.stack);
         return;
@@ -96,11 +101,11 @@ io.on("connection", (socket) => {
         }
       }
     });
-    if (!exists){
-      const shaObj = new jsSHA("SHA-256", "TEXT", { encoding : "UTF8" });
+    if (!exists) {
+      const shaObj = new jsSHA("SHA-256", "TEXT", { encoding: "UTF8" });
       shaObj.update(mdp);
       const hashMDP = shaObj.getHash("HEX");
-      connexiondb.query("INSERT INTO joueurs (pseudo, hashMDP) VALUES ('"+ nom + "','" + hashMDP + "')", function(err, result) {
+      connexiondb.query("INSERT INTO joueurs (pseudo, hashMDP) VALUES ('" + nom + "','" + hashMDP + "')", function (err, result) {
         if (err) {
           console.error('error on insertion: ' + err.stack);
           return;
@@ -110,21 +115,24 @@ io.on("connection", (socket) => {
       });
     }
   });
-  
-  socket.on('creationPartie', (type,nbMinJoueurs,nbMaxJoueurs,idCreateur)=>{
-    codepartie=defCode();
-    listeParties[codepartie]=new partie(type,idCreateur,nbMinJoueurs,nbMaxJoueurs,1);
+
+  socket.on('creationPartie', (type, nbMinJoueurs, nbMaxJoueurs, idCreateur) => {
+    codepartie = defCode();
+    listeParties[codepartie] = new partie(type, idCreateur, nbMinJoueurs, nbMaxJoueurs, 1, [idCreateur],0,{});
     console.log("partie " + codepartie + " créée");
     socket.emit('goToGame', codepartie.toString());
+    socket.emit("setGameId", codepartie.toString());
     socket.join(codepartie.toString());
   });
 
-  socket.on("joinGame", (idJoueur, idRoom)=>{
+  socket.on("joinGame", (idJoueur, idRoom) => {
     var idRoomInt = parseInt(idRoom);
-    if (idRoomInt in listeParties){
-      if(listeParties[idRoomInt].nbJoueurs == listeParties[idRoomInt].nbMaxJoueurs){
+    if (idRoomInt in listeParties) {
+      if (listeParties[idRoomInt].nbJoueurs == listeParties[idRoomInt].nbMaxJoueurs) {
         socket.emit("roomComplete");
       } else {
+        listeParties[idRoomInt].nbJoueurs += 1;
+
         listeParties[idRoomInt].listeJoueurs.push(idJoueur);
         socket.join(idRoom);
         socket.emit('goToGame', idRoom);
@@ -137,13 +145,17 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on('mess',data => {
-    console.log(data + " : data envoyée à "+socket.id)
-    io.emit('messagerie',data); 
+  socket.on('mess', data => {
+    console.log(data + " : data envoyée à " + socket.id)
+    io.emit('messagerie', data);
   });
 
-  socket.on("getCards", playerId => {
-    socket.emit("cardsList", cartes[playerId]);
+  socket.on("getCards", (playerId,gameId) => {
+    if(listeParties[gameId]!=undefined){
+      if(listeParties[gameId].cartes[playerId]!=null){
+        socket.emit("cardsList", listeParties[gameId].cartes[playerId]);
+      }
+    }
   });
 
   function countdown(){
@@ -158,17 +170,25 @@ io.on("connection", (socket) => {
         }
         io.to(key).emit("timeLeft",value.timer);
       }
-    }, 1000);
+    },1000);
   }
 
-  socket.on("startTimer", () => {
-    startTimer(2);
+  socket.on("startTimer", (gameId) => {
+    listeParties[gameId].timer = 5;
+    if(!timerIsRunning){
+      timerIsRunning = true;
+      countdown();
+    }
   });
 
-  socket.on("submitCard", (playerId, card) => {
-    bataille.push([playerId,card]);
-    if(playersList.length == bataille.length){
-      pickWinner();
+  socket.on("submitCard", (playerId, card, gameId) => {
+    if(bataille[gameId]==undefined){
+      bataille[gameId] = [];
+    }
+    bataille[gameId].push([playerId, card]);
+    console.log("Le joueur " + playerId + " a le code de partie :"+gameId);
+    if (listeParties[gameId].listeJoueurs.length === bataille[gameId].length) {
+      pickWinner(gameId);
     }
   });
 
@@ -201,6 +221,7 @@ io.on("connection", (socket) => {
         winner = player[0];
       }
     });
+
     console.log(winner);
     bataille[gameId] = [];
   }
@@ -229,6 +250,42 @@ io.on("connection", (socket) => {
         }
       });
     }
+  });
+
+  function shuffle(playerList){
+    var cardListe = [];
+    const couleurs = ["hearts","spades","diamonds","clubs"];
+    const valeurs = ["ace","2","3","4","5","6","7","8","9","10","jack","king","queen"];
+    couleurs.forEach(couleur => {
+      valeurs.forEach(valeur => {
+        cardListe.push(valeur+"_of_"+couleur);
+        //console.log(valeur+"_of_"+couleur)
+      });    
+    });
+    for (let i = cardListe.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const temp = cardListe[i];
+      cardListe[i] = cardListe[j];
+      cardListe[j] = temp;
+    }
+  console.log("la liste des cartes est :"+cardListe+"          La longueur de la liste est"+cardListe.length);
+    var max = playerList.length;
+    var i = 0;
+    var cartes = {};
+    playerList.forEach(player => {
+      cartes[player] = [];
+    });
+  
+    cardListe.forEach(card => {
+      cartes[playerList[i]].push(card);
+      i = (i+1)%max;
+    });
+    return cartes;
+  }
+
+  socket.on("launchGame",(gameId)=>{
+    listeParties[gameId].cartes = shuffle(listeParties[gameId].listeJoueurs);
+    io.to(gameId).emit("shuffleDone");
   });
 });
 

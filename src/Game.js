@@ -108,14 +108,19 @@ function Main() {
     const [selectedCard, setSelectedCard] = useState(null);
 
     useEffect(() => {
-        socket.emit("getCards", playerId);
+        socket.emit("getCards", playerId, playerGameId);
 
         socket.on("cardsList", (list) => {
             setCardList(list);
         });
 
+        socket.on("shuffleDone",()=>{
+            socket.emit("getCards",playerId, playerGameId);
+        });
+
         return () => {
             socket.off("cardsList");
+            socket.off("shuffleDone");
         };
     }, []);
 
@@ -126,9 +131,11 @@ function Main() {
     useEffect(() => {
         socket.on("choosingEnd",()=>{
             if(selectedCard == null){
-                setSelectedCard(cardList[0])
+                setSelectedCard(cardList[0]);
+                socket.emit("submitCard", playerId, cardList[0], playerGameId);
+            } else {
+                socket.emit("submitCard", playerId, selectedCard, playerGameId);
             }
-            socket.emit("submitCard", playerId, selectedCard, playerGameId);
         });
 
         return () => {
@@ -151,12 +158,24 @@ function Main() {
     );
 }
 
+function Plateau(){
+    function launchGame(){
+        socket.emit("launchGame",playerGameId);
+    }
+    return (
+        <div>
+            <button onClick={launchGame}>Lancer la partie</button>
+        </div>
+    );
+}
+
 function Game(){
     return(
         <div>
             <Sauvegarde/>
             <PlayerList/>
             <Timer/>
+            <Plateau/>
             <Main/>
         </div>
     );
