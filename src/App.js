@@ -1,14 +1,16 @@
 import "./App.css";
 import Game from './Game';
 import Chat from './Chat';
+import Home from './Home';
 
 import { useEffect, useState } from "react";
 import { socket } from "./socket.js";
 
-
 function App() {
-  const [connected, setConnected] = useState(false);
-  
+  const [connected, setConnected] = useState(true);
+  const[inGame, setInGame] = useState(false);
+  const[gameId,setGameId] = useState("0000")
+
   function connect(){
     var nom = document.getElementById("name").value;
     var mdp = document.getElementById("password").value;
@@ -28,23 +30,40 @@ function App() {
   function onConnect(){
     setConnected(true);
   }
+  function goToGame(){
+    setInGame(true);
+  }
+
   useEffect(() => {
     socket.on("userNotRegistered", notRegistered);
     socket.on("userAlreadyRegistered", alreadyRegistered);      
     socket.on("connected", onConnect);
+    socket.on("goToGame",(idRoom)=>{
+      goToGame();
+      setGameId(idRoom);
+    });
     return () => {
       socket.off("userNotRegistered");
       socket.off("userAlreadyRegistered");
       socket.off("connected");
+      socket.off("goToGame");
     }
   });
   return (
     <div className="App">
       {connected ? (
+        inGame ? (
         <div>
+          <h2>Code de la partie {gameId}</h2>
           <Game />
           <Chat />
         </div>
+
+        ) : (
+          <div>
+            <Home/>
+          </div>
+        )
       ) : (
         <div>
           <input id="name" type="text" placeholder="Nom"/>

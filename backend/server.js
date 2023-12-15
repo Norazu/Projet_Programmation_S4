@@ -112,7 +112,7 @@ io.on("connection", (socket) => {
     codepartie=defCode();
     listeParties[codepartie]=new partie(type,idCreateur,nbMinJoueurs,nbMaxJoueurs,1);
     console.log("partie " + codepartie + " créée");
-    socket.emit('goToGame', codepartie);
+    socket.emit('goToGame', codepartie.toString());
     socket.join(codepartie.toString());
   });
 
@@ -125,7 +125,7 @@ io.on("connection", (socket) => {
         listeParties[idRoomInt].nbJoueurs += 1;
         socket.join(idRoom);
       }
-      socket.emit('goToGame', idRoomInt);
+      socket.emit('goToGame', idRoom);
     } else {
       socket.emit("roomDontExist");
     }
