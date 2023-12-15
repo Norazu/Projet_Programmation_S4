@@ -9,7 +9,7 @@ function Sauvegarde(){
         socket.emit("saveGame",gameId);
     }
     return(
-        <button onClick={saveGame(playerGameId)}>Sauvegarder la partie</button>
+        <button onClick={()=>saveGame(playerGameId)}>Sauvegarder la partie</button>
     );
 }
 

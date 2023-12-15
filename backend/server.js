@@ -9,8 +9,6 @@ const jsSHA = require("jssha");
 
 var timerIsRunning = false;
 
-var timerIsRunning = false;
-
 var connexiondb = mysql.createConnection({
   host: 'mysql.etu.umontpellier.fr',
   user: 'e20220003375',
@@ -71,7 +69,7 @@ io.on("connection", (socket) => {
     const shaObj = new jsSHA("SHA-256", "TEXT", { encoding: "UTF8" });
     shaObj.update(mdp);
     const hashMDP = shaObj.getHash("HEX");
-    connexiondb.query("SELECT idJoueur,pseudo FROM joueurs WHERE pseudo='" + nom + "' AND hashMDP='" + hashMDP + "'", function (err, result) {
+    connexiondb.query("SELECT pseudo FROM joueurs WHERE pseudo='" + nom + "' AND hashMDP='" + hashMDP + "'", function (err, result) {
       if (err) {
         console.error('error on query: ' + err.stack);
         return;
@@ -226,29 +224,26 @@ io.on("connection", (socket) => {
     bataille[gameId] = [];
   }
 
-  socket.on("idJoueur", (id) => {
-    playersList.push(id);
-    console.log(id);
-  });
-
   socket.on("saveGame", (gameId) => {
-    connexiondb.query("INSERT INTO parties VALUES ('" + gameId + "', '" + 1 + "', '" + 2 + "', '" + 10 + "', '" + listeParties[gameId].idCreateur + "')", function(err, result) {
-      if (err) {
-        console.error('error on insertion: ' + err.stack);
-        return;
-      } else {
-        console.log("partie sauvegardée");
-      }
-    });
-    for (var joueur in listeParties[gameId].listeJoueurs) {
-      connexiondb.query("INSERT INTO partiejoueur VALUES ('" + gameId + "', '" + joueur + "', '" + listeParties[gameId].cartes[joueur].join("|") + "')", function(err, result) {
+    if (!gameId == "") {
+      connexiondb.query("INSERT INTO parties VALUES ('" + gameId + "', '" + 1 + "', '" + 2 + "', '" + 10 + "', '" + listeParties[gameId].idCreateur + "')", function(err, result) {
         if (err) {
           console.error('error on insertion: ' + err.stack);
           return;
         } else {
-          console.log(`joueur : ${joueur} et ses cartes ajoutés`);
+          console.log("partie sauvegardée");
         }
       });
+      for (var joueur in listeParties[gameId].listeJoueurs) {
+        connexiondb.query("INSERT INTO partiejoueur VALUES ('" + gameId + "', '" + joueur + "', '" + listeParties[gameId].cartes[joueur].join("|") + "')", function(err, result) {
+          if (err) {
+            console.error('error on insertion: ' + err.stack);
+            return;
+          } else {
+            console.log(`joueur : ${joueur} et ses cartes ajoutés`);
+          }
+        });
+      }
     }
   });
 
