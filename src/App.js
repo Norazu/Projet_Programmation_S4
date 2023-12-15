@@ -7,7 +7,8 @@ import { useEffect, useState } from "react";
 import { socket } from "./socket.js";
 
 function App() {
-  const [connected, setConnected] = useState(true);
+  console.log(localStorage.getItem("sessId"));
+  const [connected, setConnected] = useState(false);
   const[inGame, setInGame] = useState(false);
   const[gameId,setGameId] = useState("0000")
 
@@ -29,6 +30,9 @@ function App() {
   }
   function onConnect(){
     setConnected(true);
+    localStorage.setItem("sessId",document.getElementById("name").value);
+    console.log(localStorage.getItem("sessId"));
+    socket.emit("idJoueur", localStorage.getItem("sessId"));
   }
   function goToGame(){
     setInGame(true);

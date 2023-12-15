@@ -7,6 +7,8 @@ const { time } = require("console");
 const mysql = require("mysql");
 const jsSHA = require("jssha"); 
 
+var timerIsRunning = false;
+
 var connexiondb = mysql.createConnection({
   host : 'mysql.etu.umontpellier.fr',
   user : 'e20220003375',
@@ -26,9 +28,8 @@ app.use(cors());
 
 const server = http.createServer(app);
 
-var playersList = [["player1",10]];
-var cartes = {"001":["2_of_clubs","5_of_hearts","jack_of_spades"]};
-var bataille = [];
+var cartes = { "001": ["2_of_clubs", "5_of_hearts", "jack_of_spades"] };
+var bataille = {};
 
 function defCode(){
   code = Math.floor(Math.random() * 9999);
@@ -37,13 +38,15 @@ function defCode(){
   return code
 }
 
-class partie{
-  constructor(typeJeu, idCreateur, nbMinJoueurs, nbMaxJoueurs, nbJoueurs) {
-    this.typeJeu=typeJeu;
-    this.idCreateur=idCreateur;
-    this.nbMinJoueurs=nbMinJoueurs;
-    this.nbMaxJoueurs=nbMaxJoueurs;
-    this.nbJoueurs=nbJoueurs;
+class partie {
+  constructor(typeJeu, idCreateur, nbMinJoueurs, nbMaxJoueurs, nbJoueurs, listeJoueurs, timer) {
+    this.typeJeu = typeJeu;
+    this.idCreateur = idCreateur;
+    this.nbMinJoueurs = nbMinJoueurs;
+    this.nbMaxJoueurs = nbMaxJoueurs;
+    this.nbJoueurs = nbJoueurs;
+    this.listeJoueurs = listeJoueurs;
+    this.timer = timer;
   }
 } 
 
@@ -122,10 +125,13 @@ io.on("connection", (socket) => {
       if(listeParties[idRoomInt].nbJoueurs == listeParties[idRoomInt].nbMaxJoueurs){
         socket.emit("roomComplete");
       } else {
-        listeParties[idRoomInt].nbJoueurs += 1;
+        listeParties[idRoomInt].listeJoueurs.push(idJoueur);
         socket.join(idRoom);
+        socket.emit('goToGame', idRoom);
+        io.to(idRoom).emit("setGameId", idRoom);
+        io.to(idRoom).emit("playersList", listeParties[idRoomInt].listeJoueurs);
+        console.log("Le joueur " + idJoueur + " a rejoint la room " + idRoom);
       }
-      socket.emit('goToGame', idRoom);
     } else {
       socket.emit("roomDontExist");
     }
@@ -136,26 +142,21 @@ io.on("connection", (socket) => {
     io.emit('messagerie',data); 
   });
 
-  socket.on("getPlayers", () => {
-    socket.emit("playersList",playersList);
+  socket.on("getCards", playerId => {
+    socket.emit("cardsList", cartes[playerId]);
   });
 
-  socket.on("getCards",playerId => {
-    socket.emit("cardsList",cartes[playerId]);
-  });
-
-  function timer(timeLeft) {
-    io.emit("timeLeft", timeLeft - 1);
-    return timeLeft - 1;
-  }
-
-  function startTimer(duration) {
-    const timerId = setInterval(() => {
-      duration = timer(duration);
-
-      if (duration <= 0) {
-        clearInterval(timerId);
-        io.emit("choosingEnd");
+  function countdown(){
+    setInterval(()=>{
+      for (const [key, value] of Object.entries(listeParties)) {
+        if(value.timer!=0){
+          value.timer -= 1;
+          if(value.timer==0){
+            io.to(key).emit("choosingEnd");
+            console.log("fin du tour !")
+          }
+        }
+        io.to(key).emit("timeLeft",value.timer);
       }
     }, 1000);
   }
@@ -171,34 +172,64 @@ io.on("connection", (socket) => {
     }
   });
 
-  function pickWinner(){
-    winner = bataille[0][0];
-    winnerCardValue = 1;
-    bataille.forEach(player => {
-      card = player[1].split("_")[0];
-      cardValue = 1;
+  function pickWinner(gameId) {
+    let winner = bataille[gameId][0][0];
+    let winnerCardValue = 1;
+    console.log(bataille);
+    bataille[gameId].forEach(player => {
+      let card = player[1].split("_")[0];
+      let cardValue = 1;
       switch (card) {
         case 'jack':
           cardValue = 11;
           break;
         case 'queen':
           cardValue = 12;
+          break;
         case 'king':
           cardValue = 13;
           break;
         case 'ace':
           cardValue = 14;
+          break;
         default:
           cardValue = parseInt(card);
+          break;
       }
-      if(winnerCardValue<cardValue){
+      if (winnerCardValue < cardValue) {
         winnerCardValue = cardValue;
         winner = player[0];
       }
     });
     console.log(winner);
-    bataille = [];
+    bataille[gameId] = [];
   }
+
+  socket.on("idJoueur", (id) => {
+    playersList.push(id);
+    console.log(id);
+  });
+
+  socket.on("saveGame", (gameId) => {
+    connexiondb.query("INSERT INTO parties VALUES ('" + gameId + "', '" + 1 + "', '" + 2 + "', '" + 10 + "', '" + listeParties[gameId].idCreateur + "')", function(err, result) {
+      if (err) {
+        console.error('error on insertion: ' + err.stack);
+        return;
+      } else {
+        console.log("partie sauvegardée");
+      }
+    });
+    for (var joueur in listeParties[gameId].listeJoueurs) {
+      connexiondb.query("INSERT INTO partiejoueur VALUES ('" + gameId + "', '" + joueur + "', '" + listeParties[gameId].cartes[joueur].join("|") + "')", function(err, result) {
+        if (err) {
+          console.error('error on insertion: ' + err.stack);
+          return;
+        } else {
+          console.log(`joueur : ${joueur} et ses cartes ajoutés`);
+        }
+      });
+    }
+  });
 });
 
 server.listen(3001, () => {
