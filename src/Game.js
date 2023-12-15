@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { socket } from "./socket.js";
 
 var playerId = "001";
+var playerGameId = "";
 
 function Sauvegarde(){
     return(
@@ -22,30 +23,34 @@ function PlayerList() {
     const [players, setPlayers] = useState([]);
 
     useEffect(() => {
-        socket.emit("getPlayers");
-
         // Mettez à jour le state lorsque la liste de joueurs est reçue
         socket.on("playersList", (list) => {
             setPlayers(list);
         });
 
+        socket.on("setGameId",(idRoom)=>{
+            playerGameId = idRoom;
+        });
+
         // Nettoyage de l'écouteur lorsque le composant est démonté
         return () => {
             socket.off("playersList");
+            socket.off("setGameId")
         };
     }, []); // Le tableau vide signifie que cela s'exécute une seule fois lors du montage
 
     return (
         <div className="playerList">
+            <h2>Joueurs de la partie : {playerGameId}</h2>
             {players.map((player) => (
-                <Player pseudo={player[0]} nbCartes={player[1]} />
+                <Player pseudo={player} nbCartes={player} />
             ))}
         </div>
     );
 }
 
 function Timer(){
-    const [timer, setTimer] = useState(0);
+    const [timer, setTimer] = useState(5);
 
     useEffect(() => {
         socket.on("timeLeft", (timeLeft) => {
@@ -58,7 +63,7 @@ function Timer(){
     }, []);
 
     function startTimer(){
-        socket.emit("startTimer");
+        socket.emit("startTimer",playerGameId);
     }
 
     return(
@@ -118,9 +123,11 @@ function Main() {
     useEffect(() => {
         socket.on("choosingEnd",()=>{
             if(selectedCard == null){
-                setSelectedCard(cardList[0])
+                setSelectedCard(cardList[0]);
+                socket.emit("submitCard", playerId, cardList[0], playerGameId);
+            } else {
+                socket.emit("submitCard", playerId, selectedCard, playerGameId);
             }
-            socket.emit("submitCard", playerId, selectedCard);
         });
 
         return () => {
