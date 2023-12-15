@@ -13,17 +13,17 @@ function defCode(){
   return code
 }
 
-class parties{
-  constructor(typeJeu, idCreateur, nbMinJoueurs, nbMaxJoueurs,code) {
+class partie{
+  constructor(typeJeu, idCreateur, nbMinJoueurs, nbMaxJoueurs, nbJoueurs) {
     this.typeJeu=typeJeu;
     this.idCreateur=idCreateur;
     this.nbMinJoueurs=nbMinJoueurs;
     this.nbMaxJoueurs=nbMaxJoueurs;
+    this.nbJoueurs=nbJoueurs;
   }
 } 
 
 let listeParties={};
-
 
 var connexiondb = mysql.createConnection({
   host : 'mysql.etu.umontpellier.fr',
@@ -52,13 +52,6 @@ const io = new Server(server, {
   },
 });
 
-/* connexiondb.query("INSERT INTO jeux (nomJeu) VALUES ('bataille ouverte')", function(err, result){
-  if (err) {
-    console.error('error on query: ' + err.stack);
-    return;
-  }
-}); */
-
 io.on("connection", (socket) => {
   console.log(`User Connected: ${socket.id}`);
 
@@ -75,35 +68,29 @@ io.on("connection", (socket) => {
 
   socket.on('creationPartie', (type,nbMinJoueurs,nbMaxJoueurs,idCreateur)=>{
     codepartie=defCode();
-    listeParties[codepartie]=new parties(type,idCreateur,nbMinJoueurs,nbMaxJoueurs);
-    console.log("partie créée "+ Object.keys(listeParties).length + " ; " + (listeParties[codepartie]).nbMaxJoueurs);
-
-    socket.emit('codePartieCree', codepartie);
+    listeParties[codepartie]=new parties(type,idCreateur,nbMinJoueurs,nbMaxJoueurs,1);
+    console.log("partie " + codepartie + " créée");
+    socket.emit('goToGame', codepartie);
     socket.join(codepartie.toString());
-    
-    /*connexiondb.query("INSERT INTO parties (typeJeu, nbMinJoueurs, nbMaxJoueurs, idCreateur) VALUES ('" + type + "','" + nbMinJoueurs + "','" + nbMaxJoueurs +"','" +idCreateur + "')", function(err, result) {
-      if (err) {
-        console.error('error on query: ' + err.stack);
-        return;
+  });
+
+  socket.on("joinGame", (idJoueur, idRoom)=>{
+    var idRoomInt = parseInt(idRoom);
+    if (idRoomInt in listeParties){
+      if(listeParties[idRoomInt].nbJoueurs == listeParties[idRoomInt].nbMaxJoueurs){
+        socket.emit("roomComplete");
       } else {
-        console.log("partie crée avec succès");
+        listeParties[idRoomInt].nbJoueurs += 1;
+        socket.join(idRoom);
       }
-  })
-  connexiondb.query("SELECT MAX(idGame) AS maxId FROM parties WHERE idCreateur='" + idCreateur + "'", function(err, result) {
-    if (err) {
-      console.error('error on query: ' + err.stack);
-      return;
-    } else{
-      console.log(result[0].maxId);
+      socket.emit('goToGame', idRoomInt);
+    } else {
+      socket.emit("roomDontExist");
     }
-  
-  socket.emit('codePartieCree', result[0].maxId)
-}) */
-
+  })
 
 });
 
-});
 server.listen(3001, () => {
   console.log("SERVER IS RUNNING");
 });
