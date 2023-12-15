@@ -27,7 +27,7 @@ function Home() {
 
   function joinGame() {
     var identifiant = document.getElementById("idGame").value;
-    //socket.emit("connexion",{nom},{mdp});
+    socket.emit("joinGame",);
   }
 
   function afficherCreationPartie() {
@@ -35,7 +35,7 @@ function Home() {
   }
 
   function creationPartie() {
-    socket.emit("creationPartie", 1,2,10,1)
+    socket.emit("creationPartie", 1,2,10,1);
 
   }
 

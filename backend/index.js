@@ -6,6 +6,25 @@ const cors = require("cors");
 const mysql = require("mysql");
 const jsSHA = require("jssha");
 
+function defCode(){
+  code = Math.floor(Math.random() * 9999);
+  while(code in listeParties)
+    code=Math.floor(Math.random() * 9999);
+  return code
+}
+
+class parties{
+  constructor(typeJeu, idCreateur, nbMinJoueurs, nbMaxJoueurs,code) {
+    this.typeJeu=typeJeu;
+    this.idCreateur=idCreateur;
+    this.nbMinJoueurs=nbMinJoueurs;
+    this.nbMaxJoueurs=nbMaxJoueurs;
+  }
+} 
+
+let listeParties={};
+
+
 var connexiondb = mysql.createConnection({
   host : 'mysql.etu.umontpellier.fr',
   user : 'e20220003375',
@@ -33,12 +52,12 @@ const io = new Server(server, {
   },
 });
 
-connexiondb.query("INSERT INTO jeux (nomJeu) VALUES ('bataille ouverte')", function(err, result){
+/* connexiondb.query("INSERT INTO jeux (nomJeu) VALUES ('bataille ouverte')", function(err, result){
   if (err) {
     console.error('error on query: ' + err.stack);
     return;
   }
-});
+}); */
 
 io.on("connection", (socket) => {
   console.log(`User Connected: ${socket.id}`);
@@ -55,7 +74,13 @@ io.on("connection", (socket) => {
   });
 
   socket.on('creationPartie', (type,nbMinJoueurs,nbMaxJoueurs,idCreateur)=>{
-    connexiondb.query("INSERT INTO parties (typeJeu, nbMinJoueurs, nbMaxJoueurs, idCreateur) VALUES ('" + type + "','" + nbMinJoueurs + "','" + nbMaxJoueurs +"','" +idCreateur + "')", function(err, result) {
+    codepartie=defCode();
+    listeParties[codepartie]=new parties(type,idCreateur,nbMinJoueurs,nbMaxJoueurs);
+    console.log("partie créée "+ Object.keys(listeParties).length + " ; " + (listeParties[codepartie]).nbMaxJoueurs);
+
+    socket.emit('codePartieCree', codepartie);
+    socket.join(codepartie.toString());
+    /*connexiondb.query("INSERT INTO parties (typeJeu, nbMinJoueurs, nbMaxJoueurs, idCreateur) VALUES ('" + type + "','" + nbMinJoueurs + "','" + nbMaxJoueurs +"','" +idCreateur + "')", function(err, result) {
       if (err) {
         console.error('error on query: ' + err.stack);
         return;
@@ -72,7 +97,8 @@ io.on("connection", (socket) => {
     }
   
   socket.emit('codePartieCree', result[0].maxId)
-})
+}) */
+
 
 });
 
