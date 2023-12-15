@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
 import { socket } from "./socket.js";
 
-var playerId = 1;
+var playerId = localStorage.getItem("sessId");
 var playerGameId = "";
 
 function Sauvegarde(){
+    function saveGame(gameId){
+        socket.emit("saveGame",gameId);
+    }
     return(
-        <button>Sauvegarder la partie</button>
+        <button onClick={saveGame(playerGameId)}>Sauvegarder la partie</button>
     );
 }
 

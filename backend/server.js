@@ -9,6 +9,8 @@ const jsSHA = require("jssha");
 
 var timerIsRunning = false;
 
+var timerIsRunning = false;
+
 var connexiondb = mysql.createConnection({
   host: 'mysql.etu.umontpellier.fr',
   user: 'e20220003375',
@@ -48,6 +50,7 @@ class partie {
     this.listeJoueurs = listeJoueurs;
     this.timer = timer;
     this.cartes = cartes;
+
   }
 }
 
@@ -129,6 +132,7 @@ io.on("connection", (socket) => {
         socket.emit("roomComplete");
       } else {
         listeParties[idRoomInt].nbJoueurs += 1;
+
         listeParties[idRoomInt].listeJoueurs.push(idJoueur);
         socket.join(idRoom);
         socket.emit('goToGame', idRoom);
@@ -195,7 +199,6 @@ io.on("connection", (socket) => {
     bataille[gameId].forEach(player => {
       let card = player[1].split("_")[0];
       let cardValue = 1;
-
       switch (card) {
         case 'jack':
           cardValue = 11;
@@ -211,6 +214,7 @@ io.on("connection", (socket) => {
           break;
         default:
           cardValue = parseInt(card);
+          break;
       }
       if (winnerCardValue < cardValue) {
         winnerCardValue = cardValue;
@@ -221,6 +225,32 @@ io.on("connection", (socket) => {
     console.log(winner);
     bataille[gameId] = [];
   }
+
+  socket.on("idJoueur", (id) => {
+    playersList.push(id);
+    console.log(id);
+  });
+
+  socket.on("saveGame", (gameId) => {
+    connexiondb.query("INSERT INTO parties VALUES ('" + gameId + "', '" + 1 + "', '" + 2 + "', '" + 10 + "', '" + listeParties[gameId].idCreateur + "')", function(err, result) {
+      if (err) {
+        console.error('error on insertion: ' + err.stack);
+        return;
+      } else {
+        console.log("partie sauvegardée");
+      }
+    });
+    for (var joueur in listeParties[gameId].listeJoueurs) {
+      connexiondb.query("INSERT INTO partiejoueur VALUES ('" + gameId + "', '" + joueur + "', '" + listeParties[gameId].cartes[joueur].join("|") + "')", function(err, result) {
+        if (err) {
+          console.error('error on insertion: ' + err.stack);
+          return;
+        } else {
+          console.log(`joueur : ${joueur} et ses cartes ajoutés`);
+        }
+      });
+    }
+  });
 
   function shuffle(playerList){
     var cardListe = [];
@@ -257,7 +287,6 @@ io.on("connection", (socket) => {
     listeParties[gameId].cartes = shuffle(listeParties[gameId].listeJoueurs);
     io.to(gameId).emit("shuffleDone");
   });
-
 });
 
 server.listen(3001, () => {

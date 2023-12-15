@@ -33,7 +33,7 @@ function Home() {
   }
 
   function creationPartie() {
-    socket.emit("creationPartie", 1,2,10,1);
+    socket.emit("creationPartie",1,2,10,1);
   }
 
   function afficherListeParties() {
