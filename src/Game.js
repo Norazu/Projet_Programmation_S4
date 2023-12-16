@@ -57,13 +57,13 @@ function PlayerList() {
         // Nettoyage de l'écouteur lorsque le composant est démonté
         return () => {
             socket.off("playersList");
-            socket.off("setGameId")
+            socket.off("setGameId");
         };
     }, []); // Le tableau vide signifie que cela s'exécute une seule fois lors du montage
 
     return (
         <div className="playerList">
-            <h2>Joueurs de la partie : {playerGameId}</h2>
+            <h2>Joueurs de la partie : </h2>
             {players.map((player) => (
                 <Player pseudo={player} nbCartes={player} />
             ))}

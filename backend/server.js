@@ -131,13 +131,15 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on('creationPartie', (type, nbMinJoueurs, nbMaxJoueurs, idCreateur) => {
+  socket.on('creationPartie', async (type, nbMinJoueurs, nbMaxJoueurs, idCreateur) => {
     codepartie = defCode();
     listeParties[codepartie] = new partie(type, idCreateur, nbMinJoueurs, nbMaxJoueurs, 1, [idCreateur],0,0,{});
+    await socket.join(codepartie.toString());
     console.log("partie " + codepartie + " créée");
-    socket.emit('goToGame', codepartie.toString());
-    socket.emit("setGameId", codepartie.toString());
-    socket.join(codepartie.toString());
+    socket.emit("goToGame", codepartie.toString(), () => {
+      socket.emit("setGameId", codepartie.toString());
+      socket.emit("playersList", listeParties[codepartie].listeJoueurs);
+    });
   });
 
   socket.on("joinGame", async (idJoueur, idRoom) => {
@@ -149,10 +151,11 @@ io.on("connection", (socket) => {
         listeParties[idRoomInt].nbJoueurs += 1;
         listeParties[idRoomInt].listeJoueurs.push(idJoueur);
         await socket.join(idRoom);
-        socket.emit('goToGame', idRoom);
-        io.to(idRoom).emit("setGameId", idRoom);
-        io.to(idRoom).emit("playersList", listeParties[idRoomInt].listeJoueurs);
-        console.log("Le joueur " + idJoueur + " a rejoint la room " + idRoom);
+        socket.emit('goToGame', idRoom, () => {
+          io.to(idRoom).emit("setGameId", idRoom);
+          io.to(idRoom).emit("playersList", listeParties[idRoomInt].listeJoueurs);
+          console.log("Le joueur " + idJoueur + " a rejoint la room " + idRoom);
+        });
       }
     } else {
       socket.emit("roomDontExist");

@@ -56,9 +56,10 @@ function App() {
     socket.on("userNotRegistered", notRegistered);
     socket.on("userAlreadyRegistered", alreadyRegistered);      
     socket.on("connected", onConnect);
-    socket.on("goToGame",(idRoom)=>{
+    socket.on("goToGame",(idRoom, acknowledgeCallback) => {
       goToGame();
       setGameId(idRoom);
+      acknowledgeCallback();
     });
     socket.on("disconnected", onDisconnect);
     return () => {
