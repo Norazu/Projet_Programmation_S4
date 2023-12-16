@@ -12,14 +12,34 @@ function Sauvegarde(){
     );
 }
 
-function Player({pseudo, nbCartes}){
+function OtherPlayerCard({cardName}){
     return(
-        <div className="Player">
-            <p>Nom: {pseudo}</p>
-            <p>Cartes: {nbCartes}</p>
-        </div>
+        <img src={"./Cards/"+cardName+".png"} alt={cardName} width="100"/>
     );
 }
+
+function Player({ pseudo, nbCartes }) {
+    const [cards, setCards] = useState([]);
+    socket.on("fight", (winner, allCards) => {
+        setCards([]);
+        allCards.forEach((element) => {
+        if (element[0] === pseudo) {
+          setCards((prevCards) => [...prevCards, element[1]]);
+        }
+      });
+    });
+  
+    return (
+      <div className="Player">
+        <p>Nom: {pseudo}</p>
+        <p>Cartes: {pseudo}</p>
+        {cards.map((cardName, index) => (
+            <OtherPlayerCard cardName={cardName} />
+        ))}
+      </div>
+    );
+  }
+  
 
 function PlayerList() {
     const [players, setPlayers] = useState([]);
@@ -64,13 +84,8 @@ function Timer(){
         };
     }, []);
 
-    function startTimer(){
-        socket.emit("startTimer",playerGameId);
-    }
-
     return(
         <div>
-            <button onClick={startTimer}>Start Timer</button>
             <p>Temps Restant : {timer}</p>
         </div>
     );
