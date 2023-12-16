@@ -86,19 +86,12 @@ function Carte({ cardName, onSelect, isSelected }) {
         onSelect(cardName);
     };
 
-    const buttonStyle = {
-        backgroundColor: isSelected ? 'green' : '',
-        border: 'none',
-        cursor: 'pointer',
-    };
-
-    const imgStyle = {
-        padding: "10px"
-    }
+    const etat = isSelected ? 'carteChoisie' : 'default';
 
     return (
-        <button onClick={selectThisCard} style={buttonStyle}>
-            <img src={imgSource} alt={cardName} width="100" style={imgStyle}/>
+        <button onClick={selectThisCard} className="carte" data-etat={etat}>
+            <img src={imgSource} alt={cardName} width="100"/>
+            <div className="overlay"></div>
         </button>
     );
 }
@@ -171,7 +164,7 @@ function Plateau(){
 
 function Game(){
     return(
-        <div>
+        <div className="Game">
             <Sauvegarde/>
             <PlayerList/>
             <Timer/>
