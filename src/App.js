@@ -49,6 +49,9 @@ function App() {
       socket.on("connect", () => {
         socket.emit("hello", localStorage.getItem("sessId"))
       });
+      socket.on("reconnect", () => {
+        socket.emit("hello", localStorage.getItem("sessId"));
+      });
     }
     socket.on("userNotRegistered", notRegistered);
     socket.on("userAlreadyRegistered", alreadyRegistered);      
