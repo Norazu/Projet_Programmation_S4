@@ -64,8 +64,13 @@ function Home() {
     setShowGameList(true);
   }
 
+  function deconnexion() {
+    socket.emit("goodbye", localStorage.getItem("sessId"));
+  }
+
   return (
     <div className="Home">
+      <button id="deco" onClick={deconnexion}>Se déconnecter</button>
       <div className="Container1">
         <button type="button" onClick={afficherCreationPartie}>Afficher le formulaire de création de partie</button>
         {showCreateGame && (

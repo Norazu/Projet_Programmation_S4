@@ -28,6 +28,7 @@ app.use(cors());
 const server = http.createServer(app);
 
 var bataille = {};
+var joueursConnectes = [];
 
 function defCode() {
   var code = Math.floor(Math.random() * 9999);
@@ -62,6 +63,22 @@ const io = new Server(server, {
 
 io.on("connection", (socket) => {
   console.log(`User Connected: ${socket.id}`);
+
+  socket.on("hello", (sessId) => {
+    if (joueursConnectes.includes(sessId)) {
+      socket.emit("connected");
+    } else {
+      joueursConnectes.push(sessId);
+    }
+  });
+
+  socket.on("goodbye", (sessId) => {
+    var index = joueursConnectes.indexOf(sessId)
+    if (index != -1) {
+      joueursConnectes.splice(index, 1);
+      socket.emit("disconnected");
+    }
+  });
 
   socket.on("connexion", (nom, mdp) => {
     const shaObj = new jsSHA("SHA-256", "TEXT", { encoding: "UTF8" });

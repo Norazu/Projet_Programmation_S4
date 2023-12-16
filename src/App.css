@@ -140,7 +140,21 @@ button {
   padding: 1em;
 }
 
-button:hover{
+button#deco {
+  border-radius: 0.5em;
+  height: 3em;
+  background-color: gainsboro;
+  border-color: gainsboro;
+  border-style: solid;
+  text-transform: uppercase;
+  font-weight: bold;
+  padding: 1em;
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
+button:hover, button#deco:hover{
   background-color: #2e772e;
   color: gainsboro;
   transition: all 0.2s ease-in-out;
