@@ -274,7 +274,16 @@ io.on("connection", (socket) => {
       })
       bataille[gameId] = [];
       io.to(gameId).emit("cardsChanged");
-      startTimer(gameId);
+      for (const [key, value] of Object.entries(listeParties[gameId].cartes)) {
+        if(value.length == 0){
+          delete listeParties[gameId].cartes[key];
+        }
+      }
+      if(Object.keys(listeParties[gameId].cartes).length == 1){
+        io.to(gameId).emit("gameFinished",Object.keys(listeParties[gameId].cartes)[0]);
+      } else {
+        startTimer(gameId);
+      }
     }
   }
 
