@@ -59,21 +59,22 @@ function App() {
         inGame ? (
         <div>
           <h2>Code de la partie {gameId}</h2>
-          <Game />
-          <Chat />
+          <Game/>
+          <Chat/>
         </div>
 
         ) : (
-          <div>
-            <Home/>
-          </div>
+          <Home/>
         )
       ) : (
-        <div>
-          <input id="name" type="text" placeholder="Nom"/>
-          <input id="password" type="password"placeholder="mot de passe"/>
-          <button onClick={connect}>Connexion</button>
-          <button onClick={createAccount}>créer un compte</button>
+        <div className="ConnectionPage">
+          <div className="Container1">
+            <h1>Connexion / Inscription</h1>
+            <input id="name" type="text" placeholder="Nom"/>
+            <input id="password" type="password"placeholder="mot de passe"/>
+            <button onClick={connect}>Connexion</button>
+            <button onClick={createAccount}>créer un compte</button>
+          </div>
         </div>
       )}
     </div>
