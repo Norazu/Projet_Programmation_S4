@@ -30,15 +30,26 @@ function App() {
   }
   function onConnect(){
     setConnected(true);
-    localStorage.setItem("sessId",document.getElementById("name").value);
-    console.log(localStorage.getItem("sessId"));
-    socket.emit("idJoueur", localStorage.getItem("sessId"));
+    if (localStorage.getItem("sessId") == null) {
+      localStorage.setItem("sessId",document.getElementById("name").value);
+      console.log(localStorage.getItem("sessId"));
+      socket.emit("hello", localStorage.getItem("sessId"));
+    }
+  }
+  function onDisconnect(){
+    setConnected(false);
+    localStorage.clear();
   }
   function goToGame(){
     setInGame(true);
   }
 
   useEffect(() => {
+    if (localStorage.getItem("sessId") != null){
+      socket.on("connect", () => {
+        socket.emit("hello", localStorage.getItem("sessId"))
+      });
+    }
     socket.on("userNotRegistered", notRegistered);
     socket.on("userAlreadyRegistered", alreadyRegistered);      
     socket.on("connected", onConnect);
@@ -46,10 +57,13 @@ function App() {
       goToGame();
       setGameId(idRoom);
     });
+    socket.on("disconnected", onDisconnect);
     return () => {
+      socket.off("connect");
       socket.off("userNotRegistered");
       socket.off("userAlreadyRegistered");
       socket.off("connected");
+      socket.off("disconnected");
       socket.off("goToGame");
     }
   });
