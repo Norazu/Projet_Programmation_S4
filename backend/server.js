@@ -7,6 +7,7 @@ const mysql = require("mysql");
 const jsSHA = require("jssha");
 
 var timerIsRunning = false;
+var turnDuration = 10;
 
 var connexiondb = mysql.createConnection({
   host: 'mysql.etu.umontpellier.fr',
@@ -37,7 +38,7 @@ function defCode() {
 }
 
 class partie {
-  constructor(typeJeu, idCreateur, nbMinJoueurs, nbMaxJoueurs, nbJoueurs, listeJoueurs, timer, cartes) {
+  constructor(typeJeu, idCreateur, nbMinJoueurs, nbMaxJoueurs, nbJoueurs, listeJoueurs, timer, secondTimer, cartes) {
     this.typeJeu = typeJeu;
     this.idCreateur = idCreateur;
     this.nbMinJoueurs = nbMinJoueurs;
@@ -45,6 +46,7 @@ class partie {
     this.nbJoueurs = nbJoueurs;
     this.listeJoueurs = listeJoueurs;
     this.timer = timer;
+    this.secondTimer = secondTimer;
     this.cartes = cartes;
 
   }
@@ -114,7 +116,7 @@ io.on("connection", (socket) => {
 
   socket.on('creationPartie', (type, nbMinJoueurs, nbMaxJoueurs, idCreateur) => {
     codepartie = defCode();
-    listeParties[codepartie] = new partie(type, idCreateur, nbMinJoueurs, nbMaxJoueurs, 1, [idCreateur],0,{});
+    listeParties[codepartie] = new partie(type, idCreateur, nbMinJoueurs, nbMaxJoueurs, 1, [idCreateur],0,0,{});
     console.log("partie " + codepartie + " créée");
     socket.emit('goToGame', codepartie.toString());
     socket.emit("setGameId", codepartie.toString());
@@ -170,27 +172,64 @@ io.on("connection", (socket) => {
     },1000);
   }
 
-  socket.on("startTimer", (gameId) => {
-    listeParties[gameId].timer = 5;
+  function startTimer(gameId){
+    listeParties[gameId].timer = turnDuration;
     if(!timerIsRunning){
       timerIsRunning = true;
       countdown();
     }
-  });
+  }
 
   socket.on("submitCard", (playerId, card, gameId) => {
+    socket.emit("unselectCard");
     if(bataille[gameId]==undefined){
       bataille[gameId] = [];
     }
     bataille[gameId].push([playerId, card]);
-    console.log("Le joueur " + playerId + " a le code de partie :"+gameId);
+    const index =  listeParties[gameId].cartes[playerId].indexOf(card);
+    if (index > -1) {
+      listeParties[gameId].cartes[playerId].splice(index, 1);
+    }
     if (listeParties[gameId].listeJoueurs.length === bataille[gameId].length) {
-      pickWinner(gameId);
+      io.to(gameId).emit("cardsChanged");
+      pickWinner(gameId, []);
     }
   });
 
-  function pickWinner(gameId) {
+  function startSecondTimer(gameId, playerList, cardsToWin){
+    listeParties[gameId].secondTimer = turnDuration;
+     var secondTimer = setInterval(()=>{
+      if(listeParties[gameId].secondTimer!=0){
+        listeParties[gameId].secondTimer -= 1;
+        if(listeParties[gameId].secondTimer==0){
+          io.to(gameId).emit("secondChoosingEnd",playerList, cardsToWin);
+          console.log("fin du tour !")
+          clearInterval(secondTimer);
+        }
+      }
+      io.to(gameId).emit("timeLeft",listeParties[gameId].secondTimer);
+    },1000);
+  }
+
+  socket.on("submitCardSecondTime", (playerId, card, gameId, cardsToWin) => {
+    socket.emit("unselectCard");
+    if(bataille[gameId]==undefined){
+      bataille[gameId] = [];
+    }
+    bataille[gameId].push([playerId, card]);
+    const index =  listeParties[gameId].cartes[playerId].indexOf(card);
+    if (index > -1) {
+      listeParties[gameId].cartes[playerId].splice(index, 1);
+    }
+    if (listeParties[gameId].listeJoueurs.length === bataille[gameId].length) {
+      io.to(gameId).emit("cardsChanged");
+      pickWinner(gameId, cardsToWin);
+    }
+  });
+
+  function pickWinner(gameId, cardsToWin) {
     let winner = bataille[gameId][0][0];
+    let otherWinners = [];
     let winnerCardValue = 1;
     console.log(bataille);
     bataille[gameId].forEach(player => {
@@ -216,11 +255,37 @@ io.on("connection", (socket) => {
       if (winnerCardValue < cardValue) {
         winnerCardValue = cardValue;
         winner = player[0];
+        otherWinners = [];
+      } else if (winnerCardValue == cardValue) {
+        otherWinners.push(player[0]);
       }
     });
-
-    console.log(winner);
-    bataille[gameId] = [];
+    if(otherWinners.length!=0){
+      otherWinners.push(winner);
+      startSecondTimer(gameId, otherWinners, bataille[gameId].concat(cardsToWin));
+      bataille[gameId] = [];
+    } else {
+      console.log(winner + " a gagné le tour de jeu !");
+      var allCards = bataille[gameId].concat(cardsToWin);
+      console.log(cardsToWin);
+      console.log(allCards);
+      allCards.forEach(player => {
+        listeParties[gameId].cartes[winner].push(player[1]);
+        console.log(winner + " a obtenu la carte " + player[1] + " du joueur "+ player[0]);
+      })
+      bataille[gameId] = [];
+      io.to(gameId).emit("cardsChanged");
+      for (const [key, value] of Object.entries(listeParties[gameId].cartes)) {
+        if(value.length == 0){
+          delete listeParties[gameId].cartes[key];
+        }
+      }
+      if(Object.keys(listeParties[gameId].cartes).length == 1){
+        io.to(gameId).emit("gameFinished",Object.keys(listeParties[gameId].cartes)[0]);
+      } else {
+        startTimer(gameId);
+      }
+    }
   }
 
   socket.on("saveGame", (gameId) => {
@@ -262,7 +327,7 @@ io.on("connection", (socket) => {
       cardListe[i] = cardListe[j];
       cardListe[j] = temp;
     }
-  console.log("la liste des cartes est :"+cardListe+"          La longueur de la liste est"+cardListe.length);
+  //console.log("la liste des cartes est :"+cardListe+"          La longueur de la liste est"+cardListe.length);
     var max = playerList.length;
     var i = 0;
     var cartes = {};
@@ -279,7 +344,8 @@ io.on("connection", (socket) => {
 
   socket.on("launchGame",(gameId)=>{
     listeParties[gameId].cartes = shuffle(listeParties[gameId].listeJoueurs);
-    io.to(gameId).emit("shuffleDone");
+    io.to(gameId).emit("cardsChanged");
+    startTimer(gameId);
   });
 });
 
