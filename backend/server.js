@@ -190,6 +190,7 @@ io.on("connection", (socket) => {
       listeParties[gameId].cartes[playerId].splice(index, 1);
     }
     if (listeParties[gameId].listeJoueurs.length === bataille[gameId].length) {
+      io.to(gameId).emit("cardsChanged");
       pickWinner(gameId, []);
     }
   });
@@ -220,6 +221,7 @@ io.on("connection", (socket) => {
       listeParties[gameId].cartes[playerId].splice(index, 1);
     }
     if (listeParties[gameId].listeJoueurs.length === bataille[gameId].length) {
+      io.to(gameId).emit("cardsChanged");
       pickWinner(gameId, cardsToWin);
     }
   });
