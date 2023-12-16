@@ -21,7 +21,7 @@ connexiondb.connect(function (err) {
     console.error('error connecting: ' + err.stack);
     return;
   }
-  console.log('connected as id ' + connexiondb.threadId);
+  console.log('connected to database as id ' + connexiondb.threadId);
 });
 
 app.use(cors());
@@ -64,7 +64,7 @@ const io = new Server(server, {
 });
 
 io.on("connection", (socket) => {
-  console.log(`User Connected: ${socket.id}`);
+  console.log(`Socket connected: ${socket.id}`);
 
   socket.on("hello", (sessId) => {
     if (joueursConnectes.includes(sessId)) {
@@ -78,6 +78,7 @@ io.on("connection", (socket) => {
     var index = joueursConnectes.indexOf(sessId)
     if (index != -1) {
       joueursConnectes.splice(index, 1);
+      console.log(`${sessId} disconnected`);
       socket.emit("disconnected");
     }
   });
@@ -125,6 +126,7 @@ io.on("connection", (socket) => {
           console.error('error on insertion: ' + err.stack);
           return;
         } else {
+          socket.emit("accountCreated");
           console.log(`account created : ${nom}, ${hashMDP}`)
         }
       });
@@ -395,5 +397,5 @@ io.on("connection", (socket) => {
 });
 
 server.listen(3001, () => {
-  console.log("SERVER IS RUNNING");
+  console.log("Server is listening on port 3001");
 });

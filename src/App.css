@@ -25,11 +25,31 @@ body {
   flex-wrap: wrap;
 }
 
+.GamePage {
+  width: 100%;
+  height: 100%;
+  background-image: url("../public/10013190.jpg");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
 h1 {
   color: gainsboro;
   font-weight: bold;
   text-transform: uppercase;
   padding: 1em;
+}
+
+#codeGame {
+  position: absolute;
+  top: 0;
+  left: 1em;
 }
 
 .Container1  {

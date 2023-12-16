@@ -1,7 +1,7 @@
 import "./App.css";
-import Game from './Game';
-import Chat from './Chat';
-import Home from './Home';
+import Game from './Game.js';
+import Chat from './Chat.js';
+import Home from './Home.js';
 
 import { useEffect, useState } from "react";
 import { socket } from "./socket.js";
@@ -27,6 +27,9 @@ function App() {
   }
   function alreadyRegistered(){
     window.alert("Vous avez déjà un compte, veuillez vous connecter");
+  }
+  function accountCreated(){
+    window.alert("Compte créé avec succès, veuillez vous connecter");
   }
   function onConnect(){
     setConnected(true);
@@ -54,7 +57,8 @@ function App() {
       });
     }
     socket.on("userNotRegistered", notRegistered);
-    socket.on("userAlreadyRegistered", alreadyRegistered);      
+    socket.on("userAlreadyRegistered", alreadyRegistered);
+    socket.on("accountCreated", accountCreated);
     socket.on("connected", onConnect);
     socket.on("goToGame",(idRoom, acknowledgeCallback) => {
       goToGame();
@@ -66,6 +70,7 @@ function App() {
       socket.off("connect");
       socket.off("userNotRegistered");
       socket.off("userAlreadyRegistered");
+      socket.off("accountCreated");
       socket.off("connected");
       socket.off("disconnected");
       socket.off("goToGame");
@@ -75,12 +80,11 @@ function App() {
     <div className="App">
       {connected ? (
         inGame ? (
-        <div>
-          <h2>Code de la partie {gameId}</h2>
+        <div className="GamePage">
+          <h2 id="codeGame">Code de la partie : {gameId}</h2>
           <Game/>
           <Chat/>
         </div>
-
         ) : (
           <Home/>
         )
