@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { socket } from "./socket.js";
 
 var playerId = localStorage.getItem("sessId");
-console.log(playerId);
 
 let elements = [
   { id: 1, nom: 'test1', accessible: 'oui' },
