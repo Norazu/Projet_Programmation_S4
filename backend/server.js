@@ -289,6 +289,7 @@ io.on("connection", (socket) => {
         listeParties[gameId].cartes[winner].push(player[1]);
         console.log(winner + " a obtenu la carte " + player[1] + " du joueur "+ player[0]);
       })
+      io.to(gameId).emit("fight",winner, allCards);
       bataille[gameId] = [];
       io.to(gameId).emit("cardsChanged");
       for (const [key, value] of Object.entries(listeParties[gameId].cartes)) {
