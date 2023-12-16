@@ -196,12 +196,13 @@ io.on("connection", (socket) => {
 
   function startSecondTimer(gameId, playerList, cardsToWin){
     listeParties[gameId].secondTimer = turnDuration;
-    setInterval(()=>{
+     var secondTimer = setInterval(()=>{
       if(listeParties[gameId].secondTimer!=0){
         listeParties[gameId].secondTimer -= 1;
         if(listeParties[gameId].secondTimer==0){
           io.to(gameId).emit("secondChoosingEnd",playerList, cardsToWin);
           console.log("fin du tour !")
+          clearInterval(secondTimer);
         }
       }
       io.to(gameId).emit("timeLeft",listeParties[gameId].secondTimer);
