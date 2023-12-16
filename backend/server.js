@@ -3,7 +3,6 @@ const app = express();
 const http = require("http");
 const { Server } = require("socket.io");
 const cors = require("cors");
-const { time } = require("console");
 const mysql = require("mysql");
 const jsSHA = require("jssha");
 
@@ -28,11 +27,10 @@ app.use(cors());
 
 const server = http.createServer(app);
 
-var cartes = { "001": ["2_of_clubs", "5_of_hearts", "jack_of_spades"] };
 var bataille = {};
 
 function defCode() {
-  code = Math.floor(Math.random() * 9999);
+  var code = Math.floor(Math.random() * 9999);
   while (code in listeParties)
     code = Math.floor(Math.random() * 9999);
   return code

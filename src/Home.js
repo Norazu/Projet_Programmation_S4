@@ -2,6 +2,8 @@ import io from "socket.io-client";
 import { useEffect, useState } from "react";
 import { socket } from "./socket.js";
 
+var playerId = localStorage.getItem("sessId");
+
 let elements = [
   { id: 1, nom: 'test1', accessible: 'oui' },
   { id: 2, nom: 'test2', accessible: 'oui' }
@@ -25,7 +27,7 @@ function Home() {
 
   function joinGame() {
     var identifiant = document.getElementById("idGame").value;
-    socket.emit("joinGame",2,identifiant);
+    socket.emit("joinGame",playerId,identifiant);
   }
 
   function afficherCreationPartie() {
@@ -33,7 +35,7 @@ function Home() {
   }
 
   function creationPartie() {
-    socket.emit("creationPartie",1,2,10,1);
+    socket.emit("creationPartie",1,2,10,playerId);
   }
 
   function afficherListeParties() {
