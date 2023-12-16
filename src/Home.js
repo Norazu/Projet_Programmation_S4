@@ -63,6 +63,17 @@ function Home() {
   function afficherListeParties() {
     setShowGameList(true);
   }
+  function roomComplete(){
+    window.alert("La Partie a atteint son nombre maximum de joueurs");
+  }
+  useEffect(()=>{
+    socket.on("roomComplete",roomComplete);
+    return ()=>{
+      socket.off("roomComplete");
+    }
+
+
+  });
 
   function deconnexion() {
     socket.emit("goodbye", localStorage.getItem("sessId"));

@@ -4,13 +4,13 @@ import { socket } from "./socket.js";
 
 function Chat(){
     function sendMessage(){
-        socket.emit('mess',document.getElementById('messages').value);
+        socket.emit('mess',document.getElementById('messages').value,localStorage.getItem("sessId"));
      }
     useEffect(()=> {
         socket.on('messagerie', data => {
             var messagerie = document.getElementById('messageAffiche');
             var message = document.createElement('p');
-            message.innerText = localStorage.getItem("sessId")+" : "+data;
+            message.innerText =data;
             console.log(message);
             messagerie.appendChild(message);
             
