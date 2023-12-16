@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { socket } from "./socket.js";
 
-var playerId = localStorage.getItem("sessId");
 var playerGameId = "";
 
 function Sauvegarde(){
@@ -101,14 +100,14 @@ function Main() {
     const [selectedCard, setSelectedCard] = useState(null);
 
     useEffect(() => {
-        socket.emit("getCards", playerId, playerGameId);
+        socket.emit("getCards", localStorage.getItem("sessId"), playerGameId);
 
         socket.on("cardsList", (list) => {
             setCardList(list);
         });
 
         socket.on("shuffleDone",()=>{
-            socket.emit("getCards",playerId, playerGameId);
+            socket.emit("getCards",localStorage.getItem("sessId"), playerGameId);
         });
 
         return () => {
@@ -125,9 +124,9 @@ function Main() {
         socket.on("choosingEnd",()=>{
             if(selectedCard == null){
                 setSelectedCard(cardList[0]);
-                socket.emit("submitCard", playerId, cardList[0], playerGameId);
+                socket.emit("submitCard", localStorage.getItem("sessId"), cardList[0], playerGameId);
             } else {
-                socket.emit("submitCard", playerId, selectedCard, playerGameId);
+                socket.emit("submitCard", localStorage.getItem("sessId"), selectedCard, playerGameId);
             }
         });
 
