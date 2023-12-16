@@ -7,6 +7,7 @@ const mysql = require("mysql");
 const jsSHA = require("jssha");
 
 var timerIsRunning = false;
+var turnDuration = 5;
 
 var connexiondb = mysql.createConnection({
   host: 'mysql.etu.umontpellier.fr',
@@ -169,20 +170,24 @@ io.on("connection", (socket) => {
     },1000);
   }
 
-  socket.on("startTimer", (gameId) => {
-    listeParties[gameId].timer = 5;
+  function startTimer(gameId){
+    listeParties[gameId].timer = turnDuration;
     if(!timerIsRunning){
       timerIsRunning = true;
       countdown();
     }
-  });
+  }
 
   socket.on("submitCard", (playerId, card, gameId) => {
+    socket.emit("unselectCard");
     if(bataille[gameId]==undefined){
       bataille[gameId] = [];
     }
     bataille[gameId].push([playerId, card]);
-    console.log("Le joueur " + playerId + " a le code de partie :"+gameId);
+    const index =  listeParties[gameId].cartes[playerId].indexOf(card);
+    if (index > -1) {
+      listeParties[gameId].cartes[playerId].splice(index, 1);
+    }
     if (listeParties[gameId].listeJoueurs.length === bataille[gameId].length) {
       pickWinner(gameId);
     }
@@ -217,9 +222,14 @@ io.on("connection", (socket) => {
         winner = player[0];
       }
     });
-
-    console.log(winner);
+    console.log(winner + " a gagné le tour de jeu !");
+    bataille[gameId].forEach(player => {
+      listeParties[gameId].cartes[winner].push(player[1]);
+      console.log(winner + " a obtenu la carte " + player[1] + " du joueur "+ player[0]);
+    })
     bataille[gameId] = [];
+    io.to(gameId).emit("cardsChanged");
+    startTimer(gameId);
   }
 
   socket.on("saveGame", (gameId) => {
@@ -261,7 +271,7 @@ io.on("connection", (socket) => {
       cardListe[i] = cardListe[j];
       cardListe[j] = temp;
     }
-  console.log("la liste des cartes est :"+cardListe+"          La longueur de la liste est"+cardListe.length);
+  //console.log("la liste des cartes est :"+cardListe+"          La longueur de la liste est"+cardListe.length);
     var max = playerList.length;
     var i = 0;
     var cartes = {};
@@ -278,7 +288,8 @@ io.on("connection", (socket) => {
 
   socket.on("launchGame",(gameId)=>{
     listeParties[gameId].cartes = shuffle(listeParties[gameId].listeJoueurs);
-    io.to(gameId).emit("shuffleDone");
+    io.to(gameId).emit("cardsChanged");
+    startTimer(gameId);
   });
 });
 

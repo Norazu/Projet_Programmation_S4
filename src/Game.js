@@ -106,13 +106,13 @@ function Main() {
             setCardList(list);
         });
 
-        socket.on("shuffleDone",()=>{
+        socket.on("cardsChanged",()=>{
             socket.emit("getCards",localStorage.getItem("sessId"), playerGameId);
         });
 
         return () => {
             socket.off("cardsList");
-            socket.off("shuffleDone");
+            socket.off("cardsChanged");
         };
     }, []);
 
@@ -130,8 +130,13 @@ function Main() {
             }
         });
 
+        socket.on("unselectCard",()=>{
+            setSelectedCard(null);
+        })
+
         return () => {
             socket.off("choosingEnd");
+            socket.off("unselectCard");
         };
     },[cardList, selectedCard]);
 
