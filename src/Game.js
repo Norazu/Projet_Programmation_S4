@@ -106,13 +106,13 @@ function Main() {
             setCardList(list);
         });
 
-        socket.on("shuffleDone",()=>{
+        socket.on("cardsChanged",()=>{
             socket.emit("getCards",localStorage.getItem("sessId"), playerGameId);
         });
 
         return () => {
             socket.off("cardsList");
-            socket.off("shuffleDone");
+            socket.off("cardsChanged");
         };
     }, []);
 
@@ -130,8 +130,25 @@ function Main() {
             }
         });
 
+        socket.on("unselectCard",()=>{
+            setSelectedCard(null);
+        })
+
+        socket.on("secondChoosingEnd",(playerList, cardsToWin)=>{
+            if(playerList.includes(localStorage.getItem("sessId"))){
+                if(selectedCard == null){
+                    setSelectedCard(cardList[0]);
+                    socket.emit("submitCardSecondTime", localStorage.getItem("sessId"), cardList[0], playerGameId, cardsToWin);
+                } else {
+                    socket.emit("submitCardSecondTime", localStorage.getItem("sessId"), selectedCard, playerGameId, cardsToWin);
+                }
+            }
+        });
+
         return () => {
             socket.off("choosingEnd");
+            socket.off("unselectCard");
+            socket.off("secondChoosingEnd");
         };
     },[cardList, selectedCard]);
 
