@@ -10,7 +10,7 @@ function Chat(){
         socket.on('messagerie', data => {
             var messagerie = document.getElementById('messageAffiche');
             var message = document.createElement('p');
-            message.innerText = data;
+            message.innerText = localStorage.getItem("sessId")+" : "+data;
             console.log(message);
             messagerie.appendChild(message);
             
