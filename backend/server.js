@@ -140,16 +140,15 @@ io.on("connection", (socket) => {
     socket.join(codepartie.toString());
   });
 
-  socket.on("joinGame", (idJoueur, idRoom) => {
+  socket.on("joinGame", async (idJoueur, idRoom) => {
     var idRoomInt = parseInt(idRoom);
     if (idRoomInt in listeParties) {
       if (listeParties[idRoomInt].nbJoueurs == listeParties[idRoomInt].nbMaxJoueurs) {
         socket.emit("roomComplete");
       } else {
         listeParties[idRoomInt].nbJoueurs += 1;
-
         listeParties[idRoomInt].listeJoueurs.push(idJoueur);
-        socket.join(idRoom);
+        await socket.join(idRoom);
         socket.emit('goToGame', idRoom);
         io.to(idRoom).emit("setGameId", idRoom);
         io.to(idRoom).emit("playersList", listeParties[idRoomInt].listeJoueurs);
@@ -326,7 +325,7 @@ io.on("connection", (socket) => {
           }
         });
       }
-      
+
       for (var joueur of listeParties[gameId].listeJoueurs) {
         console.log(joueur,listeParties[gameId].cartes[joueur].join("|"));
         queryResult(joueur,gameId);
