@@ -1,21 +1,45 @@
-import io from "socket.io-client";
 import { useEffect, useState } from "react";
 import { socket } from "./socket.js";
 
-let elements = [
-  { id: 1, nom: 'test1', accessible: 'oui' },
-  { id: 2, nom: 'test2', accessible: 'oui' }
-];
+function joinGame() {
+  var identifiant = document.getElementById("idGame").value;
+  socket.emit("joinGame",localStorage.getItem("sessId"),identifiant);
+}
+
+function joinGameByList(identifiant){
+  //console.log(typeof(identifiant));
+  //console.log(identifiant);
+  socket.emit("joinGame",localStorage.getItem("sessId"),identifiant);
+}
+
+function Parties({code}){
+  return(
+      <div className="Parties">
+          <p>Code de la partie: {code}</p>
+          <button onClick={()=>joinGameByList(code)}>Rejoindre la partie</button>
+      </div>
+  );
+}
 
 function ListeDesElements() {
-  return (
-    <ul>
-      {elements.map((element, index) => (
-        <li key={index}>
-          <strong>Nom:</strong> {element.nom}, <strong>Accessible:</strong> {element.accessible}
-        </li>
-      ))}
-    </ul>
+  const [parties, setParties] = useState([]);
+
+  useEffect(() => {
+    socket.emit("recuperationListeParties", 1);
+
+    socket.on('listeDesParties', liste => {
+      setParties(liste);
+    });
+    return () => {
+      socket.off("listeDesParties");
+      };
+  }, []);
+    return (
+      <div className="playerList">
+          {parties.map((partie) => (
+              <Parties code={partie[0]}/>
+          ))}
+      </div>
   );
 }
 
@@ -43,28 +67,28 @@ function Home() {
   return (
     <div className="Home">
       <div className="Container1">
-        <h1>Créer/Rejoindre une partie</h1>
-          <button type="button" onClick={afficherCreationPartie}>Afficher le formulaire de création de partie</button>
-          {showCreateGame && (
-            <div className="creationGame">
-              {/* Contenu de la page de création de partie */}
-              <label htmlFor="choixTypeJeu">À quel jeu voulez vous jouer ?</label>
-              <select id="choixTypeJeu">
-                <option>Bataille ouverte</option>
-              </select>
-              <button type="button" onClick={creationPartie}>Créer la partie</button>
-            </div>
-          )}
-          <input id="idGame" type="text" placeholder="Identifiant de la partie" />
-          <button onClick={joinGame}>Rejoindre la partie</button>
+        <button type="button" onClick={afficherCreationPartie}>Afficher le formulaire de création de partie</button>
+        {showCreateGame && (
+          <div>
+            {/* Contenu de la page de création de partie */}
+            <label htmlFor="choixTypeJeu">A quel jeu voulez-vous jouer ? </label>
+            <select id="choixTypeJeu">
+              <option>Bataille ouverte</option>
+            </select>
+            <button type="button" onClick={creationPartie}>Créer la partie</button>
+          </div>
+        )}
+        <input id="idGame" type="text" placeholder="Identifiant de la partie" />
+        <button onClick={joinGame}>Rejoindre la partie</button>
       </div>
       <div className="Container1">
-        <h1>Parties existantes</h1>
+        {!showGameList && (
         <button type="button" onClick={afficherListeParties}> Afficher la liste des parties</button>
+        )}
         {showGameList && (
-          <div>
+          <div className="Container1">
             {/* Contenu de la liste des parties */}
-            <p>Contenu de la liste des parties</p>
+            <p>Parties disponibles</p>
             <ListeDesElements />
           </div>
         )}

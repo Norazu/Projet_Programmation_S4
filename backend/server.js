@@ -245,6 +245,25 @@ io.on("connection", (socket) => {
     }
   });
 
+  socket.on('recuperationListeParties', (typeJeu) => {
+    let liste = [];
+    //console.log(listeParties);
+    if (listeParties) {
+      for (var pt in listeParties) {
+        var partie = listeParties[pt];
+        liste.push([
+          pt, //code
+          partie.typeJeu,
+          partie.nbMinJoueurs, 
+          partie.nbMaxJoueurs,
+          partie.listeJoueurs.length
+        ]);
+      }
+    }
+    socket.emit('listeDesParties', liste);
+    console.log(liste);
+  });
+
   function shuffle(playerList){
     var cardListe = [];
     const couleurs = ["hearts","spades","diamonds","clubs"];
