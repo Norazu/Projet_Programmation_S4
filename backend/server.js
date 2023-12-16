@@ -315,7 +315,8 @@ io.on("connection", (socket) => {
           console.log("partie sauvegardée");
         }
       });
-      for (var joueur in listeParties[gameId].listeJoueurs) {
+
+      function queryResult(joueur,gameId) {
         connexiondb.query("INSERT INTO partiejoueur VALUES ('" + gameId + "', '" + joueur + "', '" + listeParties[gameId].cartes[joueur].join("|") + "')", function(err, result) {
           if (err) {
             console.error('error on insertion: ' + err.stack);
@@ -324,6 +325,11 @@ io.on("connection", (socket) => {
             console.log(`joueur : ${joueur} et ses cartes ajoutés`);
           }
         });
+      }
+      
+      for (var joueur of listeParties[gameId].listeJoueurs) {
+        console.log(joueur,listeParties[gameId].cartes[joueur].join("|"));
+        queryResult(joueur,gameId);
       }
     }
   });
