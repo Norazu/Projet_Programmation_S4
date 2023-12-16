@@ -143,9 +143,10 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on('mess', data => {
-    console.log(data + " : data envoyée à " + socket.id)
-    io.emit('messagerie', data);
+  socket.on('mess', (data1,data2) => {
+    console.log(data1 + " : data envoyée à " + socket.id)
+    var res = data2+" : "+data1
+    io.emit('messagerie', res);
   });
 
   socket.on("getCards", (playerId,gameId) => {

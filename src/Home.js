@@ -39,6 +39,17 @@ function Home() {
   function afficherListeParties() {
     setShowGameList(true);
   }
+  function roomComplete(){
+    window.alert("La Partie a atteint son nombre maximum de joueurs");
+  }
+  useEffect(()=>{
+    socket.on("roomComplete",roomComplete);
+    return ()=>{
+      socket.off("roomComplete");
+    }
+
+
+  });
 
   return (
     <div className="Home">
