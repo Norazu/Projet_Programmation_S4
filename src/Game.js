@@ -134,9 +134,21 @@ function Main() {
             setSelectedCard(null);
         })
 
+        socket.on("secondChoosingEnd",(playerList, cardsToWin)=>{
+            if(playerList.includes(localStorage.getItem("sessId"))){
+                if(selectedCard == null){
+                    setSelectedCard(cardList[0]);
+                    socket.emit("submitCardSecondTime", localStorage.getItem("sessId"), cardList[0], playerGameId, cardsToWin);
+                } else {
+                    socket.emit("submitCardSecondTime", localStorage.getItem("sessId"), selectedCard, playerGameId, cardsToWin);
+                }
+            }
+        });
+
         return () => {
             socket.off("choosingEnd");
             socket.off("unselectCard");
+            socket.off("secondChoosingEnd");
         };
     },[cardList, selectedCard]);
 
