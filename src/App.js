@@ -17,21 +17,26 @@ function App() {
     var mdp = document.getElementById("password").value;
     socket.emit("connexion",nom,mdp);
   }
-  function createAccount(){
+
+  function createAccount() {
     var nom = document.getElementById("name").value; 
     var mdp = document.getElementById("password").value;
     socket.emit("newAccount",nom,mdp);
   }
-  function notRegistered(){
+
+  function notRegistered() {
     window.alert("Nom d'utilisateur ou mot de passe incorrect ou compte inexistant");
   }
-  function alreadyRegistered(){
+
+  function alreadyRegistered() {
     window.alert("Vous avez déjà un compte, veuillez vous connecter");
   }
-  function accountCreated(){
+
+  function accountCreated() {
     window.alert("Compte créé avec succès, veuillez vous connecter");
   }
-  function onConnect(){
+
+  function onConnect() {
     setConnected(true);
     if (localStorage.getItem("sessId") == null) {
       localStorage.setItem("sessId",document.getElementById("name").value);
@@ -39,11 +44,13 @@ function App() {
       socket.emit("hello", localStorage.getItem("sessId"));
     }
   }
-  function onDisconnect(){
+
+  function onDisconnect() {
     setConnected(false);
     localStorage.clear();
   }
-  function goToGame(){
+
+  function goToGame() {
     setInGame(true);
   }
 
@@ -83,7 +90,7 @@ function App() {
           <div className="PartiePage">
             <div className="GamePage">
               <h2 id="codeGame">Code de la partie : {gameId}</h2>
-              <Game/>
+              <Game gameEnd={onDisconnect}/>
             </div>
             <Chat/>
           </div>

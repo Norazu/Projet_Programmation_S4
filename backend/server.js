@@ -195,15 +195,14 @@ io.on("connection", (socket) => {
         if ((listeParties[cle].listeIdentifiants).includes(socket.id)){
           let indice=(listeParties[cle].listeIdentifiants.indexOf(socket.id));
           (listeParties[cle].listeIdentifiants).splice(indice,1);
+          /*
           (listeParties[cle].listeJoueurs).splice(indice,1);
           console.log(listeParties[cle].nbJoueurs);
           listeParties[cle].nbJoueurs=(listeParties[cle].nbJoueurs)-1;
           console.log(listeParties[cle].nbJoueurs);
-
+          */
         }
       }
-    
-
   });
 
   socket.on('mess', (data1,data2) => {
@@ -393,12 +392,14 @@ io.on("connection", (socket) => {
                 return;
               } else {
                 console.log(`joueur : ${joueur} et ses cartes ajoutés`);
+                io.to(gameId).emit("partieSauvegardee", () => {
+                  io.to(gameId).emit("disconnected");
+                });
               }
             });
           }
 
           for (var joueur of listeParties[gameId].listeJoueurs) {
-            console.log(joueur,listeParties[gameId].cartes[joueur].join("|"));
             queryResult(joueur,gameId);
           }
         }
@@ -504,12 +505,15 @@ io.on("connection", (socket) => {
     });
     return cartes;
   }
+
   socket.on("pauseGame",(data)=>{
     listeParties[data].gameIsPaused = true;
   });
+
   socket.on("unpauseGame",(data)=>{
     listeParties[data].gameIsPaused = false;
   });
+
   socket.on("launchGame",(gameId, pseudo)=>{
     if (pseudo==listeParties[gameId].idCreateur){
       if (listeParties[gameId].nbJoueurs>=listeParties[gameId].nbMinJoueurs){

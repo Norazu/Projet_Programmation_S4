@@ -256,27 +256,28 @@ function Plateau(){
     );
 }
 
-function Game(){
+function Game({ gameEnd }){
+    function partieSaved() {
+        window.alert("Partie sauvegardée avec succès, vous avez été déconnecté");
+        gameEnd();
+    }
     useEffect(() => {
-    
-        // Gestionnaire d'événement pour le déchargement de la fenêtre
+        // Gestionnaire d'événement pour le déchargement de la fenêtr
         const handleUnload = () => {
             socket.emit("disconnecting")
-          // Déconnectez le socket avant le déchargement de la fenêtre
-          socket.close();
+            // Déconnectez le socket avant le déchargement de la fenêtre
+            socket.close();
         };
-    
         // Ajoutez le gestionnaire d'événement à l'événement unload
         window.addEventListener('beforeunload', handleUnload);
-    
-        // Nettoyage lorsque le composant est démonté
-        return () => {
-          // Retirez le gestionnaire d'événement lors du démontage du composant
-          window.removeEventListener('beforeunload', handleUnload);
-    
-        };
-      }, []);
 
+        socket.on("partieSauvegardee", partieSaved);
+        return () => {
+            // Retirez le gestionnaire d'événement lors du démontage du composant
+            window.removeEventListener('beforeunload', handleUnload);
+            socket.off("partieSauvegardee");
+        };
+    })
     return(
         <div className="Game">
             <Sauvegarde/>
