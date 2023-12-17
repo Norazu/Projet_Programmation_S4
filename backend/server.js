@@ -364,7 +364,11 @@ io.on("connection", (socket) => {
               return;
             } else {
               console.log("partie sauvegardée");
+              for (const [key, value] of Object.entries(listeParties)){
+                console.log("Les id des games sont "+key+" avant la suppression");
+              }
               delete listeParties[gameId]
+              console.log(listeParties);
             }
           });
 
