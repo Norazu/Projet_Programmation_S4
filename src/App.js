@@ -80,11 +80,13 @@ function App() {
     <div className="App">
       {connected ? (
         inGame ? (
-        <div className="GamePage">
-          <h2 id="codeGame">Code de la partie : {gameId}</h2>
-          <Game/>
-          <Chat/>
-        </div>
+          <div className="PartiePage">
+            <div className="GamePage">
+              <h2 id="codeGame">Code de la partie : {gameId}</h2>
+              <Game/>
+            </div>
+            <Chat/>
+          </div>
         ) : (
           <Home/>
         )

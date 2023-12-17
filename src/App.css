@@ -24,17 +24,84 @@ body {
 }
 
 .GamePage {
-  min-height: 100vh;
-  min-width: 100vw;
-  background-image: url("../public/10013190.jpg");
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: cover;
   display: flex;
+  flex:2;
   justify-content: center;
   flex-direction: column;
   align-items: center;
   flex-wrap: wrap;
+  margin: 1em;
+  min-width: 40em;
+}
+
+.PartiePage {
+  background-image: url("../public/10013190.jpg");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  flex-wrap: wrap;
+}
+
+.Chat {
+  background-color: rgb(0 0 0 / 0.7);
+  backdrop-filter: blur(2em);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 30%;
+}
+
+.Chat * {
+  margin: 1em;
+}
+
+.messageSender {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.Chat #messages {
+  background-color: transparent;
+  resize: none;
+  color: gainsboro;
+  border-radius: 0.5em;
+  height: 1.5em;
+  border-width: 0.2em;
+  border-style: solid;
+  padding: 1em;
+}
+
+#messageAffiche {
+  overflow-y: scroll  ;
+  height: 75%;
+  max-height: 75vh;
+}
+
+#messageAffiche::-webkit-scrollbar {
+  width: 8px;
+}
+
+#messageAffiche::-webkit-scrollbar-thumb {
+  background-color: #888;
+  border-radius: 4px;
+}
+
+/* Piste de la barre de défilement */
+#messageAffiche::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+#messageAffiche p {
+  color: gainsboro;
+}
+
+#codeGame {
+  width: 100%;
 }
 
 h1 {
@@ -42,12 +109,6 @@ h1 {
   font-weight: bold;
   text-transform: uppercase;
   padding: 1em;
-}
-
-#codeGame {
-  position: absolute;
-  top: 0;
-  left: 1em;
 }
 
 .Container1  {
