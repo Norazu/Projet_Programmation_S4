@@ -72,6 +72,11 @@ io.on("connection", (socket) => {
   socket.on("hello", (sessId) => {
     if (joueursConnectes.includes(sessId)) {
       socket.emit("connected");
+      for (var pt in listeParties) {
+        if (listeParties[pt].listeJoueurs.includes(sessId)) {
+          rejoindrePartie(sessId, pt);
+        }
+      }
     } else {
       joueursConnectes.push(sessId);
     }
@@ -136,9 +141,8 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on('creationPartie', async (type, nbMinJoueurs, nbMaxJoueurs, idCreateur) => {
-    codepartie = defCode();
-    listeParties[codepartie] = new partie(type, idCreateur, nbMinJoueurs, nbMaxJoueurs, 1, [idCreateur],0,0,{});
+  async function creerPartie(codepartie, type, nbMinJoueurs, nbMaxJoueurs, idCreateur, cartes) {
+    listeParties[codepartie] = new partie(type, idCreateur, nbMinJoueurs, nbMaxJoueurs, 1, [idCreateur],0,0,cartes);
     listeParties[codepartie].listeIdentifiants=[socket.id];
     await socket.join(codepartie.toString());
     console.log("partie " + codepartie + " créée");
@@ -146,17 +150,24 @@ io.on("connection", (socket) => {
       socket.emit("setGameId", codepartie.toString());
       socket.emit("playersList", listeParties[codepartie].listeJoueurs);
     });
+  }
+
+  socket.on('creationPartie', (type, nbMinJoueurs, nbMaxJoueurs, idCreateur) => {
+    codepartie = defCode();
+    creerPartie(codepartie, type, nbMinJoueurs, nbMaxJoueurs, idCreateur, {});
   });
 
-  socket.on("joinGame", async (idJoueur, idRoom) => {
+  async function rejoindrePartie(idJoueur, idRoom) {
     var idRoomInt = parseInt(idRoom);
     if (idRoomInt in listeParties) {
       if (listeParties[idRoomInt].status==0){
         if (listeParties[idRoomInt].nbJoueurs == listeParties[idRoomInt].nbMaxJoueurs) {
           socket.emit("roomComplete");
         } else {
-          listeParties[idRoomInt].nbJoueurs += 1;
-          listeParties[idRoomInt].listeJoueurs.push(idJoueur);
+          if (!listeParties[idRoomInt].listeJoueurs.includes(idJoueur)) {
+            listeParties[idRoomInt].nbJoueurs += 1;
+            listeParties[idRoomInt].listeJoueurs.push(idJoueur);
+          }
           listeParties[idRoomInt].listeIdentifiants.push(socket.id);
           await socket.join(idRoom);
           socket.emit('goToGame', idRoom, () => {
@@ -171,6 +182,10 @@ io.on("connection", (socket) => {
     } else {
       socket.emit("roomDontExist");
     }
+  }
+
+  socket.on("joinGame", (idJoueur, idRoom) => {
+    rejoindrePartie(idJoueur, idRoom);
   });
 
   socket.on('disconnecting', () => {
@@ -275,17 +290,16 @@ io.on("connection", (socket) => {
     }
   });
 
-  function score(playerId){
-    connexiondb.query("UPDATE joueurs SET score=score+1 WHERE pseudo="+"'"+playerId+"'",function (err,result){
-      if(err){
-        console.error('error on insertion: ' + err.stack);
-      }
-    })
-  }
-
-
-
   function pickWinner(gameId, cardsToWin) {
+    function score(playerId){
+      connexiondb.query("UPDATE joueurs SET score=score+1 WHERE pseudo='"+playerId+"'",function (err,result){
+        if(err){
+          console.error('error on insertion: ' + err.stack);
+        } else {
+          console.log("score of " + playerId + " updated");
+        }
+      })
+    }
     let winner = bataille[gameId][0][0];
     let otherWinners = [];
     let winnerCardValue = 1;
@@ -396,6 +410,49 @@ io.on("connection", (socket) => {
     }
   });
 
+  socket.on("loadGame", (code) => {
+    var cartes = {};
+    connexiondb.query("SELECT * FROM parties AS pt JOIN partiejoueur AS ptj ON pt.idGame=ptj.idGame WHERE pt.idGame='" + code + "'", (err, result) => {
+      if (err) {
+        console.error('error on query: ' + err.stack);
+        return;
+      } else {
+        for (row of result) {
+          cartes[row.idJoueur] = row.carte.split("|");
+        }
+        creerPartie(row.idGame, result[0].typeJeu, result[0].nbMinJoueurs, result[0].nbMaxJoueurs, result[0].idCreateur, cartes);
+        connexiondb.query("DELETE FROM partiejoueur WHERE idGame='" + code + "'", (err, result) => {
+          if (err) {
+            console.error('error on delete: ' + err.stack);
+            return;
+          } else {
+            connexiondb.query("DELETE FROM parties WHERE idGame='" + code + "'", (err, result) => {
+              if (err) {
+                console.error('error on delete: ' + err.stack);
+                return;
+              }
+            });
+          }
+        });
+      }
+    });
+  });
+
+  socket.on("getSavedGames", () => {
+    var queryResult = []
+    connexiondb.query("SELECT * FROM parties", (err, result) => {
+      if (err) {
+        console.error('error on query: ' + err.stack);
+        return;
+      } else {
+        for (row of result) {
+          queryResult.push([row.idGame]);
+        }
+        socket.emit("returnSavedGames", queryResult);
+      }
+    });
+  });
+
   socket.on('recuperationListeParties', (typeJeu) => {
     let liste = [];
     //console.log(listeParties);
@@ -456,7 +513,9 @@ io.on("connection", (socket) => {
   socket.on("launchGame",(gameId, pseudo)=>{
     if (pseudo==listeParties[gameId].idCreateur){
       if (listeParties[gameId].nbJoueurs>=listeParties[gameId].nbMinJoueurs){
-        listeParties[gameId].cartes = shuffle(listeParties[gameId].listeJoueurs);
+        if (Object.keys(listeParties[gameId].cartes).length === 0) {
+          listeParties[gameId].cartes = shuffle(listeParties[gameId].listeJoueurs);
+        }
         io.to(gameId).emit("cardsChanged");
         var nbCartes = {};
         for (const [key, value] of Object.entries(listeParties[gameId].cartes)) {
