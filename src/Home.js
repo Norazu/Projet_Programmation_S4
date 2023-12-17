@@ -64,12 +64,22 @@ function Home() {
     setShowGameList(true);
   }
   function roomComplete(){
-    window.alert("La Partie a atteint son nombre maximum de joueurs");
+    window.alert("La partie a atteint son nombre maximum de joueurs");
+  }
+  function roomDontExist(){
+    window.alert("La partie n'existe pas");
+  }
+  function gameRunning(){
+    window.alert("La partie est déjà lancée");
   }
   useEffect(()=>{
     socket.on("roomComplete",roomComplete);
+    socket.on("roomDontExist", roomDontExist);
+    socket.on("gameRunning", gameRunning);
     return ()=>{
       socket.off("roomComplete");
+      socket.off("roomDontExist");
+      socket.off("gameRunning");
     }
 
 
