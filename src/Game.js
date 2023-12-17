@@ -108,25 +108,45 @@ function PlayerList() {
 
 function Timer(){
     const [timer, setTimer] = useState(5);
-    function pause(){
-        if(!gameIsPaused){
-        socket.emit("pauseGame",playerGameId);
+    function pasPermPause(){
+        window.alert("Vous n'avez pas la permission de mettre en pause la partie, seul le créateur de la partie le peut");
+    };
+
+    function pauseGameNotStarted(){
+        window.alert("Vous ne pouvez pas mettre en pause la partie si elle n'a pas démarré");
+    }
+
+    function gameEnPause(){
         gameIsPaused=true;
         document.getElementById("pause").innerText = "Enlever la pause";
     }
-        else{
-            socket.emit("unpauseGame",playerGameId);
-            gameIsPaused=false;
-            document.getElementById("pause").innerText = "Pause";
-        }
+    function gameReprise(){
+        gameIsPaused=false;
+        document.getElementById("pause").innerText = "Pause";
     }
+    function pause(){
+        if(!gameIsPaused){
+            socket.emit("pauseGame",playerGameId,localStorage.getItem("sessId"));
+        }
+            else{
+                socket.emit("unpauseGame",playerGameId, localStorage.getItem("sessId"));
+            }
+    };
     useEffect(() => {
         socket.on("timeLeft", (timeLeft) => {
             setTimer(timeLeft);
         });
-
+        socket.on("pasPermPause", pasPermPause);
+        socket.on("pauseGameNotStarted", pauseGameNotStarted);
+        socket.on("gameEnPause", gameEnPause);
+        socket.on("gameReprise", gameReprise);
         return () => {
             socket.off("timeLeft");
+            socket.off("pasPermPause");
+            socket.off("pauseGameNotStarted");
+            socket.off("gameEnPause");
+            socket.off("gameReprise");
+
         };
     }, []);
 

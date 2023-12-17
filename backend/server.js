@@ -441,11 +441,26 @@ io.on("connection", (socket) => {
     });
     return cartes;
   }
-  socket.on("pauseGame",(data)=>{
-    listeParties[data].gameIsPaused = true;
+  socket.on("pauseGame",(data,pseudo)=>{
+    if (listeParties[data].status==1){
+      if (listeParties[data].idCreateur==pseudo){
+        listeParties[data].gameIsPaused = true;
+        socket.emit("gameEnPause");
+      } else{
+        socket.emit("pasPermPause");
+      }
+    } else {
+      socket.emit("pauseGameNotStarted");
+    }
   });
-  socket.on("unpauseGame",(data)=>{
-    listeParties[data].gameIsPaused = false;
+
+  socket.on("unpauseGame",(data,pseudo)=>{
+    if (listeParties[data].idCreateur==pseudo){
+      listeParties[data].gameIsPaused = false;
+      socket.emit("gameReprise");
+    } else{
+      socket.emit("pasPermPause");
+    }
   });
   socket.on("launchGame",(gameId, pseudo)=>{
     if (pseudo==listeParties[gameId].idCreateur){
