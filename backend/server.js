@@ -347,6 +347,7 @@ io.on("connection", (socket) => {
       if(Object.keys(listeParties[gameId].cartes).length == 1){
         io.to(gameId).emit("gameFinished",Object.keys(listeParties[gameId].cartes)[0]);
         score(winner);
+        delete listeParties[gameId];
       } else {
         startTimer(gameId);
       }
@@ -363,6 +364,7 @@ io.on("connection", (socket) => {
               return;
             } else {
               console.log("partie sauvegardée");
+              delete listeParties[gameId]
             }
           });
 
