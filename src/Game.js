@@ -4,11 +4,27 @@ import { socket } from "./socket.js";
 var playerGameId = "";
 
 function Sauvegarde(){
-    function saveGame(gameId){
-        socket.emit("saveGame",gameId);
+    function saveGame(gameId,pseudo){
+        socket.emit("saveGame",gameId,pseudo);
     }
+    function pasPermSauvegarde(){
+        window.alert("Vous n'avez pas la permission de sauvegarder, seul le créateur de la partie le peut");
+    }
+    function saveGameNotStarted(){
+        window.alert("Vous ne pouvez pas sauvegarder si la partie n'a pas démarré");
+    }
+    useEffect(()=>{
+        socket.on("PasPermSauvegarde", pasPermSauvegarde);
+        socket.on("SaveGameNotStarted", saveGameNotStarted)
+        return ()=>{
+          socket.off("PasPermSauvegarde");
+          socket.off("SaveGameNotStarted");
+        }
+    
+      });
+
     return(
-        <button onClick={()=>saveGame(playerGameId)}>Sauvegarder la partie</button>
+        <button onClick={()=>saveGame(playerGameId,localStorage.getItem("sessId"))}>Sauvegarder la partie</button>
     );
 }
 
@@ -122,7 +138,7 @@ function Main() {
         });
 
         socket.on("cardsChanged",()=>{
-            socket.emit("getCards",localStorage.getItem("sessId"), playerGameId);
+            socket.emit("getCards",localStorage.getItem("sessId"),playerGameId);
         });
 
         return () => {
@@ -183,8 +199,24 @@ function Main() {
 }
 
 function Plateau(){
+    function notEnoughPlayers(){
+        window.alert("Il n'y a pas assez de joueurs pour démarrer une partie");
+      }
+    function pasDePerms(){
+        window.alert("Vous n'avez pas la permission de démarrer la partie, seul le createur peut");
+    }
+
+    useEffect(() =>{
+        socket.on("notEnoughPlayers", notEnoughPlayers);
+        socket.on("PasDePerms",pasDePerms);
+        return ()=> {
+            socket.off("notEnoughPlayers")
+            socket.off("PasDePerms")
+        }
+    })
+
     function launchGame(){
-        socket.emit("launchGame",playerGameId);
+        socket.emit("launchGame",playerGameId,localStorage.getItem("sessId"));
     }
     return (
         <div>
@@ -194,6 +226,26 @@ function Plateau(){
 }
 
 function Game(){
+    useEffect(() => {
+    
+        // Gestionnaire d'événement pour le déchargement de la fenêtre
+        const handleUnload = () => {
+            socket.emit("disconnecting")
+          // Déconnectez le socket avant le déchargement de la fenêtre
+          socket.close();
+        };
+    
+        // Ajoutez le gestionnaire d'événement à l'événement unload
+        window.addEventListener('beforeunload', handleUnload);
+    
+        // Nettoyage lorsque le composant est démonté
+        return () => {
+          // Retirez le gestionnaire d'événement lors du démontage du composant
+          window.removeEventListener('beforeunload', handleUnload);
+    
+        };
+      }, []);
+
     return(
         <div className="Game">
             <Sauvegarde/>
