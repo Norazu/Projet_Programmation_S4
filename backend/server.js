@@ -51,6 +51,7 @@ class partie {
     this.secondTimer = secondTimer;
     this.cartes = cartes;
     this.status=0; //1 si la partie est démarré
+    this.gameIsPaused=false;
 
   }
 }
@@ -207,7 +208,7 @@ io.on("connection", (socket) => {
   function countdown(){
     setInterval(()=>{
       for (const [key, value] of Object.entries(listeParties)) {
-        if(value.timer!=0){
+        if(value.timer!=0 && !value.gameIsPaused){
           value.timer -= 1;
           if(value.timer==0){
             io.to(key).emit("choosingEnd");
@@ -440,7 +441,12 @@ io.on("connection", (socket) => {
     });
     return cartes;
   }
-
+  socket.on("pauseGame",(data)=>{
+    listeParties[data].gameIsPaused = true;
+  });
+  socket.on("unpauseGame",(data)=>{
+    listeParties[data].gameIsPaused = false;
+  });
   socket.on("launchGame",(gameId, pseudo)=>{
     if (pseudo==listeParties[gameId].idCreateur){
       if (listeParties[gameId].nbJoueurs>=listeParties[gameId].nbMinJoueurs){
