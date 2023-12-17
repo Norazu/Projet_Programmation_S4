@@ -209,6 +209,7 @@ io.on("connection", (socket) => {
     if (listeParties[gameId].idCreateur == playerId) {
       if (listeParties[gameId].nbJoueurs == 0) {
         delete listeParties[gameId];
+        console.log("partie " + gameId + " supprimée : " + (!listeParties[gameId]));
       } else {
         listeParties[gameId].idCreateur = listeParties[gameId].listeJoueurs[0];
         console.log("créateur de la partie " + gameId + " apres réassignation " + listeParties[gameId].idCreateur);
