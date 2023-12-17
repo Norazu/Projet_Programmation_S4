@@ -46,6 +46,7 @@ class partie {
     this.nbMaxJoueurs = nbMaxJoueurs;
     this.nbJoueurs = nbJoueurs;
     this.listeJoueurs = listeJoueurs;
+    this.listeIdentifiants = [];
     this.timer = timer;
     this.secondTimer = secondTimer;
     this.cartes = cartes;
@@ -136,6 +137,7 @@ io.on("connection", (socket) => {
   socket.on('creationPartie', async (type, nbMinJoueurs, nbMaxJoueurs, idCreateur) => {
     codepartie = defCode();
     listeParties[codepartie] = new partie(type, idCreateur, nbMinJoueurs, nbMaxJoueurs, 1, [idCreateur],0,0,{});
+    listeParties[codepartie].listeIdentifiants=[socket.id];
     await socket.join(codepartie.toString());
     console.log("partie " + codepartie + " créée");
     socket.emit("goToGame", codepartie.toString(), () => {
@@ -152,6 +154,7 @@ io.on("connection", (socket) => {
       } else {
         listeParties[idRoomInt].nbJoueurs += 1;
         listeParties[idRoomInt].listeJoueurs.push(idJoueur);
+        listeParties[idRoomInt].listeIdentifiants.push(socket.id);
         await socket.join(idRoom);
         socket.emit('goToGame', idRoom, () => {
           io.to(idRoom).emit("setGameId", idRoom);
@@ -162,6 +165,24 @@ io.on("connection", (socket) => {
     } else {
       socket.emit("roomDontExist");
     }
+  });
+
+  socket.on('disconnecting', () => {
+    console.log("deconnexion");
+    for (const cle in listeParties) {
+      console.log(listeParties[cle].listeIdentifiants);
+        if ((listeParties[cle].listeIdentifiants).includes(socket.id)){
+          let indice=(listeParties[cle].listeIdentifiants.indexOf(socket.id));
+          (listeParties[cle].listeIdentifiants).splice(indice,1);
+          (listeParties[cle].listeJoueurs).splice(indice,1);
+          console.log(listeParties[cle].nbJoueurs);
+          listeParties[cle].nbJoueurs=(listeParties[cle].nbJoueurs)-1;
+          console.log(listeParties[cle].nbJoueurs);
+
+        }
+      }
+    
+
   });
 
   socket.on('mess', (data1,data2) => {
@@ -390,6 +411,7 @@ io.on("connection", (socket) => {
   }
 
   socket.on("launchGame",(gameId)=>{
+    console.log(listeParties[gameId].nbJoueurs);
     if (listeParties[gameId].nbJoueurs>=listeParties[gameId].nbMinJoueurs){
       listeParties[gameId].cartes = shuffle(listeParties[gameId].listeJoueurs);
       io.to(gameId).emit("cardsChanged");

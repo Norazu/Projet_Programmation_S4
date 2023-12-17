@@ -122,7 +122,7 @@ function Main() {
         });
 
         socket.on("cardsChanged",()=>{
-            socket.emit("getCards",localStorage.getItem("sessId"), playerGameId);
+            socket.emit("getCards",localStorage.getItem("sessId"));
         });
 
         return () => {
@@ -204,6 +204,26 @@ function Plateau(){
 }
 
 function Game(){
+    useEffect(() => {
+    
+        // Gestionnaire d'événement pour le déchargement de la fenêtre
+        const handleUnload = () => {
+            socket.emit("disconnecting")
+          // Déconnectez le socket avant le déchargement de la fenêtre
+          socket.close();
+        };
+    
+        // Ajoutez le gestionnaire d'événement à l'événement unload
+        window.addEventListener('beforeunload', handleUnload);
+    
+        // Nettoyage lorsque le composant est démonté
+        return () => {
+          // Retirez le gestionnaire d'événement lors du démontage du composant
+          window.removeEventListener('beforeunload', handleUnload);
+    
+        };
+      }, []);
+
     return(
         <div className="Game">
             <Sauvegarde/>
