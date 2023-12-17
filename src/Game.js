@@ -276,12 +276,12 @@ function Plateau(){
 
 function Game({ gameEnd }){
     function partieSaved() {
-        window.alert("Partie sauvegardée avec succès, vous avez été ramené au menu principal");
+        window.alert("Partie sauvegardée avec succès, vous allez être ramené au menu principal");
         gameEnd();
     }
 
     function partieAbandonnee() {
-        window.alert("Partie abandonnée, vous avez été ramené au menu principal");
+        window.alert("Partie abandonnée, vous allez être ramené au menu principal");
         gameEnd();
     }
 

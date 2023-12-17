@@ -94,7 +94,7 @@ function Home() {
   }
 
   function afficherCreationPartie() {
-    setShowCreateGame(true);
+    setShowCreateGame(!showCreateGame);
   }
 
   function creationPartie() {
@@ -102,17 +102,21 @@ function Home() {
   }
 
   function afficherListeParties() {
-    setShowGameList(true);
+    setShowGameList(!showGameList);
   }
+
   function roomComplete(){
     window.alert("La partie a atteint son nombre maximum de joueurs");
   }
+
   function roomDontExist(){
     window.alert("La partie n'existe pas");
   }
+
   function gameRunning(){
     window.alert("La partie est déjà lancée");
   }
+
   useEffect(()=>{
     socket.on("roomComplete",roomComplete);
     socket.on("roomDontExist", roomDontExist);
@@ -148,8 +152,9 @@ function Home() {
           <>
           <div className="Container1">
             <button type="button" onClick={toSavedGames}>Charger une partie sauvegardée</button>
-            <button type="button" onClick={afficherCreationPartie}>Créer une partie</button>
-            {showCreateGame && (
+            {showCreateGame ? (
+              <>
+              <button type="button" onClick={afficherCreationPartie}>Masquer le menu de création de partie</button>
               <div>
                 {/* Contenu de la page de création de partie */}
                 <label htmlFor="choixTypeJeu">A quel jeu voulez-vous jouer ? </label>
@@ -158,20 +163,23 @@ function Home() {
                 </select>
                 <button type="button" onClick={creationPartie}>Créer la partie</button>
               </div>
+              </>
+            ) : (
+              <button type="button" onClick={afficherCreationPartie}>Créer une partie</button>
             )}
             <input id="idGame" type="text" placeholder="Identifiant de la partie" />
             <button onClick={joinGame}>Rejoindre la partie</button>
           </div>
           <div className="Container1">
-            {!showGameList && (
-            <button type="button" onClick={afficherListeParties}> Afficher la liste des parties</button>
-            )}
-            {showGameList && (
+            {showGameList ? (
               <div className="Container1">
+                <button type="button" onClick={afficherListeParties}>Masquer la liste des parties</button>
                 {/* Contenu de la liste des parties */}
                 <p>Parties disponibles</p>
                 <ListeDesElements />
               </div>
+            ) : (
+              <button type="button" onClick={afficherListeParties}>Afficher la liste des parties</button>
             )}
           </div>
           </>

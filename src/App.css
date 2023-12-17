@@ -52,7 +52,7 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  width: 30%;
+  width: 20%;
 }
 
 .Chat * {
@@ -217,9 +217,10 @@ button {
   text-transform: uppercase;
   font-weight: bold;
   padding: 1em;
+  cursor: pointer;
 }
 
-button#deco {
+#deco {
   border-radius: 0.5em;
   height: 3em;
   background-color: gainsboro;
@@ -233,6 +234,10 @@ button#deco {
   right: 1em;
 }
 
+#deco:hover, #giveUp:hover {
+  background-color: #F2393F;
+}
+
 #pause {
   margin-right: 1em;
 }
@@ -243,7 +248,7 @@ button#deco {
   left: 1em;
 }
 
-button:hover, button#deco:hover{
+button:hover {
   background-color: #2e772e;
   color: gainsboro;
   transition: all 0.2s ease-in-out;
