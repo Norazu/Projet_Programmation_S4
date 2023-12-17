@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { socket } from "./socket.js";
 
 var playerGameId = "";
+var gameIsPaused = false;
 
 function Sauvegarde(){
     function saveGame(gameId,pseudo){
@@ -89,7 +90,7 @@ function PlayerList() {
 
     function getNbCartes(player){
         var nbCartesPlayer = 0;
-        if(nbCartes[player]!=undefined){
+        if(nbCartes[player]!==undefined){
             nbCartesPlayer = nbCartes[player];
         }
         return nbCartesPlayer;
@@ -107,7 +108,18 @@ function PlayerList() {
 
 function Timer(){
     const [timer, setTimer] = useState(5);
-
+    function pause(){
+        if(!gameIsPaused){
+        socket.emit("pauseGame",playerGameId);
+        gameIsPaused=true;
+        document.getElementById("pause").innerText = "Enlever la pause";
+    }
+        else{
+            socket.emit("unpauseGame",playerGameId);
+            gameIsPaused=false;
+            document.getElementById("pause").innerText = "Pause";
+        }
+    }
     useEffect(() => {
         socket.on("timeLeft", (timeLeft) => {
             setTimer(timeLeft);
@@ -121,6 +133,7 @@ function Timer(){
     return(
         <div>
             <p>Temps Restant : {timer}</p>
+            <button id="pause" onClick={pause}>Pause</button>
         </div>
     );
 }
