@@ -323,6 +323,11 @@ io.on("connection", (socket) => {
       io.to(gameId).emit("fight",winner, allCards);
       bataille[gameId] = [];
       io.to(gameId).emit("cardsChanged");
+      var nbCartes = {};
+      for (const [key, value] of Object.entries(listeParties[gameId].cartes)) {
+        nbCartes[key] = value.length;
+      }
+      io.to(gameId).emit("nbCartes",nbCartes);
       for (const [key, value] of Object.entries(listeParties[gameId].cartes)) {
         if(value.length == 0){
           delete listeParties[gameId].cartes[key];
@@ -430,6 +435,11 @@ io.on("connection", (socket) => {
       if (listeParties[gameId].nbJoueurs>=listeParties[gameId].nbMinJoueurs){
         listeParties[gameId].cartes = shuffle(listeParties[gameId].listeJoueurs);
         io.to(gameId).emit("cardsChanged");
+        var nbCartes = {};
+        for (const [key, value] of Object.entries(listeParties[gameId].cartes)) {
+          nbCartes[key] = value.length;
+        }
+        io.to(gameId).emit("nbCartes",nbCartes);
         startTimer(gameId);
         listeParties[gameId].status=1;
       }else {

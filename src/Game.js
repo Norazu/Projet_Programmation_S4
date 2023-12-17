@@ -49,7 +49,7 @@ function Player({ pseudo, nbCartes }) {
         <div className="PLayerContainer">
             <p className="pseudo" style={{ filter: `hue-rotate(${hueRotateValue}deg)` }}>{pseudo}</p>
             <div className="Player" style={{ filter: `hue-rotate(${hueRotateValue}deg)` }}>
-                <p className="cartes">32</p>
+                <p className="cartes">{nbCartes}</p>
             </div>
             <div className="cardsPlayed">
                 {cards.map((cardName, index) => (
@@ -63,6 +63,7 @@ function Player({ pseudo, nbCartes }) {
 
 function PlayerList() {
     const [players, setPlayers] = useState([]);
+    const [nbCartes, setNbCartes] = useState({});
 
     useEffect(() => {
         // Mettez à jour le state lorsque la liste de joueurs est reçue
@@ -74,18 +75,31 @@ function PlayerList() {
             playerGameId = idRoom;
         });
 
+        socket.on("nbCartes",(nbCartesByPlayers) => {
+            setNbCartes(nbCartesByPlayers);
+        });
+
         // Nettoyage de l'écouteur lorsque le composant est démonté
         return () => {
             socket.off("playersList");
             socket.off("setGameId");
+            socket.off("nbCartes");
         };
     }, []); // Le tableau vide signifie que cela s'exécute une seule fois lors du montage
+
+    function getNbCartes(player){
+        var nbCartesPlayer = 0;
+        if(nbCartes[player]!=undefined){
+            nbCartesPlayer = nbCartes[player];
+        }
+        return nbCartesPlayer;
+    }
 
     return (
         <div className="playerList">
             <h2>Joueurs de la partie : </h2>
             {players.map((player) => (
-                <Player pseudo={player} nbCartes={player} />
+                <Player pseudo={player} nbCartes={getNbCartes(player)} />
             ))}
         </div>
     );
