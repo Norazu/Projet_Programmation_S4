@@ -274,6 +274,16 @@ io.on("connection", (socket) => {
     }
   });
 
+  function score(playerId){
+    connexiondb.query("UPDATE joueurs SET score=score+1 WHERE pseudo="+"'"+playerId+"'",function (err,result){
+      if(err){
+        console.error('error on insertion: ' + err.stack);
+      }
+    })
+  }
+
+
+
   function pickWinner(gameId, cardsToWin) {
     let winner = bataille[gameId][0][0];
     let otherWinners = [];
@@ -330,6 +340,7 @@ io.on("connection", (socket) => {
       }
       if(Object.keys(listeParties[gameId].cartes).length == 1){
         io.to(gameId).emit("gameFinished",Object.keys(listeParties[gameId].cartes)[0]);
+        score(winner);
       } else {
         startTimer(gameId);
       }
