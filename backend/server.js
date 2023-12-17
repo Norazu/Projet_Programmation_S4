@@ -338,31 +338,35 @@ io.on("connection", (socket) => {
 
   socket.on("saveGame", (gameId, pseudo) => {
     if (pseudo==listeParties[gameId].idCreateur){
-      if (!gameId == "") {
-        connexiondb.query("INSERT INTO parties VALUES ('" + gameId + "', '" + 1 + "', '" + 2 + "', '" + 10 + "', '" + listeParties[gameId].idCreateur + "')", function(err, result) {
-          if (err) {
-            console.error('error on insertion: ' + err.stack);
-            return;
-          } else {
-            console.log("partie sauvegardée");
-          }
-        });
-
-        function queryResult(joueur,gameId) {
-          connexiondb.query("INSERT INTO partiejoueur VALUES ('" + gameId + "', '" + joueur + "', '" + listeParties[gameId].cartes[joueur].join("|") + "')", function(err, result) {
+      if (listeParties[gameId].status==1){
+        if (!gameId == "") {
+          connexiondb.query("INSERT INTO parties VALUES ('" + gameId + "', '" + 1 + "', '" + 2 + "', '" + 10 + "', '" + listeParties[gameId].idCreateur + "')", function(err, result) {
             if (err) {
               console.error('error on insertion: ' + err.stack);
               return;
             } else {
-              console.log(`joueur : ${joueur} et ses cartes ajoutés`);
+              console.log("partie sauvegardée");
             }
           });
-        }
 
-        for (var joueur of listeParties[gameId].listeJoueurs) {
-          console.log(joueur,listeParties[gameId].cartes[joueur].join("|"));
-          queryResult(joueur,gameId);
+          function queryResult(joueur,gameId) {
+            connexiondb.query("INSERT INTO partiejoueur VALUES ('" + gameId + "', '" + joueur + "', '" + listeParties[gameId].cartes[joueur].join("|") + "')", function(err, result) {
+              if (err) {
+                console.error('error on insertion: ' + err.stack);
+                return;
+              } else {
+                console.log(`joueur : ${joueur} et ses cartes ajoutés`);
+              }
+            });
+          }
+
+          for (var joueur of listeParties[gameId].listeJoueurs) {
+            console.log(joueur,listeParties[gameId].cartes[joueur].join("|"));
+            queryResult(joueur,gameId);
+          }
         }
+      } else{
+        socket.emit("SaveGameNotStarted");
       }
     } else{
       socket.emit("PasPermSauvegarde");

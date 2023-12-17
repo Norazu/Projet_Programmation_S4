@@ -8,12 +8,17 @@ function Sauvegarde(){
         socket.emit("saveGame",gameId,pseudo);
     }
     function pasPermSauvegarde(){
-        window.alert("Vous n'avez pas la permission de sauvegarder, seul le créateur de la partie le peut")
+        window.alert("Vous n'avez pas la permission de sauvegarder, seul le créateur de la partie le peut");
+    }
+    function saveGameNotStarted(){
+        window.alert("Vous ne pouvez pas sauvegarder si la partie n'a pas démarré");
     }
     useEffect(()=>{
         socket.on("PasPermSauvegarde", pasPermSauvegarde);
+        socket.on("SaveGameNotStarted", saveGameNotStarted)
         return ()=>{
           socket.off("PasPermSauvegarde");
+          socket.off("SaveGameNotStarted");
         }
     
       });
