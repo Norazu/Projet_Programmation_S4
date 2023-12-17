@@ -192,18 +192,29 @@ io.on("connection", (socket) => {
     console.log("deconnexion");
     for (const cle in listeParties) {
       console.log(listeParties[cle].listeIdentifiants);
-        if ((listeParties[cle].listeIdentifiants).includes(socket.id)){
-          let indice=(listeParties[cle].listeIdentifiants.indexOf(socket.id));
-          (listeParties[cle].listeIdentifiants).splice(indice,1);
-          (listeParties[cle].listeJoueurs).splice(indice,1);
-          console.log(listeParties[cle].nbJoueurs);
-          listeParties[cle].nbJoueurs=(listeParties[cle].nbJoueurs)-1;
-          console.log(listeParties[cle].nbJoueurs);
-
+        if (listeParties[cle].listeIdentifiants.includes(socket.id)){
+          let indice = listeParties[cle].listeIdentifiants.indexOf(socket.id);
+          listeParties[cle].listeIdentifiants.splice(indice,1);
         }
       }
-    
+  });
 
+  socket.on("giveUp", (gameId, playerId) => {
+    var index = listeParties[gameId].listeJoueurs.indexOf(playerId);
+    listeParties[gameId].listeJoueurs.splice(index,1);
+    listeParties[gameId].nbJoueurs=(listeParties[gameId].nbJoueurs)-1;
+
+    console.log("nombre de joueurs dans la partie " + gameId + " : " + listeParties[gameId].nbJoueurs);
+  
+    if (listeParties[gameId].idCreateur == playerId) {
+      if (listeParties[gameId].nbJoueurs == 0) {
+        delete listeParties[gameId];
+      } else {
+        listeParties[gameId].idCreateur = listeParties[gameId].listeJoueurs[0];
+        console.log("créateur de la partie " + gameId + " apres réassignation " + listeParties[gameId].idCreateur);
+      }
+    }
+    socket.emit("gaveUp");
   });
 
   socket.on('mess', (data1,data2) => {
@@ -393,12 +404,12 @@ io.on("connection", (socket) => {
                 return;
               } else {
                 console.log(`joueur : ${joueur} et ses cartes ajoutés`);
+                io.to(gameId).emit("partieSauvegardee");
               }
             });
           }
 
           for (var joueur of listeParties[gameId].listeJoueurs) {
-            console.log(joueur,listeParties[gameId].cartes[joueur].join("|"));
             queryResult(joueur,gameId);
           }
         }
@@ -504,12 +515,15 @@ io.on("connection", (socket) => {
     });
     return cartes;
   }
-  socket.on("pauseGame",(data)=>{
-    listeParties[data].gameIsPaused = true;
+
+  socket.on("pauseGame", (gameId) => {
+    listeParties[gameId].gameIsPaused = true;
   });
-  socket.on("unpauseGame",(data)=>{
-    listeParties[data].gameIsPaused = false;
+
+  socket.on("unpauseGame",  (gameId) => {
+    listeParties[gameId].gameIsPaused = false;
   });
+
   socket.on("launchGame",(gameId, pseudo)=>{
     if (pseudo==listeParties[gameId].idCreateur){
       if (listeParties[gameId].nbJoueurs>=listeParties[gameId].nbMinJoueurs){

@@ -142,6 +142,7 @@ function Home() {
           <div className="Container1">
             <PartiesSauvegardees />
           </div>
+          <button type="button" onClick={() => setSavedGames(false)}>Retour</button>
           </>
         ) : (
           <>

@@ -2,18 +2,43 @@ import { useEffect, useState } from "react";
 import { socket } from "./socket.js";
 
 var playerGameId = "";
-var gameIsPaused = false;
+
+function Abandon() {
+    function giveUp(gameId,pseudo) {
+        socket.emit("giveUp", gameId, pseudo);
+    }
+    return(
+        <button id="giveUp" onClick={() => giveUp(playerGameId,localStorage.getItem("sessId"))}>Abandonner</button>
+    );
+}
 
 function Sauvegarde(){
+    const [gameIsPaused, setGameIsPaused] = useState(false);
+
+    function pause(){
+        if (!gameIsPaused) {
+            socket.emit("pauseGame",playerGameId);
+            setGameIsPaused(true);
+            document.getElementById("pause").innerText = "Enlever la pause";
+        } else {
+            socket.emit("unpauseGame",playerGameId);
+            setGameIsPaused(false);
+            document.getElementById("pause").innerText = "Pause";
+        }
+    }
+
     function saveGame(gameId,pseudo){
         socket.emit("saveGame",gameId,pseudo);
     }
+
     function pasPermSauvegarde(){
         window.alert("Vous n'avez pas la permission de sauvegarder, seul le créateur de la partie le peut");
     }
+
     function saveGameNotStarted(){
         window.alert("Vous ne pouvez pas sauvegarder si la partie n'a pas démarré");
     }
+
     useEffect(()=>{
         socket.on("PasPermSauvegarde", pasPermSauvegarde);
         socket.on("SaveGameNotStarted", saveGameNotStarted)
@@ -25,7 +50,12 @@ function Sauvegarde(){
       });
 
     return(
-        <button onClick={()=>saveGame(playerGameId,localStorage.getItem("sessId"))}>Sauvegarder la partie</button>
+        <>
+        <button id="pause" onClick={() => pause()}>Pause</button>
+        {gameIsPaused && (
+            <button onClick={()=>saveGame(playerGameId,localStorage.getItem("sessId"))}>Sauvegarder la partie</button>
+        )}
+        </>
     );
 }
 
@@ -108,18 +138,7 @@ function PlayerList() {
 
 function Timer(){
     const [timer, setTimer] = useState(5);
-    function pause(){
-        if(!gameIsPaused){
-        socket.emit("pauseGame",playerGameId);
-        gameIsPaused=true;
-        document.getElementById("pause").innerText = "Enlever la pause";
-    }
-        else{
-            socket.emit("unpauseGame",playerGameId);
-            gameIsPaused=false;
-            document.getElementById("pause").innerText = "Pause";
-        }
-    }
+
     useEffect(() => {
         socket.on("timeLeft", (timeLeft) => {
             setTimer(timeLeft);
@@ -133,7 +152,6 @@ function Timer(){
     return(
         <div>
             <p>Temps Restant : {timer}</p>
-            <button id="pause" onClick={pause}>Pause</button>
         </div>
     );
 }
@@ -256,29 +274,39 @@ function Plateau(){
     );
 }
 
-function Game(){
+function Game({ gameEnd }){
+    function partieSaved() {
+        window.alert("Partie sauvegardée avec succès, vous avez été ramené au menu principal");
+        gameEnd();
+    }
+
+    function partieAbandonnee() {
+        window.alert("Partie abandonnée, vous avez été ramené au menu principal");
+        gameEnd();
+    }
+
     useEffect(() => {
-    
-        // Gestionnaire d'événement pour le déchargement de la fenêtre
+        // Gestionnaire d'événement pour le déchargement de la fenêtr
         const handleUnload = () => {
             socket.emit("disconnecting")
-          // Déconnectez le socket avant le déchargement de la fenêtre
-          socket.close();
+            // Déconnectez le socket avant le déchargement de la fenêtre
+            socket.close();
         };
-    
         // Ajoutez le gestionnaire d'événement à l'événement unload
         window.addEventListener('beforeunload', handleUnload);
-    
-        // Nettoyage lorsque le composant est démonté
-        return () => {
-          // Retirez le gestionnaire d'événement lors du démontage du composant
-          window.removeEventListener('beforeunload', handleUnload);
-    
-        };
-      }, []);
 
+        socket.on("partieSauvegardee", partieSaved);
+        socket.on("gaveUp", partieAbandonnee);
+        return () => {
+            // Retirez le gestionnaire d'événement lors du démontage du composant
+            window.removeEventListener('beforeunload', handleUnload);
+            socket.off("partieSauvegardee");
+            socket.off("gaveUp");
+        };
+    })
     return(
         <div className="Game">
+            <Abandon/>
             <Sauvegarde/>
             <PlayerList/>
             <Timer/>
