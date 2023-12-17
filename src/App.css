@@ -212,3 +212,71 @@ button:hover, button#deco:hover{
     transform: rotate(360deg);
   }
 }
+
+.Game {
+  width: 100%;
+}
+
+.playerList {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+}
+
+.playerList > h2 {
+  width: 100%;
+}
+
+.Player {
+  width: 110px;
+  height: 150px;
+  background-image: url("../public/cardBack.png");
+  background-position: center;
+  background-size: cover;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  margin: 0.5em;
+}
+
+.pseudo {
+  margin: 0.2em;
+  padding: 0.3em;
+  font-size: 25px;
+  font-weight: bold;
+  color: red;
+  background-color: white;
+  border-radius: 0.7em;
+  text-transform: lowercase;
+}
+
+.Player .cartes {
+  width: 100%;
+  font-size: 75px;
+  margin: 0;
+  font-weight: bold;
+  color: red;
+  text-shadow: 
+    -1px -1px 0 white,  
+    1px -1px 0 white,
+    -1px 1px 0 white,
+    1px 1px 0 white;
+}
+
+.PLayerContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.cardsPlayed {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}

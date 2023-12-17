@@ -36,6 +36,7 @@ function OtherPlayerCard({cardName}){
 
 function Player({ pseudo, nbCartes }) {
     const [cards, setCards] = useState([]);
+    const [hueRotateValue, setHueRotateValue] = useState(Math.floor(Math.random() * 360));
     socket.on("fight", (winner, allCards) => {
         setCards([]);
         allCards.forEach((element) => {
@@ -44,15 +45,18 @@ function Player({ pseudo, nbCartes }) {
         }
       });
     });
-  
     return (
-      <div className="Player">
-        <p>Nom: {pseudo}</p>
-        <p>Cartes: {pseudo}</p>
-        {cards.map((cardName, index) => (
-            <OtherPlayerCard cardName={cardName} />
-        ))}
-      </div>
+        <div className="PLayerContainer">
+            <p className="pseudo" style={{ filter: `hue-rotate(${hueRotateValue}deg)` }}>{pseudo}</p>
+            <div className="Player" style={{ filter: `hue-rotate(${hueRotateValue}deg)` }}>
+                <p className="cartes">32</p>
+            </div>
+            <div className="cardsPlayed">
+                {cards.map((cardName, index) => (
+                    <OtherPlayerCard cardName={cardName} />
+                    ))}
+            </div>
+        </div>
     );
   }
   
