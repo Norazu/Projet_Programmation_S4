@@ -6,9 +6,14 @@ const cors = require("cors");
 const mysql = require("mysql");
 const jsSHA = require("jssha");
 
+//variables globales du serveur
 var timerIsRunning = false;
 var turnDuration = 10;
+var bataille = {};
+var joueursConnectes = [];
+var listeParties = {};
 
+//mise en place et connection à la base de données mysql
 var connexiondb = mysql.createConnection({
   host: 'mysql.etu.umontpellier.fr',
   user: 'e20220003375',
@@ -24,20 +29,20 @@ connexiondb.connect(function (err) {
   console.log('connected to database as id ' + connexiondb.threadId);
 });
 
+//mise en place et création du serveur
 app.use(cors());
 
 const server = http.createServer(app);
 
-var bataille = {};
-var joueursConnectes = [];
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:3000",
+    methods: ["GET", "POST"],
+    credentials: 'true'
+  },
+});
 
-function defCode() {
-  var code = Math.floor(Math.random() * 9999);
-  while (code in listeParties)
-    code = Math.floor(Math.random() * 9999);
-  return code
-}
-
+//objet représentant une partie avec toutes ses infos sur le serveur
 class partie {
   constructor(typeJeu, idCreateur, nbMinJoueurs, nbMaxJoueurs, nbJoueurs, listeJoueurs, timer, secondTimer, cartes) {
     this.typeJeu = typeJeu;
@@ -56,20 +61,12 @@ class partie {
   }
 }
 
-let listeParties = {};
-
-const io = new Server(server, {
-  cors: {
-    origin: "http://localhost:3000",
-    methods: ["GET", "POST"],
-    credentials: 'true'
-  },
-});
-
 io.on("connection", (socket) => {
   console.log(`Socket connected: ${socket.id}`);
 
   socket.on("hello", (sessId) => {
+    // => reçu automatiquement en cas de connexion de socket et assure la reconnexion automatique
+    //regarde si le joueur était connecté via son cookie et si il était dans une partie
     if (joueursConnectes.includes(sessId)) {
       socket.emit("connected");
       for (var pt in listeParties) {
@@ -83,6 +80,9 @@ io.on("connection", (socket) => {
   });
 
   socket.on("goodbye", (sessId) => {
+    // => lorsque le joueur clique sur le bouton "se déconnecter"
+    //supprime le joueur des joueurs connectés
+    //renvoie un signal de confirmation au client
     var index = joueursConnectes.indexOf(sessId)
     if (index != -1) {
       joueursConnectes.splice(index, 1);
@@ -92,6 +92,9 @@ io.on("connection", (socket) => {
   });
 
   socket.on("connexion", (nom, mdp) => {
+    // => connexion d'un joueur via les champs de texte de la page d'accueil
+    //regarde si le joueur est dans la base de données
+    //renvoie le signal conséquent au client
     const shaObj = new jsSHA("SHA-256", "TEXT", { encoding: "UTF8" });
     shaObj.update(mdp);
     const hashMDP = shaObj.getHash("HEX");
@@ -103,7 +106,6 @@ io.on("connection", (socket) => {
       if (result.length == 0) {
         socket.emit("userNotRegistered");
       } else {
-
         console.log(`user connected ${nom}, ${hashMDP}`);
         socket.emit("connected");
       }
@@ -111,6 +113,9 @@ io.on("connection", (socket) => {
   });
 
   socket.on("newAccount", (nom, mdp) => {
+    // => joueur clique sur le bouton "créer un compte"
+    //regarde si le joueur existe déjà
+    //renvoie le signal conséquent au client
     var exists = false;
     connexiondb.query("SELECT pseudo FROM joueurs", function (err, result) {
       if (err) {
@@ -141,7 +146,53 @@ io.on("connection", (socket) => {
     }
   });
 
+  socket.on('disconnecting', () => {
+    // => reçu automatiquement en cas de déconnexion d'un socket
+    //s'assure que si le socket était connecté à une partie, il en soit supprimé
+    console.log("deconnexion");
+    for (const cle in listeParties) {
+      console.log(listeParties[cle].listeIdentifiants);
+        if (listeParties[cle].listeIdentifiants.includes(socket.id)){
+          let indice = listeParties[cle].listeIdentifiants.indexOf(socket.id);
+          listeParties[cle].listeIdentifiants.splice(indice,1);
+        }
+      }
+  });
+
+  socket.on("giveUp", (gameId, playerId) => {
+    // => joueur clique sur le bouton "abandonner" dans une partie
+    //s'assure de la réassignation du meneur si le créateur abandonne
+    //supprime la partie des parties lancées si plus aucun joueur n'est présent dedans
+    var index = listeParties[gameId].listeJoueurs.indexOf(playerId);
+    listeParties[gameId].listeJoueurs.splice(index,1);
+    listeParties[gameId].nbJoueurs=(listeParties[gameId].nbJoueurs)-1;
+
+    console.log("nombre de joueurs dans la partie " + gameId + " : " + listeParties[gameId].nbJoueurs);
+  
+    if (listeParties[gameId].idCreateur == playerId) {
+      if (listeParties[gameId].nbJoueurs == 0) {
+        delete listeParties[gameId];
+        console.log("partie " + gameId + " supprimée : " + (!listeParties[gameId]));
+      } else {
+        listeParties[gameId].idCreateur = listeParties[gameId].listeJoueurs[0];
+        console.log("créateur de la partie " + gameId + " apres réassignation " + listeParties[gameId].idCreateur);
+      }
+    }
+    socket.emit("gaveUp");
+  });
+
+  function defCode() {
+    //fonction pour définir un code de partie unique
+    var code = Math.floor(Math.random() * 9999);
+    while (code in listeParties) {
+      code = Math.floor(Math.random() * 9999);
+    }
+    return code;
+  }
+
   async function creerPartie(codepartie, type, nbMinJoueurs, nbMaxJoueurs, idCreateur, cartes) {
+    //fonction de création de partie, sous forme de fonction car utilisée plusieurs fois dans le code
+    //cette fonction est asynchrone car socket.join est une opération asynchrone
     listeParties[codepartie] = new partie(type, idCreateur, nbMinJoueurs, nbMaxJoueurs, 1, [idCreateur],0,0,cartes);
     listeParties[codepartie].listeIdentifiants=[socket.id];
     await socket.join(codepartie.toString());
@@ -153,11 +204,16 @@ io.on("connection", (socket) => {
   }
 
   socket.on('creationPartie', (type, nbMinJoueurs, nbMaxJoueurs, idCreateur) => {
+    // => joueur clique sur le bouton "créer la partie"
+    //crée la partie avec les infos données
     codepartie = defCode();
     creerPartie(codepartie, type, nbMinJoueurs, nbMaxJoueurs, idCreateur, {});
   });
 
   async function rejoindrePartie(idJoueur, idRoom) {
+    //fonction pour que le joueur idJoueur rejoigne la partie idRoom, sous forme de fonction car utilisée plusieurs fois dans le code
+    //cette fonction est asynchrone car socket.join est une opération asynchrone
+    //renvoie un signal au client si la partie n'existe pas
     var idRoomInt = parseInt(idRoom);
     if (idRoomInt in listeParties) {
       if (listeParties[idRoomInt].status==0){
@@ -185,48 +241,22 @@ io.on("connection", (socket) => {
   }
 
   socket.on("joinGame", (idJoueur, idRoom) => {
+    // => joueur clique sur le bouton "rejoindre la partie"
+    //rejoint la partie idRoom
     rejoindrePartie(idJoueur, idRoom);
   });
 
-  socket.on('disconnecting', () => {
-    console.log("deconnexion");
-    for (const cle in listeParties) {
-      console.log(listeParties[cle].listeIdentifiants);
-        if (listeParties[cle].listeIdentifiants.includes(socket.id)){
-          let indice = listeParties[cle].listeIdentifiants.indexOf(socket.id);
-          listeParties[cle].listeIdentifiants.splice(indice,1);
-        }
-      }
-  });
-
-  socket.on("giveUp", (gameId, playerId) => {
-    var index = listeParties[gameId].listeJoueurs.indexOf(playerId);
-    listeParties[gameId].listeJoueurs.splice(index,1);
-    listeParties[gameId].nbJoueurs=(listeParties[gameId].nbJoueurs)-1;
-
-    console.log("nombre de joueurs dans la partie " + gameId + " : " + listeParties[gameId].nbJoueurs);
-  
-    if (listeParties[gameId].idCreateur == playerId) {
-      if (listeParties[gameId].nbJoueurs == 0) {
-        delete listeParties[gameId];
-        console.log("partie " + gameId + " supprimée : " + (!listeParties[gameId]));
-      } else {
-        listeParties[gameId].idCreateur = listeParties[gameId].listeJoueurs[0];
-        console.log("créateur de la partie " + gameId + " apres réassignation " + listeParties[gameId].idCreateur);
-      }
-    }
-    socket.emit("gaveUp");
-  });
-
   socket.on('mess', (data1,data2) => {
+    // => un joueur envoie un message
+    //renvoie le message a tous les sockets connectés pour l'afficher
     console.log(data1 + " : data envoyée à " + socket.id)
     var res = data2+" : "+data1
     io.emit('messagerie', res);
   });
 
   socket.on("getCards", (playerId,gameId) => {
-    if(listeParties[gameId]!=undefined){
-      if(listeParties[gameId].cartes[playerId]!=null){
+    if (listeParties[gameId] != undefined) {
+      if (listeParties[gameId].cartes[playerId] != null) {
         socket.emit("cardsList", listeParties[gameId].cartes[playerId]);
       }
     }
@@ -381,6 +411,8 @@ io.on("connection", (socket) => {
   }
 
   socket.on("saveGame", (gameId, pseudo) => {
+    // => joueur clique sur le bouton "sauvegarder la partie"
+    //renvoie le signal conséquent à la réussite de la sauvegarde
     if (pseudo==listeParties[gameId].idCreateur){
       if (listeParties[gameId].status==1){
         if (!gameId == "") {
@@ -423,6 +455,10 @@ io.on("connection", (socket) => {
   });
 
   socket.on("loadGame", (code) => {
+    // => joueur clique sur le bouton "charger la partie"
+    //crée une partie avec les données tirées de la base de données
+    //rajoute la partie dans les parties en cours du serveur
+    //supprime la partie et ses joueurs de la base de données
     var cartes = {};
     connexiondb.query("SELECT * FROM parties AS pt JOIN partiejoueur AS ptj ON pt.idGame=ptj.idGame WHERE pt.idGame='" + code + "'", (err, result) => {
       if (err) {
@@ -451,6 +487,8 @@ io.on("connection", (socket) => {
   });
 
   socket.on("getSavedGames", () => {
+    // => joueur clique sur le bouton "charger une partie sauvegardée"
+    //renvoie la liste de toutes les parties sauvegardées dans la base de données
     var queryResult = []
     connexiondb.query("SELECT * FROM parties", (err, result) => {
       if (err) {
@@ -466,6 +504,8 @@ io.on("connection", (socket) => {
   });
 
   socket.on('recuperationListeParties', (typeJeu) => {
+    // => joueur clique sur le bouton "afficher la liste des parties"
+    //renvoie la liste de toutes les parties en cours dans le serveur
     let liste = [];
     //console.log(listeParties);
     if (listeParties) {
@@ -487,13 +527,13 @@ io.on("connection", (socket) => {
   });
 
   function shuffle(playerList){
+    //mélange les cartes de tous les joueurs de la playerList
     var cardListe = [];
     const couleurs = ["hearts","spades","diamonds","clubs"];
     const valeurs = ["ace","2","3","4","5","6","7","8","9","10","jack","king","queen"];
     couleurs.forEach(couleur => {
       valeurs.forEach(valeur => {
         cardListe.push(valeur+"_of_"+couleur);
-        //console.log(valeur+"_of_"+couleur)
       });    
     });
     for (let i = cardListe.length - 1; i > 0; i--) {
@@ -502,7 +542,6 @@ io.on("connection", (socket) => {
       cardListe[i] = cardListe[j];
       cardListe[j] = temp;
     }
-  //console.log("la liste des cartes est :"+cardListe+"          La longueur de la liste est"+cardListe.length);
     var max = playerList.length;
     var i = 0;
     var cartes = {};
@@ -518,6 +557,10 @@ io.on("connection", (socket) => {
   }
 
   socket.on("pauseGame", (gameId, pseudo) => {
+    // => joueur clique sur le bouton "pause"
+    //regarde si le joueur a les permissions et que la partie n'a pas démarrée
+    //met la partie en pause sur le serveur
+    //renvoie le signal conséquent
     if (listeParties[gameId].status==1){
       if (listeParties[gameId].idCreateur==pseudo){
         listeParties[gameId].gameIsPaused = true;
@@ -531,6 +574,10 @@ io.on("connection", (socket) => {
   });
 
   socket.on("unpauseGame",  (gameId, pseudo) => {
+    // => joueur clique sur le bouton "retirer la pause"
+    //regarde si le joueur a les permissions
+    //enleve la pause de la partie sur le serveur
+    //renvoie le signal conséquent
     if (listeParties[gameId].idCreateur==pseudo){
       listeParties[gameId].gameIsPaused = false;
       socket.emit("gameReprise");
@@ -540,6 +587,9 @@ io.on("connection", (socket) => {
   });
 
   socket.on("launchGame",(gameId, pseudo)=>{
+    // => joueur clique sur le bouton "lancer la partie"
+    //regarde si le joueur a les permissions et s'il y a assez de joueurs présents
+    //renvoie le signal conséquent
     if (pseudo==listeParties[gameId].idCreateur){
       if (listeParties[gameId].nbJoueurs>=listeParties[gameId].nbMinJoueurs){
         if (Object.keys(listeParties[gameId].cartes).length === 0) {
@@ -563,6 +613,7 @@ io.on("connection", (socket) => {
   });
 });
 
+//lien entre les clients React et le serveur
 server.listen(3001, () => {
   console.log("Server is listening on port 3001");
 });
