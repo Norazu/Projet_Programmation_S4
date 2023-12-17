@@ -122,7 +122,7 @@ function Main() {
         });
 
         socket.on("cardsChanged",()=>{
-            socket.emit("getCards",localStorage.getItem("sessId"));
+            socket.emit("getCards",localStorage.getItem("sessId"),playerGameId);
         });
 
         return () => {
