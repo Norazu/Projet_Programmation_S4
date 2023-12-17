@@ -414,6 +414,19 @@ io.on("connection", (socket) => {
           cartes[row.idJoueur] = row.carte.split("|");
         }
         creerPartie(row.idGame, result[0].typeJeu, result[0].nbMinJoueurs, result[0].nbMaxJoueurs, result[0].idCreateur, cartes);
+        connexiondb.query("DELETE FROM partiejoueur WHERE idGame='" + code + "'", (err, result) => {
+          if (err) {
+            console.error('error on delete: ' + err.stack);
+            return;
+          } else {
+            connexiondb.query("DELETE FROM parties WHERE idGame='" + code + "'", (err, result) => {
+              if (err) {
+                console.error('error on delete: ' + err.stack);
+                return;
+              }
+            });
+          }
+        });
       }
     });
   });
