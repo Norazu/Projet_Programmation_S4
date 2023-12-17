@@ -488,7 +488,9 @@ io.on("connection", (socket) => {
   socket.on("launchGame",(gameId, pseudo)=>{
     if (pseudo==listeParties[gameId].idCreateur){
       if (listeParties[gameId].nbJoueurs>=listeParties[gameId].nbMinJoueurs){
-        listeParties[gameId].cartes = shuffle(listeParties[gameId].listeJoueurs);
+        if (Object.keys(listeParties[gameId].cartes).length === 0) {
+          listeParties[gameId].cartes = shuffle(listeParties[gameId].listeJoueurs);
+        }
         io.to(gameId).emit("cardsChanged");
         var nbCartes = {};
         for (const [key, value] of Object.entries(listeParties[gameId].cartes)) {
