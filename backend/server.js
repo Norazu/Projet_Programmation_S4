@@ -50,6 +50,7 @@ class partie {
     this.timer = timer;
     this.secondTimer = secondTimer;
     this.cartes = cartes;
+    this.status=0; //1 si la partie est démarré
 
   }
 }
@@ -365,14 +366,16 @@ io.on("connection", (socket) => {
     //console.log(listeParties);
     if (listeParties) {
       for (var pt in listeParties) {
-        var partie = listeParties[pt];
-        liste.push([
-          pt, //code
-          partie.typeJeu,
-          partie.nbMinJoueurs, 
-          partie.nbMaxJoueurs,
-          partie.listeJoueurs.length
-        ]);
+        if (listeParties[pt].status==0){
+          var partie = listeParties[pt];
+          liste.push([
+            pt, //code
+            partie.typeJeu,
+            partie.nbMinJoueurs, 
+            partie.nbMaxJoueurs,
+            partie.listeJoueurs.length
+          ]);
+        }
       }
     }
     socket.emit('listeDesParties', liste);
@@ -416,6 +419,7 @@ io.on("connection", (socket) => {
       listeParties[gameId].cartes = shuffle(listeParties[gameId].listeJoueurs);
       io.to(gameId).emit("cardsChanged");
       startTimer(gameId);
+      listeParties[gameId].status=1;
     }else {
       socket.emit("notEnoughPlayers");
     }
