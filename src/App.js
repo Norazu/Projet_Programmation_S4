@@ -54,6 +54,10 @@ function App() {
     setInGame(true);
   }
 
+  function backFromGame() {
+    setInGame(false);
+  }
+
   useEffect(() => {
     if (localStorage.getItem("sessId") != null){
       socket.on("connect", () => {
@@ -90,7 +94,7 @@ function App() {
           <div className="PartiePage">
             <div className="GamePage">
               <h2 id="codeGame">Code de la partie : {gameId}</h2>
-              <Game gameEnd={onDisconnect}/>
+              <Game gameEnd={backFromGame}/>
             </div>
             <Chat/>
           </div>

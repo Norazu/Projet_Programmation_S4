@@ -229,8 +229,18 @@ button#deco {
   font-weight: bold;
   padding: 1em;
   position: absolute;
-  top: 0;
-  right: 0;
+  top: 1em;
+  right: 1em;
+}
+
+#pause {
+  margin-right: 1em;
+}
+
+#giveUp {
+  position: absolute;
+  top: 1em;
+  left: 1em;
 }
 
 button:hover, button#deco:hover{
