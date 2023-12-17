@@ -4,23 +4,25 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
 
 ## How to launch
 
-In the 'backend' directory, run :
+To start the server, go to the 'backend' directory and run :
 
 ### `npm start`
 
-to start the server
-
-In the project directory (Projet_de_Programmation directory), run :
-
-### `npm start`
-
-to run the app
+To run the app go to the project directory (Projet_de_Programmation_S4 directory) and run the same command.
 
 Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
 
-# For developpers
+# To developpers
 
-The page and the server will reload when you make changes.\
+The page and the server will reload when you make changes.
+
+# Prerequisites
+
+nodejs and npm are needed for the rest of the installation process.
+
+## For Debian users
+
+`sudo apt install nodejs npm`
 
 # Requirements
 
@@ -34,13 +36,14 @@ Server side :
 * cors
 * mysql
 * jssha
+* nodemon
 
 ## How to install
 
-Go in the right directory :
-* project directory (Projet_de_Programmation directory) for client packages installation
-* 'backend' directory for server packages installation
+Go to the project directory (Projet_de_Programmation_S4 directory) and run :
 
-And run :
+### `npm install`
 
-### `npm i <package(s) name>`
+Then go to the 'backend directory and run the same command.
+
+Both times, npm will read the package.json file and install the necessary packages.
