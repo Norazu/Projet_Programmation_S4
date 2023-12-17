@@ -4,11 +4,22 @@ import { socket } from "./socket.js";
 var playerGameId = "";
 
 function Sauvegarde(){
-    function saveGame(gameId){
-        socket.emit("saveGame",gameId);
+    function saveGame(gameId,pseudo){
+        socket.emit("saveGame",gameId,pseudo);
     }
+    function pasPermSauvegarde(){
+        window.alert("Vous n'avez pas la permission de sauvegarder, seul le créateur de la partie le peut")
+    }
+    useEffect(()=>{
+        socket.on("PasPermSauvegarde", pasPermSauvegarde);
+        return ()=>{
+          socket.off("PasPermSauvegarde");
+        }
+    
+      });
+
     return(
-        <button onClick={()=>saveGame(playerGameId)}>Sauvegarder la partie</button>
+        <button onClick={()=>saveGame(playerGameId,localStorage.getItem("sessId"))}>Sauvegarder la partie</button>
     );
 }
 
@@ -186,15 +197,21 @@ function Plateau(){
     function notEnoughPlayers(){
         window.alert("Il n'y a pas assez de joueurs pour démarrer une partie");
       }
+    function pasDePerms(){
+        window.alert("Vous n'avez pas la permission de démarrer la partie, seul le createur peut");
+    }
+
     useEffect(() =>{
-        socket.on("notEnoughPlayers", notEnoughPlayers)
+        socket.on("notEnoughPlayers", notEnoughPlayers);
+        socket.on("PasDePerms",pasDePerms);
         return ()=> {
             socket.off("notEnoughPlayers")
+            socket.off("PasDePerms")
         }
     })
 
     function launchGame(){
-        socket.emit("launchGame",playerGameId);
+        socket.emit("launchGame",playerGameId,localStorage.getItem("sessId"));
     }
     return (
         <div>

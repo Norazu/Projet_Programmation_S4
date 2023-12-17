@@ -336,32 +336,36 @@ io.on("connection", (socket) => {
     }
   }
 
-  socket.on("saveGame", (gameId) => {
-    if (!gameId == "") {
-      connexiondb.query("INSERT INTO parties VALUES ('" + gameId + "', '" + 1 + "', '" + 2 + "', '" + 10 + "', '" + listeParties[gameId].idCreateur + "')", function(err, result) {
-        if (err) {
-          console.error('error on insertion: ' + err.stack);
-          return;
-        } else {
-          console.log("partie sauvegardée");
-        }
-      });
-
-      function queryResult(joueur,gameId) {
-        connexiondb.query("INSERT INTO partiejoueur VALUES ('" + gameId + "', '" + joueur + "', '" + listeParties[gameId].cartes[joueur].join("|") + "')", function(err, result) {
+  socket.on("saveGame", (gameId, pseudo) => {
+    if (pseudo==listeParties[gameId].idCreateur){
+      if (!gameId == "") {
+        connexiondb.query("INSERT INTO parties VALUES ('" + gameId + "', '" + 1 + "', '" + 2 + "', '" + 10 + "', '" + listeParties[gameId].idCreateur + "')", function(err, result) {
           if (err) {
             console.error('error on insertion: ' + err.stack);
             return;
           } else {
-            console.log(`joueur : ${joueur} et ses cartes ajoutés`);
+            console.log("partie sauvegardée");
           }
         });
-      }
 
-      for (var joueur of listeParties[gameId].listeJoueurs) {
-        console.log(joueur,listeParties[gameId].cartes[joueur].join("|"));
-        queryResult(joueur,gameId);
+        function queryResult(joueur,gameId) {
+          connexiondb.query("INSERT INTO partiejoueur VALUES ('" + gameId + "', '" + joueur + "', '" + listeParties[gameId].cartes[joueur].join("|") + "')", function(err, result) {
+            if (err) {
+              console.error('error on insertion: ' + err.stack);
+              return;
+            } else {
+              console.log(`joueur : ${joueur} et ses cartes ajoutés`);
+            }
+          });
+        }
+
+        for (var joueur of listeParties[gameId].listeJoueurs) {
+          console.log(joueur,listeParties[gameId].cartes[joueur].join("|"));
+          queryResult(joueur,gameId);
+        }
       }
+    } else{
+      socket.emit("PasPermSauvegarde");
     }
   });
 
@@ -417,17 +421,20 @@ io.on("connection", (socket) => {
     return cartes;
   }
 
-  socket.on("launchGame",(gameId)=>{
-    console.log(listeParties[gameId].nbJoueurs);
-    if (listeParties[gameId].nbJoueurs>=listeParties[gameId].nbMinJoueurs){
-      listeParties[gameId].cartes = shuffle(listeParties[gameId].listeJoueurs);
-      io.to(gameId).emit("cardsChanged");
-      startTimer(gameId);
-      listeParties[gameId].status=1;
-    }else {
-      socket.emit("notEnoughPlayers");
+  socket.on("launchGame",(gameId, pseudo)=>{
+    if (pseudo==listeParties[gameId].idCreateur){
+      if (listeParties[gameId].nbJoueurs>=listeParties[gameId].nbMinJoueurs){
+        listeParties[gameId].cartes = shuffle(listeParties[gameId].listeJoueurs);
+        io.to(gameId).emit("cardsChanged");
+        startTimer(gameId);
+        listeParties[gameId].status=1;
+      }else {
+        socket.emit("notEnoughPlayers");
+      }
+    } else{
+      console.log("vous");
+      socket.emit("PasDePerms");
     }
-    
   });
 });
 
