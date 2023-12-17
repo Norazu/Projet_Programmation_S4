@@ -183,6 +183,16 @@ function Main() {
 }
 
 function Plateau(){
+    function notEnoughPlayers(){
+        window.alert("Il n'y a pas assez de joueurs pour démarrer une partie");
+      }
+    useEffect(() =>{
+        socket.on("notEnoughPlayers", notEnoughPlayers)
+        return ()=> {
+            socket.off("notEnoughPlayers")
+        }
+    })
+
     function launchGame(){
         socket.emit("launchGame",playerGameId);
     }

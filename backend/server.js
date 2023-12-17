@@ -390,9 +390,14 @@ io.on("connection", (socket) => {
   }
 
   socket.on("launchGame",(gameId)=>{
-    listeParties[gameId].cartes = shuffle(listeParties[gameId].listeJoueurs);
-    io.to(gameId).emit("cardsChanged");
-    startTimer(gameId);
+    if (listeParties[gameId].nbJoueurs>=listeParties[gameId].nbMinJoueurs){
+      listeParties[gameId].cartes = shuffle(listeParties[gameId].listeJoueurs);
+      io.to(gameId).emit("cardsChanged");
+      startTimer(gameId);
+    }else {
+      socket.emit("notEnoughPlayers");
+    }
+    
   });
 });
 
