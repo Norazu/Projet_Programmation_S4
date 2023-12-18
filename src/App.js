@@ -84,6 +84,7 @@ function App() {
     socket.on("disconnected", onDisconnect);
     return () => {
       socket.off("connect");
+      socket.off("userAlreadyConnected");
       socket.off("userNotRegistered");
       socket.off("userAlreadyRegistered");
       socket.off("accountCreated");
