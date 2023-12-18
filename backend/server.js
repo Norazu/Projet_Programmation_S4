@@ -177,8 +177,13 @@ io.on("connection", (socket) => {
         listeParties[gameId].idCreateur = listeParties[gameId].listeJoueurs[0];
         console.log("créateur de la partie " + gameId + " apres réassignation " + listeParties[gameId].idCreateur);
       }
+    } else {
+      if (listeParties[gameId].nbJoueurs == 0) {
+        delete listeParties[gameId];
+      }
     }
     socket.emit("gaveUp");
+    socket.to(gameId).emit("quit", playerId);
   });
 
   function defCode() {

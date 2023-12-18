@@ -53,7 +53,15 @@ function Sauvegarde(){
         window.alert("Vous ne pouvez pas sauvegarder si la partie n'a pas démarré");
     }
 
+    function reload(id) {
+        window.alert("Le joueur " + id + " a abandonner");
+        window.location.reload();
+    }
+
     useEffect(()=>{
+        socket.on("quit", id => {
+            reload(id);
+        });
         socket.on("pasPermPause", pasPermPause);
         socket.on("pauseGameNotStarted", pauseGameNotStarted);
         socket.on("gameEnPause", gameEnPause);
@@ -61,6 +69,7 @@ function Sauvegarde(){
         socket.on("PasPermSauvegarde", pasPermSauvegarde);
         socket.on("SaveGameNotStarted", saveGameNotStarted)
         return ()=>{
+            socket.off("quit");
             socket.off("pasPermPause");
             socket.off("pauseGameNotStarted");
             socket.off("gameEnPause");
