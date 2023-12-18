@@ -404,6 +404,7 @@ io.on("connection", (socket) => {
         io.to(gameId).emit("gameFinished",Object.keys(listeParties[gameId].cartes)[0]);
         score(winner);
         delete listeParties[gameId];
+        io.to(gameId).emit("victory",winner);
       } else {
         startTimer(gameId);
       }

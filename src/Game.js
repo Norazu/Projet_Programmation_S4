@@ -316,7 +316,12 @@ function Game({ gameEnd }){
         };
         // Ajoutez le gestionnaire d'événement à l'événement unload
         window.addEventListener('beforeunload', handleUnload);
-
+        socket.on("victory",(data)=>{
+            window.alert("Le vainqueur de la partie est "+data);
+            setTimeout(function() {
+                gameEnd();
+              }, 7000);
+        })
         socket.on("partieSauvegardee", partieSaved);
         socket.on("gaveUp", partieAbandonnee);
         return () => {
