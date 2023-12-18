@@ -8,7 +8,7 @@ function Abandon() {
         socket.emit("giveUp", gameId, pseudo);
     }
     return(
-        <button id="giveUp" onClick={() => giveUp(playerGameId,localStorage.getItem("sessId"))}>Abandonner</button>
+        <button id="giveUp" onClick={() => giveUp(playerGameId,sessionStorage.getItem("sessId"))}>Abandonner</button>
     );
 }
 
@@ -35,9 +35,9 @@ function Sauvegarde(){
 
     function pause(){
         if(!gameIsPaused){
-            socket.emit("pauseGame",playerGameId,localStorage.getItem("sessId"));
+            socket.emit("pauseGame",playerGameId,sessionStorage.getItem("sessId"));
         } else {
-            socket.emit("unpauseGame",playerGameId, localStorage.getItem("sessId"));
+            socket.emit("unpauseGame",playerGameId, sessionStorage.getItem("sessId"));
         }
     };
 
@@ -84,7 +84,7 @@ function Sauvegarde(){
         <>
         <button id="pause" onClick={() => pause()}>Pause</button>
         {gameIsPaused && (
-            <button onClick={()=>saveGame(playerGameId,localStorage.getItem("sessId"))}>Sauvegarder la partie</button>
+            <button onClick={()=>saveGame(playerGameId,sessionStorage.getItem("sessId"))}>Sauvegarder la partie</button>
         )}
         </>
     );
@@ -211,14 +211,14 @@ function Main() {
     const [selectedCard, setSelectedCard] = useState(null);
 
     useEffect(() => {
-        socket.emit("getCards", localStorage.getItem("sessId"), playerGameId);
+        socket.emit("getCards", sessionStorage.getItem("sessId"), playerGameId);
 
         socket.on("cardsList", (list) => {
             setCardList(list);
         });
 
         socket.on("cardsChanged",()=>{
-            socket.emit("getCards",localStorage.getItem("sessId"),playerGameId);
+            socket.emit("getCards",sessionStorage.getItem("sessId"),playerGameId);
         });
 
         return () => {
@@ -235,9 +235,9 @@ function Main() {
         socket.on("choosingEnd",()=>{
             if(selectedCard == null){
                 setSelectedCard(cardList[0]);
-                socket.emit("submitCard", localStorage.getItem("sessId"), cardList[0], playerGameId);
+                socket.emit("submitCard", sessionStorage.getItem("sessId"), cardList[0], playerGameId);
             } else {
-                socket.emit("submitCard", localStorage.getItem("sessId"), selectedCard, playerGameId);
+                socket.emit("submitCard", sessionStorage.getItem("sessId"), selectedCard, playerGameId);
             }
         });
 
@@ -246,12 +246,12 @@ function Main() {
         })
 
         socket.on("secondChoosingEnd",(playerList, cardsToWin)=>{
-            if(playerList.includes(localStorage.getItem("sessId"))){
+            if(playerList.includes(sessionStorage.getItem("sessId"))){
                 if(selectedCard == null){
                     setSelectedCard(cardList[0]);
-                    socket.emit("submitCardSecondTime", localStorage.getItem("sessId"), cardList[0], playerGameId, cardsToWin);
+                    socket.emit("submitCardSecondTime", sessionStorage.getItem("sessId"), cardList[0], playerGameId, cardsToWin);
                 } else {
-                    socket.emit("submitCardSecondTime", localStorage.getItem("sessId"), selectedCard, playerGameId, cardsToWin);
+                    socket.emit("submitCardSecondTime", sessionStorage.getItem("sessId"), selectedCard, playerGameId, cardsToWin);
                 }
             }
         });
@@ -296,7 +296,7 @@ function Plateau(){
     })
 
     function launchGame(){
-        socket.emit("launchGame",playerGameId,localStorage.getItem("sessId"));
+        socket.emit("launchGame",playerGameId,sessionStorage.getItem("sessId"));
     }
     return (
         <div>

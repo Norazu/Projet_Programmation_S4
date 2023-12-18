@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { socket } from "./socket.js";
 
 function App() {
-  console.log(localStorage.getItem("sessId"));
+  console.log(sessionStorage.getItem("sessId"));
   const [connected, setConnected] = useState(false);
   const[inGame, setInGame] = useState(false);
   const[gameId,setGameId] = useState("0000")
@@ -42,16 +42,16 @@ function App() {
 
   function onConnect() {
     setConnected(true);
-    if (localStorage.getItem("sessId") == null) {
-      localStorage.setItem("sessId",document.getElementById("name").value);
-      console.log(localStorage.getItem("sessId"));
-      socket.emit("hello", localStorage.getItem("sessId"));
+    if (sessionStorage.getItem("sessId") == null) {
+      sessionStorage.setItem("sessId",document.getElementById("name").value);
+      console.log(sessionStorage.getItem("sessId"));
+      socket.emit("hello", sessionStorage.getItem("sessId"));
     }
   }
 
   function onDisconnect() {
     setConnected(false);
-    localStorage.clear();
+    sessionStorage.clear();
   }
 
   function goToGame() {
@@ -63,12 +63,12 @@ function App() {
   }
 
   useEffect(() => {
-    if (localStorage.getItem("sessId") != null){
+    if (sessionStorage.getItem("sessId") != null){
       socket.on("connect", () => {
-        socket.emit("hello", localStorage.getItem("sessId"))
+        socket.emit("hello", sessionStorage.getItem("sessId"))
       });
       socket.on("reconnect", () => {
-        socket.emit("hello", localStorage.getItem("sessId"));
+        socket.emit("hello", sessionStorage.getItem("sessId"));
       });
     }
     socket.on("userAlreadyConnected", alreadyConnected);

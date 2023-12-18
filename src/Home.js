@@ -4,7 +4,7 @@ import { socket } from "./socket.js";
 function joinGameByList(identifiant){
   //console.log(typeof(identifiant));
   //console.log(identifiant);
-  socket.emit("joinGame",localStorage.getItem("sessId"),identifiant);
+  socket.emit("joinGame",sessionStorage.getItem("sessId"),identifiant);
 }
 
 function loadGameByList(code) {
@@ -81,7 +81,7 @@ function Home() {
 
   function joinGame() {
     var identifiant = document.getElementById("idGame").value;
-    socket.emit("joinGame",localStorage.getItem("sessId"),identifiant);
+    socket.emit("joinGame",sessionStorage.getItem("sessId"),identifiant);
   }
 
   function loadGame() {
@@ -98,7 +98,7 @@ function Home() {
   }
 
   function creationPartie() {
-    socket.emit("creationPartie",1,2,10,localStorage.getItem("sessId"));
+    socket.emit("creationPartie",1,2,10,sessionStorage.getItem("sessId"));
   }
 
   function afficherListeParties() {
@@ -131,7 +131,7 @@ function Home() {
   });
 
   function deconnexion() {
-    socket.emit("goodbye", localStorage.getItem("sessId"));
+    socket.emit("goodbye", sessionStorage.getItem("sessId"));
   }
 
   return (

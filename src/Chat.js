@@ -4,7 +4,7 @@ import { socket } from "./socket.js";
 
 function Chat(){
     function sendMessage(){
-        socket.emit('mess',document.getElementById('messages').value,localStorage.getItem("sessId"));
+        socket.emit('mess',document.getElementById('messages').value,sessionStorage.getItem("sessId"));
      }
     useEffect(()=> {
         socket.on('messagerie', data => {
