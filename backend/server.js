@@ -95,21 +95,25 @@ io.on("connection", (socket) => {
     // => connexion d'un joueur via les champs de texte de la page d'accueil
     //regarde si le joueur est dans la base de données
     //renvoie le signal conséquent au client
-    const shaObj = new jsSHA("SHA-256", "TEXT", { encoding: "UTF8" });
-    shaObj.update(mdp);
-    const hashMDP = shaObj.getHash("HEX");
-    connexiondb.query("SELECT pseudo FROM joueurs WHERE pseudo='" + nom + "' AND hashMDP='" + hashMDP + "'", function (err, result) {
-      if (err) {
-        console.error('error on query: ' + err.stack);
-        return;
-      }
-      if (result.length == 0) {
-        socket.emit("userNotRegistered");
-      } else {
-        console.log(`user connected ${nom}, ${hashMDP}`);
-        socket.emit("connected");
-      }
-    });
+    if (joueursConnectes.includes(nom)) {
+      socket.emit("userAlreadyConnected");
+    } else {
+      const shaObj = new jsSHA("SHA-256", "TEXT", { encoding: "UTF8" });
+      shaObj.update(mdp);
+      const hashMDP = shaObj.getHash("HEX");
+      connexiondb.query("SELECT pseudo FROM joueurs WHERE pseudo='" + nom + "' AND hashMDP='" + hashMDP + "'", function (err, result) {
+        if (err) {
+          console.error('error on query: ' + err.stack);
+          return;
+        }
+        if (result.length == 0) {
+          socket.emit("userNotRegistered");
+        } else {
+          console.log(`user connected ${nom}, ${hashMDP}`);
+          socket.emit("connected");
+        }
+      });
+    }
   });
 
   socket.on("newAccount", (nom, mdp) => {

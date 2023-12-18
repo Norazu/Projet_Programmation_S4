@@ -18,6 +18,10 @@ function App() {
     socket.emit("connexion",nom,mdp);
   }
 
+  function alreadyConnected() {
+    window.alert("Vous êtes déjà connecté sur ce compte");
+  }
+
   function createAccount() {
     var nom = document.getElementById("name").value; 
     var mdp = document.getElementById("password").value;
@@ -67,6 +71,7 @@ function App() {
         socket.emit("hello", localStorage.getItem("sessId"));
       });
     }
+    socket.on("userAlreadyConnected", alreadyConnected);
     socket.on("userNotRegistered", notRegistered);
     socket.on("userAlreadyRegistered", alreadyRegistered);
     socket.on("accountCreated", accountCreated);
