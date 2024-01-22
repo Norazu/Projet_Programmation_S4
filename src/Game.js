@@ -98,7 +98,7 @@ function OtherPlayerCard({cardName}){
 
 function Player({ pseudo, nbCartes }) {
     const [cards, setCards] = useState([]);
-    const [hueRotateValue, setHueRotateValue] = useState(Math.floor(Math.random() * 360));
+    const hueRotateValue = Math.floor(Math.random() * 360);
     socket.on("fight", (winner, allCards) => {
         setCards([]);
         allCards.forEach((element) => {
@@ -278,7 +278,7 @@ function Main() {
     );
 }
 
-function Plateau(){
+export function Plateau(){
     function notEnoughPlayers(){
         window.alert("Il n'y a pas assez de joueurs pour démarrer une partie");
       }

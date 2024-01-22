@@ -1,22 +1,4 @@
-import { useEffect, useState } from "react";
-import { socket } from "./socket.js";
-
-var playerGameId = "";
-
-function Abandon() {
-}
-
-function Sauvegarde(){
-}
-
-
-function Player() {
-}
-  
-
-function PlayerList() {
-}
-
+import { Plateau } from "./Game.js";
 
 function Carte({CardNumber}) {
 
@@ -31,7 +13,7 @@ function Carte({CardNumber}) {
     } else {
         teteNb = 1;
     }
-    if(CardNumber%11==0 && CardNumber!=55){
+    if(CardNumber%11===0 && CardNumber!==55){
         teteNb+=4;
     }
 
@@ -59,15 +41,10 @@ function Carte({CardNumber}) {
     );
 }
 
-function Main() {
-}
-
-function Plateau(){
-}
-
 function GameBoeuf(){
     return (
         <>
+            <Plateau></Plateau>
             <Carte CardNumber={11}></Carte>
             <Carte CardNumber={1}></Carte>
             <Carte CardNumber={10}></Carte>

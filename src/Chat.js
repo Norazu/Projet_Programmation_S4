@@ -1,4 +1,4 @@
-import "./App.css";
+import "./Style/app.css";
 import { useEffect, useState } from "react";
 import { socket } from "./socket.js";
 

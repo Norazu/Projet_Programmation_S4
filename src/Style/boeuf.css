@@ -1,6 +1,6 @@
 @font-face {
     font-family: Chilada;
-    src: url("../public/Chilada ICG Uno.ttf");
+    src: url("../../public/Boeuf/Chilada.ttf");
 }
 
 .carte_boeuf {
@@ -18,7 +18,7 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    background-image: url("../public/boeuf.svg");
+    background-image: url("../../public/Boeuf/boeuf.svg");
     background-repeat: no-repeat;
     background-position: center;
     background-size: 90%;
@@ -65,7 +65,7 @@
     margin: 1px;
     z-index: 1;
     filter: opacity(0.7);
-    background-image: url("../public/boeuf.svg");
+    background-image: url("../../public/Boeuf/boeuf.svg");
     background-repeat: no-repeat;
 }
 
