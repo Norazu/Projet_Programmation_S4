@@ -6,10 +6,11 @@
 .carte_boeuf {
     width: 100px;
     height: 143px;
-    border: none;
     padding: 0;
     position: relative;
     background-color: rgb(255, 255, 255);
+    border-radius: 2px;
+    border-color: rgb(53, 53, 53);
 }
 
 .carte_boeuf .carte {
@@ -79,7 +80,7 @@
 .CardNumber_Center {
     margin: 0;
     font-family: "Chilada";
-    font-size: 65px;
+    font-size: 60px;
     color: #b378b3;
     -webkit-text-stroke-width: 3px;
     -webkit-text-stroke-color: rgb(37, 37, 37);

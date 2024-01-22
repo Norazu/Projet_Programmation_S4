@@ -3,7 +3,7 @@ import { socket } from "./socket.js";
 
 var playerGameId = "";
 
-function Abandon() {
+export function Abandon() {
     function giveUp(gameId,pseudo) {
         socket.emit("giveUp", gameId, pseudo);
     }
@@ -12,7 +12,7 @@ function Abandon() {
     );
 }
 
-function Sauvegarde(){
+export function Sauvegarde(){
     const [gameIsPaused, setGameIsPaused] = useState(false);
 
     function gameEnPause(){
@@ -123,7 +123,7 @@ function Player({ pseudo, nbCartes }) {
   }
   
 
-function PlayerList() {
+export function PlayerList() {
     const [players, setPlayers] = useState([]);
     const [nbCartes, setNbCartes] = useState({});
 
@@ -167,7 +167,7 @@ function PlayerList() {
     );
 }
 
-function Timer(){
+export function Timer(){
     const [timer, setTimer] = useState(5);
 
     useEffect(() => {
@@ -188,7 +188,7 @@ function Timer(){
 }
 
 function Carte({ cardName, onSelect, isSelected }) {
-    var dir = "./Cards/";
+    var dir = "./Bataille/Cards/";
     var ext = ".png";
     var imgSource = dir + cardName + ext;
 
@@ -206,7 +206,48 @@ function Carte({ cardName, onSelect, isSelected }) {
     );
 }
 
-function Main() {
+export function CarteBoeuf({CardNumber}) {
+
+    let teteNb;
+
+    if (CardNumber === 55) {
+        teteNb = 7;
+    } else if (CardNumber % 10 === 0) {
+        teteNb = 3;
+    } else if (CardNumber % 5 === 0) {
+        teteNb = 2;
+    } else {
+        teteNb = 1;
+    }
+    if(CardNumber%11===0 && CardNumber!==55){
+        teteNb+=4;
+    }
+
+    var tetes = [];
+    for (var i = 0; i < teteNb; i++) {
+        tetes.push(<div className="tete_boeuf" key={i}/>);
+    }
+
+    return (
+        <button className="carte_boeuf">
+            <div className="carte" data-tetes={teteNb}>
+                <div className="carteTop">
+                    <p className="CardNumber">{CardNumber}</p>
+                    <div className="tetes">{tetes}</div>
+                    <p className="CardNumber">{CardNumber}</p>
+                </div>
+                <p className="CardNumber_Center">{CardNumber}</p>
+                <div className="carteBot">
+                    <p className="CardNumber">{CardNumber}</p>
+                    <p className="CardNumber">{CardNumber}</p>
+                </div>
+            </div>
+            <div className="overlay"></div>
+        </button>
+    );
+}
+
+export function Main({gameType}) {
     const [cardList, setCardList] = useState([]);
     const [selectedCard, setSelectedCard] = useState(null);
 
@@ -262,20 +303,35 @@ function Main() {
             socket.off("secondChoosingEnd");
         };
     },[cardList, selectedCard]);
-
-    return (
-        <div className="main">
-            <h2>Votre main</h2>
-            {cardList.map((cardName) => (
-                <Carte
-                    key={cardName}
-                    cardName={cardName}
-                    onSelect={handleSelectCard}
-                    isSelected={selectedCard === cardName}
-                />
-            ))}
-        </div>
-    );
+    switch (gameType) {
+        case 1:
+            return (
+                <div className="main">
+                    <h2>Votre main</h2>
+                    {cardList.map((cardName) => (
+                        <Carte
+                            key={cardName}
+                            cardName={cardName}
+                            onSelect={handleSelectCard}
+                            isSelected={selectedCard === cardName}
+                        />
+                    ))}
+                </div>
+            );
+        case 2:
+            return (
+                <div className="main">
+                    <h2>Votre main</h2>
+                    {cardList.map((cardNum) => (
+                        <CarteBoeuf
+                            CardNumber = {cardNum}
+                        />
+                    ))}
+                </div>
+            );
+        default:
+            break;
+    }
 }
 
 export function Plateau(){
@@ -298,58 +354,10 @@ export function Plateau(){
     function launchGame(){
         socket.emit("launchGame",playerGameId,sessionStorage.getItem("sessId"));
     }
+    
     return (
         <div>
             <button onClick={launchGame}>Lancer la partie</button>
         </div>
     );
 }
-
-function Game({ gameEnd }){
-    function partieSaved() {
-        window.alert("Partie sauvegardée avec succès, vous allez être ramené au menu principal");
-        gameEnd();
-    }
-
-    function partieAbandonnee() {
-        window.alert("Partie abandonnée, vous allez être ramené au menu principal");
-        gameEnd();
-    }
-
-    useEffect(() => {
-        // Gestionnaire d'événement pour le déchargement de la fenêtr
-        const handleUnload = () => {
-            socket.emit("disconnecting")
-            // Déconnectez le socket avant le déchargement de la fenêtre
-            socket.close();
-        };
-        // Ajoutez le gestionnaire d'événement à l'événement unload
-        window.addEventListener('beforeunload', handleUnload);
-        socket.on("victory",(data)=>{
-            window.alert("Le vainqueur de la partie est "+data);
-            setTimeout(function() {
-                gameEnd();
-              }, 7000);
-        })
-        socket.on("partieSauvegardee", partieSaved);
-        socket.on("gaveUp", partieAbandonnee);
-        return () => {
-            // Retirez le gestionnaire d'événement lors du démontage du composant
-            window.removeEventListener('beforeunload', handleUnload);
-            socket.off("partieSauvegardee");
-            socket.off("gaveUp");
-        };
-    })
-    return(
-        <div className="Game">
-            <Abandon/>
-            <Sauvegarde/>
-            <PlayerList/>
-            <Timer/>
-            <Plateau/>
-            <Main/>
-        </div>
-    );
-}
-
-export default Game;

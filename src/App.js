@@ -1,7 +1,7 @@
 import "./Style/app.css";
 import "./Style/boeuf.css";
-import Game from './Game.js';
-import GameBoeuf from './Boeuf.js';
+import Bataille from './Bataille.js';
+import Boeuf from './Boeuf.js';
 import Chat from './Chat.js';
 import Home from './Home.js';
 
@@ -14,7 +14,6 @@ function App() {
   const[inGame, setInGame] = useState(false);
   const[gameId,setGameId] = useState("0000");
   const[gameType,setGameType] = useState(null);
-  let gamepage;
 
   function connect(){
     var nom = document.getElementById("name").value;
@@ -109,7 +108,7 @@ function App() {
           <div className="PartiePage">
             <div className="GamePage">
               <h2 id="codeGame">Code de la partie : {gameId}</h2>
-              {gameType == 1 ? (<Game gameEnd={backFromGame}/>) :(<GameBoeuf/>)}
+              {gameType === "1" ? (<Bataille gameEnd={backFromGame}/>) :(<Boeuf/>)}
             </div>
             <Chat/>
           </div>

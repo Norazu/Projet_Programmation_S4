@@ -571,6 +571,7 @@ io.on("connection", (socket) => {
     });
     return cartes;
   }
+
   function shuffleBoeuf(playerList){
     var cartes = {}
     var cards = []
@@ -634,7 +635,17 @@ io.on("connection", (socket) => {
     if (pseudo==listeParties[gameId].idCreateur){
       if (listeParties[gameId].nbJoueurs>=listeParties[gameId].nbMinJoueurs){
         if (Object.keys(listeParties[gameId].cartes).length === 0) {
-          listeParties[gameId].cartes = shuffle(listeParties[gameId].listeJoueurs);
+
+          switch (listeParties[gameId].typeJeu) {
+            case "1":
+              listeParties[gameId].cartes = shuffle(listeParties[gameId].listeJoueurs);
+              break;
+            case "2":
+              listeParties[gameId].cartes = shuffleBoeuf(listeParties[gameId].listeJoueurs);
+              break;
+            default:
+              break;
+          }
         }
         io.to(gameId).emit("cardsChanged");
         var nbCartes = {};
