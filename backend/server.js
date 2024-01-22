@@ -42,6 +42,11 @@ const io = new Server(server, {
   },
 });
 
+//variables du 6 qui prend
+var nbTours = 10;
+
+
+
 //objet représentant une partie avec toutes ses infos sur le serveur
 class partie {
   constructor(typeJeu, idCreateur, nbMinJoueurs, nbMaxJoueurs, nbJoueurs, listeJoueurs, timer, secondTimer, cartes) {
@@ -57,6 +62,7 @@ class partie {
     this.cartes = cartes;
     this.status=0; //1 si la partie est démarré
     this.gameIsPaused=false;
+    this.playerScoreBoeuf = {}
 
   }
 }
@@ -563,6 +569,31 @@ io.on("connection", (socket) => {
       cartes[playerList[i]].push(card);
       i = (i+1)%max;
     });
+    return cartes;
+  }
+  function shuffleBoeuf(playerList){
+    var cartes = {}
+    var cards = []
+    for(i=1;i<=104;i++){
+      cards.push(i);
+    }
+    playerList.forEach((elem) => 
+    {cartes[elem] = [];
+      while(cartes[elem].length <10){
+      var indexMax = cards.length-1;
+      var selectedIndex = Math.floor(Math.random()*indexMax);
+      cartes[elem].push(cards[selectedIndex]);
+      cards.splice(selectedIndex,1);
+    }
+    cartes["reste"] = []
+    for(i=0;i<4;i++){
+      var indexMax = cards.length-1;
+      var selectedIndex = Math.floor(Math.random()*indexMax);
+      cartes["reste"].push(cards[selectedIndex]);
+      cards.splice(selectedIndex,1);
+    }
+  
+  })
     return cartes;
   }
 
