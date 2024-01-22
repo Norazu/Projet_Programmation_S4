@@ -1,7 +1,7 @@
-import "./App.css";
-import "./GameBoeuf.css";
+import "./Style/app.css";
+import "./Style/boeuf.css";
 import Game from './Game.js';
-import GameBoeuf from './GameBoeuf.js';
+import GameBoeuf from './Boeuf.js';
 import Chat from './Chat.js';
 import Home from './Home.js';
 
