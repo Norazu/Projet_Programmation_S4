@@ -74,7 +74,7 @@ function PartiesSauvegardees() {
   );
 }
 
-function Home() {
+function Home({ gameType }) {
   const [showCreateGame, setShowCreateGame] = useState(false);
   const [showGameList, setShowGameList] = useState(false);
   const [savedGames, setSavedGames] = useState(false);
@@ -97,8 +97,9 @@ function Home() {
     setShowCreateGame(!showCreateGame);
   }
 
-  function creationPartie() {
-    socket.emit("creationPartie",1,2,10,sessionStorage.getItem("sessId"));
+  function creationPartie(typeJeu) {
+    gameType(typeJeu);
+    socket.emit("creationPartie",typeJeu,2,10,sessionStorage.getItem("sessId"));
   }
 
   function afficherListeParties() {
@@ -159,9 +160,10 @@ function Home() {
                 {/* Contenu de la page de création de partie */}
                 <label htmlFor="choixTypeJeu">A quel jeu voulez-vous jouer ? </label>
                 <select id="choixTypeJeu">
-                  <option>Bataille ouverte</option>
+                  <option value="1">Bataille ouverte</option>
+                  <option value="2">6 qui prend</option>
                 </select>
-                <button type="button" onClick={creationPartie}>Créer la partie</button>
+                <button type="button" onClick={() => creationPartie(document.getElementById("choixTypeJeu").value)}>Créer la partie</button>
               </div>
               </>
             ) : (
