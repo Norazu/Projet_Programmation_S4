@@ -1,5 +1,5 @@
 import "./App.css";
-import "./Game_Boeuf.css"
+import "./Game_Boeuf.css";
 import Game from './Game.js';
 import Game_Boeuf from './Game_Boeuf.js';
 import Chat from './Chat.js';
