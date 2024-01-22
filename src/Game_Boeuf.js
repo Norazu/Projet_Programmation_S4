@@ -20,10 +20,6 @@ function PlayerList() {
 
 function Carte({CardNumber}) {
 
-    var dir = "./";
-    var boeuf_img = "boeuf.svg";
-    var imgSource = dir + boeuf_img;
-
     let teteNb;
 
     if (CardNumber === 55) {
@@ -46,8 +42,18 @@ function Carte({CardNumber}) {
 
     return (
         <button className="carte_boeuf">
-            <div className="tetes">{tetes}</div>
-            <p className="CardNumber">{CardNumber}</p>
+            <div className="carte" data-tetes={teteNb}>
+                <div className="carteTop">
+                    <p className="CardNumber">{CardNumber}</p>
+                    <div className="tetes">{tetes}</div>
+                    <p className="CardNumber">{CardNumber}</p>
+                </div>
+                <p className="CardNumber_Center">{CardNumber}</p>
+                <div className="carteBot">
+                    <p className="CardNumber">{CardNumber}</p>
+                    <p className="CardNumber">{CardNumber}</p>
+                </div>
+            </div>
             <div className="overlay"></div>
         </button>
     );
@@ -62,7 +68,11 @@ function Plateau(){
 function Game_Boeuf(){
     return (
         <>
+            <Carte CardNumber={11}></Carte>
+            <Carte CardNumber={1}></Carte>
             <Carte CardNumber={10}></Carte>
+            <Carte CardNumber={5}></Carte>
+            <Carte CardNumber={55}></Carte>
         </>
     )
 }

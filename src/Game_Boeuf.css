@@ -1,3 +1,8 @@
+@font-face {
+    font-family: Chilada;
+    src: url("../public/Chilada ICG Uno.ttf");
+}
+
 .carte_boeuf {
     width: 100px;
     height: 143px;
@@ -5,52 +10,82 @@
     padding: 0;
     position: relative;
     background-color: rgb(255, 255, 255);
+}
+
+.carte_boeuf .carte {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
     background-image: url("../public/boeuf.svg");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 90%;
+}
+
+.carte_boeuf .carte[data-tetes="2"]{
+    filter: hue-rotate(270deg);
+}
+
+.carte_boeuf .carte[data-tetes="3"]{
+    filter: hue-rotate(170deg);
+}
+
+.carte_boeuf .carte[data-tetes="5"]{
+    filter: hue-rotate(50deg);
+}
+
+.carte_boeuf .carte[data-tetes="7"]{
+    filter: hue-rotate(80deg);
+}
+
+.carte_boeuf .carteTop {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+}
+
+.carte_boeuf .carteBot {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
 }
 
 .tetes {
     display: flex;
-}
-
-.carte_boeuf .CardNumber {
-    position: absolute;
-    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 60%;
 }
 
 .tete_boeuf {
-    width: 30px;
-    height: 30px;
+    width: 12px;
+    height: 12px;
+    margin: 1px;
     z-index: 1;
     filter: opacity(0.7);
     background-image: url("../public/boeuf.svg");
     background-repeat: no-repeat;
 }
 
+.CardNumber {
+    width: 20%;
+    font-family: "Chilada";
+    margin: 0;
+    color: #800080;
+}
+
+.CardNumber_Center {
+    margin: 0;
+    font-family: "Chilada";
+    font-size: 65px;
+    color: #b378b3;
+    -webkit-text-stroke-width: 3px;
+    -webkit-text-stroke-color: rgb(37, 37, 37);
+
+}
+
 .carte_boeuf:hover {
-    width: 120px;
-    height: 172px;
-    transition: all 0.2s ease-in-out;
-}
-
-.carte_boeuf[data-etat="carteChoisie"] .overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 92px;
-    height: 137px;
-    background-color: rgba(20, 107, 18, 0.2);
-    border-color: rgba(20, 107, 18, 0.7);
-    border-width: 4px;
-    border-style: solid;
-    border-radius: 4.5px;
-    transition: border-color 0.2s ease-in-out;
-}
-
-.carte_boeuf:hover[data-etat="carteChoisie"] .overlay {
-    top: -10%;
-    left: -10%;
-    z-index: 1;
-    width: 112px;
-    height: 166px;
     transition: all 0.2s ease-in-out;
 }
