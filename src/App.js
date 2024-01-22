@@ -1,5 +1,7 @@
 import "./App.css";
+import "./Game_Boeuf.css";
 import Game from './Game.js';
+import Game_Boeuf from './Game_Boeuf.js';
 import Chat from './Chat.js';
 import Home from './Home.js';
 
@@ -100,7 +102,7 @@ function App() {
           <div className="PartiePage">
             <div className="GamePage">
               <h2 id="codeGame">Code de la partie : {gameId}</h2>
-              <Game gameEnd={backFromGame}/>
+              <Game_Boeuf/>
             </div>
             <Chat/>
           </div>
