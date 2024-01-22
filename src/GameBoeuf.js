@@ -27,7 +27,7 @@ function Main() {
 function Plateau(){
 }
 
-function Game(){
+function GameBoeuf(){
 }
 
-export default Game;
+export default GameBoeuf;

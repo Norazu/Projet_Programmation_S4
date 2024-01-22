@@ -2,6 +2,7 @@ import "./App.css";
 import Game from './Game.js';
 import Chat from './Chat.js';
 import Home from './Home.js';
+import GameBoeuf from "./GameBoeuf.js";
 
 import { useEffect, useState } from "react";
 import { socket } from "./socket.js";
@@ -10,7 +11,9 @@ function App() {
   console.log(sessionStorage.getItem("sessId"));
   const [connected, setConnected] = useState(false);
   const[inGame, setInGame] = useState(false);
-  const[gameId,setGameId] = useState("0000")
+  const[gameId,setGameId] = useState("0000");
+  const[gameType,setGameType] = useState(null);
+  let gamepage;
 
   function connect(){
     var nom = document.getElementById("name").value;
@@ -62,6 +65,10 @@ function App() {
     setInGame(false);
   }
 
+  function setTypeJeu(type) {
+    setGameType(type);
+  }
+
   useEffect(() => {
     if (sessionStorage.getItem("sessId") != null){
       socket.on("connect", () => {
@@ -92,7 +99,8 @@ function App() {
       socket.off("disconnected");
       socket.off("goToGame");
     }
-  });
+  }, [gameType]);
+
   return (
     <div className="App">
       {connected ? (
@@ -100,12 +108,12 @@ function App() {
           <div className="PartiePage">
             <div className="GamePage">
               <h2 id="codeGame">Code de la partie : {gameId}</h2>
-              <Game gameEnd={backFromGame}/>
+              {gameType == 1 ? (<Game gameEnd={backFromGame}/>) :(<GameBoeuf/>)}
             </div>
             <Chat/>
           </div>
         ) : (
-          <Home/>
+          <Home gameType={setTypeJeu}/>
         )
       ) : (
         <div className="ConnectionPage">
