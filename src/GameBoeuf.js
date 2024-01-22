@@ -65,7 +65,7 @@ function Main() {
 function Plateau(){
 }
 
-function Game_Boeuf(){
+function GameBoeuf(){
     return (
         <>
             <Carte CardNumber={11}></Carte>
@@ -77,4 +77,4 @@ function Game_Boeuf(){
     )
 }
 
-export default Game_Boeuf;
+export default GameBoeuf;
