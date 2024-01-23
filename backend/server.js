@@ -596,6 +596,41 @@ io.on("connection", (socket) => {
     return cartes;
   }
 
+  function finMancheBoeuf(gameId){
+    let max=0;
+    let min;
+    let vainqueurs=[];
+    let val;
+    for (let cle in listeParties[gameId].playerScoreBoeuf){
+      
+      val=listeParties[gameId].playerScoreBoeuf[cle];
+      if (val > max){
+        max=val;
+      }
+      min = min ?? val;
+      if (val<=min){
+        if (val==min){
+          vainqueurs.push(cle);
+        } else{
+          vainqueurs=[];
+          vainqueurs.push(cle);
+          min=val;
+        }
+      }
+    }
+
+    if (max>=66){
+      //enregistrer dans la BDD
+
+      io.to(gameId).emit("gameFinished",[]);
+      delete listeParties[gameId];
+      io.to(gameId).emit("victory",vainqueurs,min);
+      return true;
+    }
+    return false;
+    
+  }
+
   socket.on("pauseGame", (gameId, pseudo) => {
     // => joueur clique sur le bouton "pause"
     //regarde si le joueur a les permissions et que la partie n'a pas démarrée
