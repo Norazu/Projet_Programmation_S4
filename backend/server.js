@@ -45,8 +45,6 @@ const io = new Server(server, {
 //variables du 6 qui prend
 var nbTours = 10;
 
-
-
 //objet représentant une partie avec toutes ses infos sur le serveur
 class partie {
   constructor(typeJeu, idCreateur, nbMinJoueurs, nbMaxJoueurs, nbJoueurs, listeJoueurs, timer, secondTimer, cartes) {
@@ -590,7 +588,7 @@ io.on("connection", (socket) => {
     for(i=0;i<4;i++){
       var indexMax = cards.length-1;
       var selectedIndex = Math.floor(Math.random()*indexMax);
-      cartes["reste"].push(cards[selectedIndex]);
+      cartes["reste"].push([cards[selectedIndex]]);
       cards.splice(selectedIndex,1);
     }
   
