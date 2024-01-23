@@ -320,7 +320,10 @@ io.on("connection", (socket) => {
       }
       gameOrderBoeuf[gameId].push([playerId, card]);
       if (listeParties[gameId].listeJoueurs.length === gameOrderBoeuf[gameId].length){
-        gameOrderBoeuf[gameId].forEach((idJoueur,carte) => {
+        console.log(gameOrderBoeuf);
+        gameOrderBoeuf[gameId].forEach((joueur) => {
+          let idJoueur = joueur[0];
+          let carte = joueur[1];
           const index =  listeParties[gameId].cartes[idJoueur].indexOf(carte);
           if (index > -1) {
             listeParties[gameId].cartes[idJoueur].splice(index, 1);
@@ -347,6 +350,7 @@ io.on("connection", (socket) => {
             }
             listeParties[gameId].cartes["reste"][ligneMin].push(carte);
             io.to(gameId).emit("cardsChanged");
+            io.to(gameId).emit("reste", listeParties[gameId].cartes["reste"]);
           }
         });
         io.to(gameId).emit("scorePlayer",listeParties[gameId].playerScoreBoeuf);
