@@ -1,5 +1,5 @@
 import "./Style/app.css";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { socket } from "./socket.js";
 
 function Chat(){

@@ -206,7 +206,13 @@ function Carte({ cardName, onSelect, isSelected }) {
     );
 }
 
-export function CarteBoeuf({CardNumber}) {
+export function CarteBoeuf({CardNumber, onSelect, isSelected }) {
+
+    const selectThisCard = () => {
+        onSelect(CardNumber);
+    };
+
+    const etat = isSelected ? 'carteChoisie' : 'default';
 
     let teteNb;
 
@@ -229,7 +235,7 @@ export function CarteBoeuf({CardNumber}) {
     }
 
     return (
-        <button className="carte_boeuf">
+        <button className="carte_boeuf" onClick={selectThisCard} data-etat={etat}>
             <div className="carte" data-tetes={teteNb}>
                 <div className="carteTop">
                     <p className="CardNumber">{CardNumber}</p>
@@ -322,9 +328,11 @@ export function Main({gameType}) {
             return (
                 <div className="main">
                     <h2>Votre main</h2>
-                    {cardList.map((cardNum) => (
+                    {cardList.map((cardName) => (
                         <CarteBoeuf
-                            CardNumber = {cardNum}
+                            CardNumber = {cardName}
+                            onSelect={handleSelectCard}
+                            isSelected={selectedCard === cardName}
                         />
                     ))}
                 </div>
