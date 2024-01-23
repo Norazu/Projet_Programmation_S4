@@ -29,19 +29,6 @@ connexiondb.connect(function (err) {
   }
   console.log('connected to database as id ' + connexiondb.threadId);
 });
-var typesJeux = 'SELECT idJeu, nomJeu FROM jeux';
-connexiondb.query(typesJeux, (error, results, fields) => {
-  if (error) {
-    console.error('Erreur lors de la requête SQL:', error);
-    throw error;
-  }
-  results.forEach((row) => {
-    const idJeu = row.idJeu;
-    const nomJeu = row.nomJeu;
-    idToTypeJeu[idJeu]=nomJeu;
-    console.log(`idJeu: ${idJeu}, nomJeu: ${nomJeu}`);
-  });
-});
 
 //mise en place et création du serveur
 app.use(cors());
@@ -538,14 +525,14 @@ io.on("connection", (socket) => {
     //console.log(listeParties);
     if (listeParties) {
       for (var pt in listeParties) {
-        if (listeParties[pt].status==0){
-          var partie = listeParties[pt];
+        var partie = listeParties[pt];
+        if (listeParties[pt].status==0 && ((typeJeu==0)||typeJeu==partie.typeJeu)){
           liste.push([
             pt, //code
-            idToTypeJeu[partie.typeJeu],
-            partie.nbMinJoueurs, 
+            partie.typeJeu,
+            /*partie.nbMinJoueurs, 
             partie.nbMaxJoueurs,
-            partie.listeJoueurs.length
+            partie.listeJoueurs.length*/
           ]);
         }
       }
