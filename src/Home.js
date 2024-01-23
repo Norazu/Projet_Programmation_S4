@@ -11,10 +11,11 @@ function loadGameByList(code) {
   socket.emit("loadGame", code);
 }
 
-function Parties({code, page}){
+function Parties({code, page,type}){
   return(
     <div className="Parties">
-      <p>Code de la partie : {code}</p>
+      <p>Code de la partie : {code}
+      <br /> Type de jeu : {type} </p>
       {page ? (
         <>
         <button onClick={() => loadGameByList(code)}>Charger la partie</button>
@@ -44,7 +45,7 @@ function ListeDesElements() {
     return (
       <div className="playerList">
           {parties.map((partie) => (
-              <Parties code={partie[0]}/>
+              <Parties code={partie[0]} type={partie[1]}/>
           ))}
       </div>
   );
@@ -181,7 +182,9 @@ function Home({ gameType }) {
                 <ListeDesElements />
               </div>
             ) : (
-              <button type="button" onClick={afficherListeParties}>Afficher la liste des parties</button>
+              <div>
+                <button type="button" onClick={afficherListeParties}>Afficher la liste des parties</button>
+              </div>
             )}
           </div>
           </>

@@ -12,6 +12,7 @@ var turnDuration = 10;
 var bataille = {};
 var joueursConnectes = [];
 var listeParties = {};
+var idToTypeJeu={};
 
 //mise en place et connection à la base de données mysql
 var connexiondb = mysql.createConnection({
@@ -27,6 +28,19 @@ connexiondb.connect(function (err) {
     return;
   }
   console.log('connected to database as id ' + connexiondb.threadId);
+});
+var typesJeux = 'SELECT idJeu, nomJeu FROM jeux';
+connexiondb.query(typesJeux, (error, results, fields) => {
+  if (error) {
+    console.error('Erreur lors de la requête SQL:', error);
+    throw error;
+  }
+  results.forEach((row) => {
+    const idJeu = row.idJeu;
+    const nomJeu = row.nomJeu;
+    idToTypeJeu[idJeu]=nomJeu;
+    console.log(`idJeu: ${idJeu}, nomJeu: ${nomJeu}`);
+  });
 });
 
 //mise en place et création du serveur
@@ -528,7 +542,7 @@ io.on("connection", (socket) => {
           var partie = listeParties[pt];
           liste.push([
             pt, //code
-            partie.typeJeu,
+            idToTypeJeu[partie.typeJeu],
             partie.nbMinJoueurs, 
             partie.nbMaxJoueurs,
             partie.listeJoueurs.length
