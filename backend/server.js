@@ -10,6 +10,7 @@ const jsSHA = require("jssha");
 var timerIsRunning = false;
 var turnDuration = 10;
 var bataille = {};
+var gameOrderBoeuf = {}
 var joueursConnectes = [];
 var listeParties = {};
 
@@ -299,17 +300,57 @@ io.on("connection", (socket) => {
 
   socket.on("submitCard", (playerId, card, gameId) => {
     socket.emit("unselectCard");
-    if(bataille[gameId]==undefined){
-      bataille[gameId] = [];
+    if(listeParties[gameId].typeJeu == 1){
+      if(bataille[gameId]==undefined){
+        bataille[gameId] = [];
+      }
+      bataille[gameId].push([playerId, card]);
+      const index =  listeParties[gameId].cartes[playerId].indexOf(card);
+      if (index > -1) {
+        listeParties[gameId].cartes[playerId].splice(index, 1);
+      }
+      if (listeParties[gameId].listeJoueurs.length === bataille[gameId].length) {
+        io.to(gameId).emit("cardsChanged");
+        pickWinner(gameId, []);
+      }
     }
-    bataille[gameId].push([playerId, card]);
-    const index =  listeParties[gameId].cartes[playerId].indexOf(card);
-    if (index > -1) {
-      listeParties[gameId].cartes[playerId].splice(index, 1);
-    }
-    if (listeParties[gameId].listeJoueurs.length === bataille[gameId].length) {
-      io.to(gameId).emit("cardsChanged");
-      pickWinner(gameId, []);
+    else if(listeParties[gameId].typeJeu == 2){
+      if(gameOrderBoeuf[gameId] == undefined){
+        gameOrderBoeuf[gameId] = [];
+      }
+      gameOrderBoeuf[gameId].push([playerId, card]);
+      if (listeParties[gameId].listeJoueurs.length === gameOrderBoeuf[gameId].length){
+        gameOrderBoeuf[gameId].forEach((idJoueur,carte) => {
+          const index =  listeParties[gameId].cartes[idJoueur].indexOf(carte);
+          if (index > -1) {
+            listeParties[gameId].cartes[idJoueur].splice(index, 1);
+          }
+          var min = 0;
+          var ligneMin = 0;
+          listeParties[gameId].cartes["reste"].forEach((list) => {
+            if(min == 0){
+              min = list[list.length-1]
+            } else if(list[list.length-1] < min && list[list.length-1]>0){
+              min = list[list.length-1];
+              ligneMin = listeParties[gameId].cartes["reste"].indexOf(list);
+            }
+          });
+          if(min > carte){
+            socket.emit("choixLigne",carte);
+            //socket à faire
+          }
+          else{
+            if(listeParties[gameId].cartes["reste"][ligneMin].length == 5){
+              while(listeParties[gameId].cartes["reste"][ligneMin].length >0){
+                listeParties[gameId].playerScoreBoeuf[idJoueur] += nbTetes(listeParties[gameId].cartes["reste"][ligneMin].pop());
+              }
+            }
+            listeParties[gameId].cartes["reste"][ligneMin].push(carte);
+            io.to(gameId).emit("cardsChanged");
+          }
+        });
+        io.to(gameId).emit("scorePlayer",listeParties[gameId].playerScoreBoeuf);
+      }
     }
   });
 
@@ -592,6 +633,20 @@ io.on("connection", (socket) => {
     }
   })
     return cartes;
+  }
+
+  function nbTetes(numCarte){
+    if (numCarte === 55) {
+      return 7;
+    } else if(numCarte%11===0){
+        return 4;
+    } else if (numCarte % 10 === 0) {
+        return  3;
+    } else if (numCarte % 5 === 0) {
+        return 2;
+    } else {
+        return 1;
+    }
   }
 
   socket.on("pauseGame", (gameId, pseudo) => {
