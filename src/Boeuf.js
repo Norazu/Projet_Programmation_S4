@@ -27,10 +27,10 @@ function LignesCartes(){
     );
 }
 
-function Boeuf(){
+function Boeuf({gameEnd}){
     return (
         <div className="Game">
-            <Abandon/>
+            <Abandon gameEnd={gameEnd}/>
             <Sauvegarde/>
             <PlayerList showCards={false}/>
             <LignesCartes/>

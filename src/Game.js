@@ -3,10 +3,20 @@ import { socket } from "./socket.js";
 
 var playerGameId = "";
 
-export function Abandon() {
+export function Abandon({gameEnd}) {
     function giveUp(gameId, pseudo) {
         socket.emit("giveUp", gameId, pseudo);
     }
+    function partieAbandonnee() {
+        window.alert("Partie abandonnée, vous allez être ramené au menu principal");
+        gameEnd();
+    }
+    useEffect(()=>{
+        socket.on("gaveUp", partieAbandonnee);
+        return () => {
+            socket.off("gaveUp");
+        }
+    })
     return (
         <button id="giveUp" onClick={() => giveUp(playerGameId, sessionStorage.getItem("sessId"))}>Abandonner</button>
     );

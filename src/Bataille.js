@@ -4,13 +4,9 @@ import { Abandon, Sauvegarde, PlayerList, Timer, Plateau, Main } from "./Game.js
 
 
 function Bataille({ gameEnd }){
+
     function partieSaved() {
         window.alert("Partie sauvegardée avec succès, vous allez être ramené au menu principal");
-        gameEnd();
-    }
-
-    function partieAbandonnee() {
-        window.alert("Partie abandonnée, vous allez être ramené au menu principal");
         gameEnd();
     }
 
@@ -30,17 +26,16 @@ function Bataille({ gameEnd }){
               }, 7000);
         })
         socket.on("partieSauvegardee", partieSaved);
-        socket.on("gaveUp", partieAbandonnee);
+        
         return () => {
             // Retirez le gestionnaire d'événement lors du démontage du composant
             window.removeEventListener('beforeunload', handleUnload);
             socket.off("partieSauvegardee");
-            socket.off("gaveUp");
         };
     })
     return(
         <div className="Game">  
-            <Abandon/>
+            <Abandon gameEnd={gameEnd}/>
             <Sauvegarde/>
             <PlayerList showCards={true}/>
             <Timer/>
