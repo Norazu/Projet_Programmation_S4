@@ -39,10 +39,10 @@ function Bataille({ gameEnd }){
         };
     })
     return(
-        <div className="Game">
+        <div className="Game">  
             <Abandon/>
             <Sauvegarde/>
-            <PlayerList/>
+            <PlayerList showCards={true}/>
             <Timer/>
             <Plateau/>
             <Main gameType={1}/>

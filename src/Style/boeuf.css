@@ -108,3 +108,7 @@
   .carte_boeuf:hover[data-etat="carteChoisie"] .overlay{
     transition: all 0.2s ease-in-out;
   }
+
+  button:hover[data-etat="disabled"] {
+    background-color: white;
+  }

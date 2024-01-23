@@ -591,7 +591,6 @@ io.on("connection", (socket) => {
       cartes["reste"].push([cards[selectedIndex]]);
       cards.splice(selectedIndex,1);
     }
-  
   })
     return cartes;
   }
@@ -640,6 +639,7 @@ io.on("connection", (socket) => {
               break;
             case "2":
               listeParties[gameId].cartes = shuffleBoeuf(listeParties[gameId].listeJoueurs);
+              io.to(gameId).emit("reste",listeParties[gameId].cartes["reste"]);
               break;
             default:
               break;

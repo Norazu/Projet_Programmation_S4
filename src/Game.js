@@ -4,18 +4,18 @@ import { socket } from "./socket.js";
 var playerGameId = "";
 
 export function Abandon() {
-    function giveUp(gameId,pseudo) {
+    function giveUp(gameId, pseudo) {
         socket.emit("giveUp", gameId, pseudo);
     }
-    return(
-        <button id="giveUp" onClick={() => giveUp(playerGameId,sessionStorage.getItem("sessId"))}>Abandonner</button>
+    return (
+        <button id="giveUp" onClick={() => giveUp(playerGameId, sessionStorage.getItem("sessId"))}>Abandonner</button>
     );
 }
 
-export function Sauvegarde(){
+export function Sauvegarde() {
     const [gameIsPaused, setGameIsPaused] = useState(false);
 
-    function gameEnPause(){
+    function gameEnPause() {
         setGameIsPaused(true);
         document.getElementById("pause").innerText = "Enlever la pause";
     }
@@ -25,31 +25,31 @@ export function Sauvegarde(){
         document.getElementById("pause").innerText = "Pause";
     }
 
-    function pauseGameNotStarted(){
+    function pauseGameNotStarted() {
         window.alert("Vous ne pouvez pas mettre en pause la partie si elle n'a pas démarré");
     }
 
-    function pasPermPause(){
+    function pasPermPause() {
         window.alert("Vous n'avez pas la permission de mettre en pause la partie, seul le créateur de la partie le peut");
     };
 
-    function pause(){
-        if(!gameIsPaused){
-            socket.emit("pauseGame",playerGameId,sessionStorage.getItem("sessId"));
+    function pause() {
+        if (!gameIsPaused) {
+            socket.emit("pauseGame", playerGameId, sessionStorage.getItem("sessId"));
         } else {
-            socket.emit("unpauseGame",playerGameId, sessionStorage.getItem("sessId"));
+            socket.emit("unpauseGame", playerGameId, sessionStorage.getItem("sessId"));
         }
     };
 
-    function saveGame(gameId,pseudo){
-        socket.emit("saveGame",gameId,pseudo);
+    function saveGame(gameId, pseudo) {
+        socket.emit("saveGame", gameId, pseudo);
     }
 
-    function pasPermSauvegarde(){
+    function pasPermSauvegarde() {
         window.alert("Vous n'avez pas la permission de sauvegarder, seul le créateur de la partie le peut");
     }
 
-    function saveGameNotStarted(){
+    function saveGameNotStarted() {
         window.alert("Vous ne pouvez pas sauvegarder si la partie n'a pas démarré");
     }
 
@@ -58,7 +58,7 @@ export function Sauvegarde(){
         window.location.reload();
     }
 
-    useEffect(()=>{
+    useEffect(() => {
         socket.on("quit", id => {
             reload(id);
         });
@@ -68,7 +68,7 @@ export function Sauvegarde(){
         socket.on("gameReprise", gameReprise);
         socket.on("PasPermSauvegarde", pasPermSauvegarde);
         socket.on("SaveGameNotStarted", saveGameNotStarted)
-        return ()=>{
+        return () => {
             socket.off("quit");
             socket.off("pasPermPause");
             socket.off("pauseGameNotStarted");
@@ -77,53 +77,66 @@ export function Sauvegarde(){
             socket.off("PasPermSauvegarde");
             socket.off("SaveGameNotStarted");
         }
-    
-      });
 
-    return(
+    });
+
+    return (
         <>
-        <button id="pause" onClick={() => pause()}>Pause</button>
-        {gameIsPaused && (
-            <button onClick={()=>saveGame(playerGameId,sessionStorage.getItem("sessId"))}>Sauvegarder la partie</button>
-        )}
+            <button id="pause" onClick={() => pause()}>Pause</button>
+            {gameIsPaused && (
+                <button onClick={() => saveGame(playerGameId, sessionStorage.getItem("sessId"))}>Sauvegarder la partie</button>
+            )}
         </>
     );
 }
 
-function OtherPlayerCard({cardName}){
-    return(
-        <img src={"./Cards/"+cardName+".png"} alt={cardName} width="100"/>
+function OtherPlayerCard({ cardName }) {
+    return (
+        <img src={"./Cards/" + cardName + ".png"} alt={cardName} width="100" />
     );
 }
 
-function Player({ pseudo, nbCartes }) {
+function Player({ pseudo, nbCartes, showCards }) {
     const [cards, setCards] = useState([]);
     const hueRotateValue = Math.floor(Math.random() * 360);
     socket.on("fight", (winner, allCards) => {
         setCards([]);
         allCards.forEach((element) => {
-        if (element[0] === pseudo) {
-          setCards((prevCards) => [...prevCards, element[1]]);
-        }
-      });
+            if (element[0] === pseudo) {
+                setCards((prevCards) => [...prevCards, element[1]]);
+            }
+        });
     });
-    return (
-        <div className="PLayerContainer">
-            <p className="pseudo" style={{ filter: `hue-rotate(${hueRotateValue}deg)` }}>{pseudo}</p>
-            <div className="Player" style={{ filter: `hue-rotate(${hueRotateValue}deg)` }}>
-                <p className="cartes">{nbCartes}</p>
-            </div>
-            <div className="cardsPlayed">
-                {cards.map((cardName, index) => (
-                    <OtherPlayerCard cardName={cardName} />
+    if (showCards) {
+        return (
+            <div className="PLayerContainer">
+                <p className="pseudo" style={{ filter: `hue-rotate(${hueRotateValue}deg)` }}>{pseudo}</p>
+                <div className="Player" style={{ filter: `hue-rotate(${hueRotateValue}deg)` }}>
+                    <p className="cartes">{nbCartes}</p>
+                </div>
+                <div className="cardsPlayed">
+                    {cards.map((cardName, index) => (
+                        <OtherPlayerCard cardName={cardName} />
                     ))}
+                </div>
             </div>
-        </div>
-    );
-  }
-  
+        );
+    } else {
+        return (
+            <div className="PLayerContainer">
+                <p className="pseudo" style={{ filter: `hue-rotate(${hueRotateValue}deg)` }}>{pseudo}</p>
+                <div className="cardsPlayed">
+                    {cards.map((cardName, index) => (
+                        <OtherPlayerCard cardName={cardName} />
+                    ))}
+                </div>
+            </div>
+        )
+    }
+}
 
-export function PlayerList() {
+
+export function PlayerList({ showCards }) {
     const [players, setPlayers] = useState([]);
     const [nbCartes, setNbCartes] = useState({});
 
@@ -133,11 +146,11 @@ export function PlayerList() {
             setPlayers(list);
         });
 
-        socket.on("setGameId",(idRoom)=>{
+        socket.on("setGameId", (idRoom) => {
             playerGameId = idRoom;
         });
 
-        socket.on("nbCartes",(nbCartesByPlayers) => {
+        socket.on("nbCartes", (nbCartesByPlayers) => {
             setNbCartes(nbCartesByPlayers);
         });
 
@@ -149,9 +162,9 @@ export function PlayerList() {
         };
     }, []); // Le tableau vide signifie que cela s'exécute une seule fois lors du montage
 
-    function getNbCartes(player){
+    function getNbCartes(player) {
         var nbCartesPlayer = 0;
-        if(nbCartes[player]!==undefined){
+        if (nbCartes[player] !== undefined) {
             nbCartesPlayer = nbCartes[player];
         }
         return nbCartesPlayer;
@@ -161,13 +174,13 @@ export function PlayerList() {
         <div className="playerList">
             <h2>Joueurs de la partie : </h2>
             {players.map((player) => (
-                <Player pseudo={player} nbCartes={getNbCartes(player)} />
+                <Player pseudo={player} nbCartes={getNbCartes(player)} showCards={showCards} />
             ))}
         </div>
     );
 }
 
-export function Timer(){
+export function Timer() {
     const [timer, setTimer] = useState(5);
 
     useEffect(() => {
@@ -180,7 +193,7 @@ export function Timer(){
         };
     }, []);
 
-    return(
+    return (
         <div>
             <p>Temps Restant : {timer}</p>
         </div>
@@ -200,19 +213,25 @@ function Carte({ cardName, onSelect, isSelected }) {
 
     return (
         <button onClick={selectThisCard} className="carte" data-etat={etat}>
-            <img src={imgSource} alt={cardName} width="100"/>
+            <img src={imgSource} alt={cardName} width="100" />
             <div className="overlay"></div>
         </button>
     );
 }
 
-export function CarteBoeuf({CardNumber, onSelect, isSelected }) {
+export function CarteBoeuf({ CardNumber, disabled, onSelect, isSelected }) {
 
     const selectThisCard = () => {
-        onSelect(CardNumber);
+        if(!disabled){
+            onSelect(CardNumber);
+        }
     };
 
-    const etat = isSelected ? 'carteChoisie' : 'default';
+    let etat = isSelected ? 'carteChoisie' : 'default';
+
+    if(disabled){
+        etat = 'disabled';
+    }
 
     let teteNb;
 
@@ -225,17 +244,17 @@ export function CarteBoeuf({CardNumber, onSelect, isSelected }) {
     } else {
         teteNb = 1;
     }
-    if(CardNumber%11===0 && CardNumber!==55){
-        teteNb+=4;
+    if (CardNumber % 11 === 0 && CardNumber !== 55) {
+        teteNb += 4;
     }
 
     var tetes = [];
     for (var i = 0; i < teteNb; i++) {
-        tetes.push(<div className="tete_boeuf" key={i}/>);
+        tetes.push(<div className="tete_boeuf" key={i} />);
     }
 
     return (
-        <button className="carte_boeuf" onClick={selectThisCard} data-etat={etat}>
+        <button disabled={disabled} className="carte_boeuf" onClick={selectThisCard} data-etat={etat}>
             <div className="carte" data-tetes={teteNb}>
                 <div className="carteTop">
                     <p className="CardNumber">{CardNumber}</p>
@@ -253,7 +272,7 @@ export function CarteBoeuf({CardNumber, onSelect, isSelected }) {
     );
 }
 
-export function Main({gameType}) {
+export function Main({ gameType }) {
     const [cardList, setCardList] = useState([]);
     const [selectedCard, setSelectedCard] = useState(null);
 
@@ -264,8 +283,8 @@ export function Main({gameType}) {
             setCardList(list);
         });
 
-        socket.on("cardsChanged",()=>{
-            socket.emit("getCards",sessionStorage.getItem("sessId"),playerGameId);
+        socket.on("cardsChanged", () => {
+            socket.emit("getCards", sessionStorage.getItem("sessId"), playerGameId);
         });
 
         return () => {
@@ -279,8 +298,8 @@ export function Main({gameType}) {
     };
 
     useEffect(() => {
-        socket.on("choosingEnd",()=>{
-            if(selectedCard == null){
+        socket.on("choosingEnd", () => {
+            if (selectedCard == null) {
                 setSelectedCard(cardList[0]);
                 socket.emit("submitCard", sessionStorage.getItem("sessId"), cardList[0], playerGameId);
             } else {
@@ -288,13 +307,13 @@ export function Main({gameType}) {
             }
         });
 
-        socket.on("unselectCard",()=>{
+        socket.on("unselectCard", () => {
             setSelectedCard(null);
         })
 
-        socket.on("secondChoosingEnd",(playerList, cardsToWin)=>{
-            if(playerList.includes(sessionStorage.getItem("sessId"))){
-                if(selectedCard == null){
+        socket.on("secondChoosingEnd", (playerList, cardsToWin) => {
+            if (playerList.includes(sessionStorage.getItem("sessId"))) {
+                if (selectedCard == null) {
                     setSelectedCard(cardList[0]);
                     socket.emit("submitCardSecondTime", sessionStorage.getItem("sessId"), cardList[0], playerGameId, cardsToWin);
                 } else {
@@ -308,7 +327,7 @@ export function Main({gameType}) {
             socket.off("unselectCard");
             socket.off("secondChoosingEnd");
         };
-    },[cardList, selectedCard]);
+    }, [cardList, selectedCard]);
     switch (gameType) {
         case 1:
             return (
@@ -330,7 +349,7 @@ export function Main({gameType}) {
                     <h2>Votre main</h2>
                     {cardList.map((cardName) => (
                         <CarteBoeuf
-                            CardNumber = {cardName}
+                            CardNumber={cardName}
                             onSelect={handleSelectCard}
                             isSelected={selectedCard === cardName}
                         />
@@ -342,27 +361,27 @@ export function Main({gameType}) {
     }
 }
 
-export function Plateau(){
-    function notEnoughPlayers(){
+export function Plateau() {
+    function notEnoughPlayers() {
         window.alert("Il n'y a pas assez de joueurs pour démarrer une partie");
-      }
-    function pasDePerms(){
+    }
+    function pasDePerms() {
         window.alert("Vous n'avez pas la permission de démarrer la partie, seul le createur peut");
     }
 
-    useEffect(() =>{
+    useEffect(() => {
         socket.on("notEnoughPlayers", notEnoughPlayers);
-        socket.on("PasDePerms",pasDePerms);
-        return ()=> {
+        socket.on("PasDePerms", pasDePerms);
+        return () => {
             socket.off("notEnoughPlayers")
             socket.off("PasDePerms")
         }
     })
 
-    function launchGame(){
-        socket.emit("launchGame",playerGameId,sessionStorage.getItem("sessId"));
+    function launchGame() {
+        socket.emit("launchGame", playerGameId, sessionStorage.getItem("sessId"));
     }
-    
+
     return (
         <div>
             <button onClick={launchGame}>Lancer la partie</button>
