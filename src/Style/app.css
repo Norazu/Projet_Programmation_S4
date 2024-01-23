@@ -316,7 +316,7 @@ button:hover {
   margin: 0.5em;
 }
 
-.pseudo {
+.pseudo,.score {
   margin: 0.2em;
   padding: 0.3em;
   font-size: 25px;

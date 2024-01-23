@@ -96,7 +96,7 @@ function OtherPlayerCard({ cardName }) {
     );
 }
 
-function Player({ pseudo, nbCartes, showCards }) {
+function Player({ pseudo, nbCartes, showCards, score }) {
     const [cards, setCards] = useState([]);
     const hueRotateValue = Math.floor(Math.random() * 360);
     socket.on("fight", (winner, allCards) => {
@@ -116,7 +116,7 @@ function Player({ pseudo, nbCartes, showCards }) {
                 </div>
                 <div className="cardsPlayed">
                     {cards.map((cardName, index) => (
-                        <OtherPlayerCard cardName={cardName} />
+                        <OtherPlayerCard key={index} cardName={cardName} />
                     ))}
                 </div>
             </div>
@@ -125,9 +125,10 @@ function Player({ pseudo, nbCartes, showCards }) {
         return (
             <div className="PLayerContainer">
                 <p className="pseudo" style={{ filter: `hue-rotate(${hueRotateValue}deg)` }}>{pseudo}</p>
+                <p className="score" style={{ filter: `hue-rotate(${hueRotateValue}deg)` }}>{score}</p>
                 <div className="cardsPlayed">
                     {cards.map((cardName, index) => (
-                        <OtherPlayerCard cardName={cardName} />
+                        <OtherPlayerCard cardName={cardName} key={index}/>
                     ))}
                 </div>
             </div>
@@ -139,6 +140,7 @@ function Player({ pseudo, nbCartes, showCards }) {
 export function PlayerList({ showCards }) {
     const [players, setPlayers] = useState([]);
     const [nbCartes, setNbCartes] = useState({});
+    const [scores, setScores] = useState({});
 
     useEffect(() => {
         // Mettez à jour le state lorsque la liste de joueurs est reçue
@@ -153,12 +155,17 @@ export function PlayerList({ showCards }) {
         socket.on("nbCartes", (nbCartesByPlayers) => {
             setNbCartes(nbCartesByPlayers);
         });
+        
+        socket.on("scorePlayer", (scoreByPlayer) => {
+            setScores(scoreByPlayer);
+        });
 
         // Nettoyage de l'écouteur lorsque le composant est démonté
         return () => {
             socket.off("playersList");
             socket.off("setGameId");
             socket.off("nbCartes");
+            socket.off("scorePlayer");
         };
     }, []); // Le tableau vide signifie que cela s'exécute une seule fois lors du montage
 
@@ -170,11 +177,19 @@ export function PlayerList({ showCards }) {
         return nbCartesPlayer;
     }
 
+    function getScore(player) {
+        var score = 0;
+        if (scores[player] !== undefined) {
+            score = scores[player];
+        }
+        return score;
+    }
+
     return (
         <div className="playerList">
             <h2>Joueurs de la partie : </h2>
-            {players.map((player) => (
-                <Player pseudo={player} nbCartes={getNbCartes(player)} showCards={showCards} />
+            {players.map((player, index) => (
+                <Player key={index} pseudo={player} nbCartes={getNbCartes(player)} score={getScore(player)} showCards={showCards} />
             ))}
         </div>
     );

@@ -61,7 +61,6 @@ class partie {
     this.status=0; //1 si la partie est démarré
     this.gameIsPaused=false;
     this.playerScoreBoeuf = {}
-
   }
 }
 

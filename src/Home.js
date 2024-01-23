@@ -43,8 +43,8 @@ function ListeDesElements() {
   }, []);
     return (
       <div className="playerList">
-          {parties.map((partie) => (
-              <Parties code={partie[0]}/>
+          {parties.map((partie, index) => (
+              <Parties key={index} code={partie[0]}/>
           ))}
       </div>
   );

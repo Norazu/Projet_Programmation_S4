@@ -19,7 +19,7 @@ function LignesCartes(){
     return (
         <div className="LignesCartes">
             {lignes.map((cards, index) => (
-                <ul className="LigneCartes" id={index}>
+                <ul className="LigneCartes" id={index} key={index}>
                     {cards.map((cardNum) => (<CarteBoeuf CardNumber={cardNum} disabled={true}/>))}
                 </ul>
             ))}
