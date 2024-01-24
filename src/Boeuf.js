@@ -5,23 +5,37 @@ import { socket } from "./socket.js";
 function LignesCartes(){
     
     const [lignes, setLignes] = useState([]);
+    const [choixLigne, setChoixLigne] = useState(false);
+
+    function ligneChoisie(indexLigne) {
+        setChoixLigne(false);
+        socket.emit("ligneChoisie", indexLigne);
+    }
 
     useEffect(() => {
         socket.on("reste", reste => {
             setLignes(reste);
         });
+        socket.on("choixLigne", () => {
+            setChoixLigne(true);
+            console.log(choixLigne);
+        });
 
         return () => {
             socket.off("reste");
+            socket.off("choixLigne");
         }
     });
 
     return (
         <div className="LignesCartes">
             {lignes.map((cards, index) => (
+                <>
+                {choixLigne ? (<button onClick={() => ligneChoisie(index)}>Choisir cette ligne</button>) : (<></>)}
                 <ul className="LigneCartes" id={index} key={index}>
                     {cards.map((cardNum) => (<li><CarteBoeuf CardNumber={cardNum} disabled={true}/></li>))}
                 </ul>
+                </>
             ))}
         </div>
     );
