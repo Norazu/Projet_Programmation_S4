@@ -20,7 +20,7 @@ function LignesCartes(){
         <div className="LignesCartes">
             {lignes.map((cards, index) => (
                 <ul className="LigneCartes" id={index} key={index}>
-                    {cards.map((cardNum) => (<CarteBoeuf CardNumber={cardNum} disabled={true}/>))}
+                    {cards.map((cardNum) => (<li><CarteBoeuf CardNumber={cardNum} disabled={true}/></li>))}
                 </ul>
             ))}
         </div>

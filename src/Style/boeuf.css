@@ -25,19 +25,19 @@
     background-size: 90%;
 }
 
-.carte_boeuf .carte[data-tetes="2"]{
+.carte_boeuf .carte[data-tetes="2"] {
     filter: hue-rotate(270deg);
 }
 
-.carte_boeuf .carte[data-tetes="3"]{
+.carte_boeuf .carte[data-tetes="3"] {
     filter: hue-rotate(170deg);
 }
 
-.carte_boeuf .carte[data-tetes="5"]{
+.carte_boeuf .carte[data-tetes="5"] {
     filter: hue-rotate(50deg);
 }
 
-.carte_boeuf .carte[data-tetes="7"]{
+.carte_boeuf .carte[data-tetes="7"] {
     filter: hue-rotate(80deg);
 }
 
@@ -103,12 +103,29 @@
     border-style: solid;
     border-radius: 2px;
     transition: border-color 0.2s ease-in-out;
-  }
-  
-  .carte_boeuf:hover[data-etat="carteChoisie"] .overlay{
-    transition: all 0.2s ease-in-out;
-  }
+}
 
-  button:hover[data-etat="disabled"] {
+.carte_boeuf:hover[data-etat="carteChoisie"] .overlay {
+    transition: all 0.2s ease-in-out;
+}
+
+button:hover[data-etat="disabled"] {
     background-color: white;
-  }
+}
+
+.LignesCartes {
+    width: fit-content;
+    margin: auto;
+}
+
+.LigneCartes {
+    align-self: center;
+    width: fit-content;
+    display: flex;
+    list-style-type: none;
+    padding: 0;
+}
+
+.LignesCartes li {
+    align-self: center;
+}
