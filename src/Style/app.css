@@ -355,3 +355,25 @@ button:hover {
   justify-content: center;
   flex-wrap: wrap;
 }
+
+.Parties {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.Parties img {
+  margin: 0;
+  align-self: center;
+}
+
+.partieText {
+  margin: 0;
+
+}
+
+.Type {
+  margin: 5px;
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+}

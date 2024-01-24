@@ -13,43 +13,39 @@ function loadGameByList(code) {
 }
 
 function Parties({code, page,type}){
+  let type_jeu = "";
+  let chemin_img = "";
   switch (type){
   case "1":
-    return(
-      <div className="Parties">
-        <p>Code de la partie : {code}
-        <br/> Type de jeu : Bataille ouverte </p>
-        <img className="bataille" src="./Bataille/cardBack.png" alt="Logo bataille" style={{width : 50+"px"}}/>
-        {page ? (
-          <>
-          <button onClick={() => loadGameByList(code)}>Charger la partie</button>
-          </>
-        ) : (
-          <>
-          <button onClick={() => joinGameByList(code)}>Rejoindre la partie</button>
-          </>
-        )}
-      </div>
-    );
+    type_jeu = "Bataille ouverte";
+    chemin_img = "./Bataille/cardBack.png";
+    break;
   case "2":
-    return(
-      <div className="Parties">
-        <p>Code de la partie : {code}
-        <br/> Type de jeu : 6 qui prend </p>
-        <img className="boeuf" src="./Boeuf/boeuf.svg" alt="Logo 6 qui prend" style={{width : 50+"px"}}/>
-        {page ? (
-          <>
-          <button onClick={() => loadGameByList(code)}>Charger la partie</button>
-          </>
-        ) : (
-          <>
-          <button onClick={() => joinGameByList(code)}>Rejoindre la partie</button>
-          </>
-        )}
-      </div>
-    );
-
+    type_jeu = "6 qui prend";
+    chemin_img = "./Boeuf/boeuf.svg";
+    break;
+  default:
+    type_jeu = "Erreur";
+    break;
   }
+  return(
+    <div className="Parties">
+      <p className="partieText">Code de la partie :{code}</p>
+      <div className="Type">
+        <p className="partieText"> Type de jeu : {type_jeu} </p>
+        <img className="boeuf" src={chemin_img} alt={"Logo " + type_jeu} style={{width : 50+"px"}}/>
+      </div >
+      {page ? (
+        <>
+        <button onClick={() => loadGameByList(code)}>Charger la partie</button>
+        </>
+      ) : (
+        <>
+        <button onClick={() => joinGameByList(code)}>Rejoindre la partie</button>
+        </>
+      )}
+    </div>
+  );
 }
 
 function ListeDesElements() {
