@@ -3,7 +3,7 @@ import { socket } from "./socket.js";
 
 var playerGameId = "";
 
-export function Abandon({gameEnd}) {
+export function Abandon({ gameEnd }) {
     function giveUp(gameId, pseudo) {
         socket.emit("giveUp", gameId, pseudo);
     }

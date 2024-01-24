@@ -57,12 +57,10 @@ function App() {
     sessionStorage.clear();
   }
 
-  function goToGame() {
-    setInGame(true);
-  }
-
   function backFromGame() {
     setInGame(false);
+    setGameType(null);
+    setGameId("0000");
   }
 
   function setTypeJeu(type) {
@@ -83,8 +81,9 @@ function App() {
     socket.on("userAlreadyRegistered", alreadyRegistered);
     socket.on("accountCreated", accountCreated);
     socket.on("connected", onConnect);
-    socket.on("goToGame",(idRoom, acknowledgeCallback) => {
-      goToGame();
+    socket.on("goToGame",(idRoom, typeJeu, acknowledgeCallback) => {
+      setInGame(true);
+      setGameType(typeJeu);
       setGameId(idRoom);
       acknowledgeCallback();
     });
