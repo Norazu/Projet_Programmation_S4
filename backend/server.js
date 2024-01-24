@@ -568,14 +568,14 @@ io.on("connection", (socket) => {
     //console.log(listeParties);
     if (listeParties) {
       for (var pt in listeParties) {
-        if (listeParties[pt].status==0){
-          var partie = listeParties[pt];
+        var partie = listeParties[pt];
+        if (listeParties[pt].status==0 && ((typeJeu==0)||typeJeu==partie.typeJeu)){
           liste.push([
             pt, //code
-            partie.typeJeu,
-            partie.nbMinJoueurs, 
+            partie.typeJeu
+            /*partie.nbMinJoueurs, 
             partie.nbMaxJoueurs,
-            partie.listeJoueurs.length
+            partie.listeJoueurs.length*/
           ]);
         }
       }
@@ -652,6 +652,42 @@ io.on("connection", (socket) => {
         return 1;
     }
   }
+
+  function finMancheBoeuf(gameId){
+    let max=0;
+    let min;
+    let vainqueurs=[];
+    let val;
+    for (let cle in listeParties[gameId].playerScoreBoeuf){
+
+      val=listeParties[gameId].playerScoreBoeuf[cle];
+      if (val > max){
+        max=val;
+      }
+      min = min ?? val;
+      if (val<=min){
+        if (val==min){
+          vainqueurs.push(cle);
+        } else{
+          vainqueurs=[];
+          vainqueurs.push(cle);
+          min=val;
+        }
+      }
+    }
+
+    if (max>=66){
+      //enregistrer dans la BDD
+
+      io.to(gameId).emit("gameFinished",[]);
+      delete listeParties[gameId];
+      io.to(gameId).emit("victory",vainqueurs,min);
+      return true;
+    }
+    return false;
+
+  }
+
 
   socket.on("pauseGame", (gameId, pseudo) => {
     // => joueur clique sur le bouton "pause"

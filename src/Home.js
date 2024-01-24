@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { socket } from "./socket.js";
+var type;
 
 function joinGameByList(identifiant){
   //console.log(typeof(identifiant));
@@ -11,28 +12,51 @@ function loadGameByList(code) {
   socket.emit("loadGame", code);
 }
 
-function Parties({code, page}){
-  return(
-    <div className="Parties">
-      <p>Code de la partie : {code}</p>
-      {page ? (
-        <>
-        <button onClick={() => loadGameByList(code)}>Charger la partie</button>
-        </>
-      ) : (
-        <>
-        <button onClick={() => joinGameByList(code)}>Rejoindre la partie</button>
-        </>
-      )}
-    </div>
-  );
+function Parties({code, page,type}){
+  switch (type){
+  case "1":
+    return(
+      <div className="Parties">
+        <p>Code de la partie : {code}
+        <br/> Type de jeu : Bataille ouverte </p>
+        <img className="bataille" src="./Bataille/cardBack.png" alt="Logo bataille" style={{width : 50+"px"}}/>
+        {page ? (
+          <>
+          <button onClick={() => loadGameByList(code)}>Charger la partie</button>
+          </>
+        ) : (
+          <>
+          <button onClick={() => joinGameByList(code)}>Rejoindre la partie</button>
+          </>
+        )}
+      </div>
+    );
+  case "2":
+    return(
+      <div className="Parties">
+        <p>Code de la partie : {code}
+        <br/> Type de jeu : 6 qui prend </p>
+        <img className="boeuf" src="./Boeuf/boeuf.svg" alt="Logo 6 qui prend" style={{width : 50+"px"}}/>
+        {page ? (
+          <>
+          <button onClick={() => loadGameByList(code)}>Charger la partie</button>
+          </>
+        ) : (
+          <>
+          <button onClick={() => joinGameByList(code)}>Rejoindre la partie</button>
+          </>
+        )}
+      </div>
+    );
+
+  }
 }
 
 function ListeDesElements() {
   const [parties, setParties] = useState([]);
 
   useEffect(() => {
-    socket.emit("recuperationListeParties", 1);
+    socket.emit("recuperationListeParties", type);
 
     socket.on('listeDesParties', liste => {
       setParties(liste);
@@ -44,7 +68,7 @@ function ListeDesElements() {
     return (
       <div className="playerList">
           {parties.map((partie, index) => (
-              <Parties key={index} code={partie[0]}/>
+              <Parties key={index} code={partie[0]} type={partie[1]}/>
           ))}
       </div>
   );
@@ -102,7 +126,8 @@ function Home({ gameType }) {
     socket.emit("creationPartie",typeJeu,2,10,sessionStorage.getItem("sessId"));
   }
 
-  function afficherListeParties() {
+  function afficherListeParties(typeJeu) {
+    type=typeJeu;
     setShowGameList(!showGameList);
   }
 
@@ -181,8 +206,17 @@ function Home({ gameType }) {
                 <ListeDesElements />
               </div>
             ) : (
-              <button type="button" onClick={afficherListeParties}>Afficher la liste des parties</button>
-            )}
+              <div>
+                <button type="button" onClick={() => afficherListeParties(document.getElementById("choixTypeJeuRecherche").value)}>Afficher la liste des parties</button>
+
+                <label htmlFor="choixTypeJeuRecherche">A quel jeu voulez-vous jouer ? </label>
+                <select id="choixTypeJeuRecherche">
+                  <option value="0">Tout types</option>
+                  <option value="1">Bataille ouverte</option>
+                  <option value="2">6 qui prend</option>
+                </select>
+              </div>
+              )}
           </div>
           </>
         )}
