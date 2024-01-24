@@ -142,18 +142,22 @@ function Home({ gameType }) {
   function gameRunning(){
     window.alert("La partie est déjà lancée");
   }
+  function maxGames(){
+    window.alert("Vous avez atteint le nombre maximum de parties en cours");
+  }
+
 
   useEffect(()=>{
     socket.on("roomComplete",roomComplete);
     socket.on("roomDontExist", roomDontExist);
     socket.on("gameRunning", gameRunning);
+    socket.on("maxGames", maxGames);
     return ()=>{
       socket.off("roomComplete");
       socket.off("roomDontExist");
       socket.off("gameRunning");
+      socket.off("maxGames");
     }
-
-
   });
 
   function deconnexion() {
