@@ -171,12 +171,12 @@ io.on("connection", (socket) => {
     // => joueur clique sur le bouton "abandonner" dans une partie
     //s'assure de la réassignation du meneur si le créateur abandonne
     //supprime la partie des parties lancées si plus aucun joueur n'est présent dedans
-    var index = listeParties[gameId].listeJoueurs.indexOf(playerId);
+    let index = listeParties[gameId].listeJoueurs.indexOf(playerId);
     listeParties[gameId].listeJoueurs.splice(index,1);
-    listeParties[gameId].nbJoueurs=(listeParties[gameId].nbJoueurs)-1;
+    listeParties[gameId].nbJoueurs-=1;
 
     console.log("nombre de joueurs dans la partie " + gameId + " : " + listeParties[gameId].nbJoueurs);
-  
+
     if (listeParties[gameId].idCreateur == playerId) {
       if (listeParties[gameId].nbJoueurs == 0) {
         delete listeParties[gameId];
@@ -210,7 +210,7 @@ io.on("connection", (socket) => {
     listeParties[codepartie].listeIdentifiants=[socket.id];
     await socket.join(codepartie.toString());
     console.log("partie " + codepartie + " créée");
-    socket.emit("goToGame", codepartie.toString(), () => {
+    socket.emit("goToGame", codepartie.toString(), listeParties[codepartie].typeJeu, () => {
       socket.emit("setGameId", codepartie.toString());
       socket.emit("playersList", listeParties[codepartie].listeJoueurs);
     });
@@ -239,7 +239,7 @@ io.on("connection", (socket) => {
           }
           listeParties[idRoomInt].listeIdentifiants.push(socket.id);
           await socket.join(idRoom);
-          socket.emit('goToGame', idRoom, () => {
+          socket.emit('goToGame', idRoom, listeParties[idRoomInt].typeJeu, () => {
             io.to(idRoom).emit("setGameId", idRoom);
             io.to(idRoom).emit("playersList", listeParties[idRoomInt].listeJoueurs);
             console.log("Le joueur " + idJoueur + " a rejoint la room " + idRoom);

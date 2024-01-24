@@ -148,8 +148,6 @@ function Home({ gameType }) {
       socket.off("roomDontExist");
       socket.off("gameRunning");
     }
-
-
   });
 
   function deconnexion() {
