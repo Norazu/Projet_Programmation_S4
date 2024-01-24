@@ -160,7 +160,13 @@ io.on("connection", (socket) => {
     console.log("deconnexion");
     for (const cle in listeParties) {
       console.log(listeParties[cle].socketsJoueurs);
-      listeParties[cle].socketsJoueurs.filter(socketJoueur => socketJoueur != socket.id);
+      let partie = listeParties[cle];
+      for (current in partie) {
+        if (partie[current] == socket.id) {
+          delete partie[current];
+          break;
+        }
+      }
     }
   });
 
@@ -381,12 +387,11 @@ io.on("connection", (socket) => {
   function waitForSocketEvent() {
     console.log("waiting response");
     return new Promise(resolve => {
-      const eventListener = number => {
+      socket.on("ligneChoisie", async(number) => {
         // Remove the event listener after it's been triggered
-        socket.off("ligneChoisie", eventListener);
+        socket.off("ligneChoisie");
         resolve(number);
-      };
-      socket.on("ligneChoisie", eventListener);
+      });
     });
   }
 
@@ -414,6 +419,7 @@ io.on("connection", (socket) => {
         io.to(listeParties[gameId].socketsJoueurs[idJoueur]).emit("choixLigne");
         ligneMin = await waitForSocketEvent();
         unpauseGame(gameId, listeParties[gameId].idCreateur);
+        console.log("game unpaused");
       }
       if(listeParties[gameId].cartes["reste"][ligneMin].length == 5 || min > carte){
         while(listeParties[gameId].cartes["reste"][ligneMin].length >0){

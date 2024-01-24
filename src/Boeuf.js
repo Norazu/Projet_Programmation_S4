@@ -10,6 +10,7 @@ function LignesCartes(){
     function ligneChoisie(indexLigne) {
         setChoixLigne(false);
         socket.emit("ligneChoisie", indexLigne);
+        console.log("signal sent");
     }
 
     useEffect(() => {
@@ -18,7 +19,6 @@ function LignesCartes(){
         });
         socket.on("choixLigne", () => {
             setChoixLigne(true);
-            console.log(choixLigne);
         });
 
         return () => {
