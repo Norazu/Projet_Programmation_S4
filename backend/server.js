@@ -199,9 +199,13 @@ io.on("connection", (socket) => {
 
   function defCode() {
     //fonction pour définir un code de partie unique
-    var code = Math.floor(Math.random() * 9999);
+    var code = Math.floor(Math.random() * 9000)+1000;
     while (code in listeParties) {
-      code = Math.floor(Math.random() * 9999);
+      if (code>=9999){
+        code=1000;;
+      }else {
+        code++;
+      }
     }
     return code;
   }
@@ -209,6 +213,10 @@ io.on("connection", (socket) => {
   async function creerPartie(codepartie, type, nbMinJoueurs, nbMaxJoueurs, idCreateur, cartes) {
     //fonction de création de partie, sous forme de fonction car utilisée plusieurs fois dans le code
     //cette fonction est asynchrone car socket.join est une opération asynchrone
+    if (nbMinJoueurs>nbMaxJoueurs || nbMinJoueurs>10 || nbMaxJoueurs>10){
+      nbMinJoueurs=2;
+      nbMaxJoueurs=10;
+    }
     listeParties[codepartie] = new partie(type, idCreateur, nbMinJoueurs, nbMaxJoueurs, 1, [idCreateur],0,0,cartes);
     listeParties[codepartie].socketsJoueurs[idCreateur] = socket.id;
     await socket.join(codepartie.toString());
@@ -221,9 +229,14 @@ io.on("connection", (socket) => {
 
   socket.on('creationPartie', (type, nbMinJoueurs, nbMaxJoueurs, idCreateur) => {
     // => joueur clique sur le bouton "créer la partie"
-    //crée la partie avec les infos données
-    codepartie = defCode();
-    creerPartie(codepartie, type, nbMinJoueurs, nbMaxJoueurs, idCreateur, {});
+    //crée la partie avec les infos données sauf si le nombre de partie max est dépassé
+    if (Object.keys(listeParties).length>=8999){
+      console.log("nombre de partie maximal atteint");
+      socket.emit("maxGames");
+    } else {
+      codepartie = defCode();
+      creerPartie(codepartie, type, nbMinJoueurs, nbMaxJoueurs, idCreateur, {});      
+    }
   });
 
   async function rejoindrePartie(idJoueur, idRoom) {

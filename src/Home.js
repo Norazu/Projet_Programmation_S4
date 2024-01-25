@@ -117,9 +117,9 @@ function Home({ gameType }) {
     setShowCreateGame(!showCreateGame);
   }
 
-  function creationPartie(typeJeu) {
+  function creationPartie(typeJeu,min,max) {
     gameType(typeJeu);
-    socket.emit("creationPartie",typeJeu,2,10,sessionStorage.getItem("sessId"));
+    socket.emit("creationPartie",typeJeu,min,max,sessionStorage.getItem("sessId"));
   }
 
   function afficherListeParties(typeJeu) {
@@ -138,21 +138,35 @@ function Home({ gameType }) {
   function gameRunning(){
     window.alert("La partie est déjà lancée");
   }
+  function maxGames(){
+    window.alert("Vous avez atteint le nombre maximum de parties en cours");
+  }
+  function unvalidArguments(){
+    window.alert("Vous avez fourni un argument qui n'est pas valide");
+  }
+
 
   useEffect(()=>{
     socket.on("roomComplete",roomComplete);
     socket.on("roomDontExist", roomDontExist);
     socket.on("gameRunning", gameRunning);
+    socket.on("maxGames", maxGames);
+    socket.on("unvalidArguments", unvalidArguments)
     return ()=>{
       socket.off("roomComplete");
       socket.off("roomDontExist");
       socket.off("gameRunning");
+      socket.off("maxGames");
+      socket.off("unvalidArguments");
     }
   });
 
   function deconnexion() {
     socket.emit("goodbye", sessionStorage.getItem("sessId"));
   }
+
+  const [maxJoueurs, setMaxJoueurs]  = useState(10);
+  const [minJoueurs, setMinJoueurs]  = useState(2);
 
   return (
     <div className="Home">
@@ -182,7 +196,13 @@ function Home({ gameType }) {
                   <option value="1">Bataille ouverte</option>
                   <option value="2">6 qui prend</option>
                 </select>
-                <button type="button" onClick={() => creationPartie(document.getElementById("choixTypeJeu").value)}>Créer la partie</button>
+                <br/>
+                <label htmlFor="nbJoueursMin">Combien de joueurs minimum voulez-vous ? </label>
+                <input id="nbJoueursMin" onChange={()=>{setMinJoueurs(document.getElementById("nbJoueursMin").value)}} type="number" min="2" max={maxJoueurs} defaultValue={minJoueurs}/>
+                <br/>
+                <label htmlFor="nbJoueursMax">Combien de joueurs maximum voulez-vous ? </label>
+                <input id="nbJoueursMax" onChange={()=>setMaxJoueurs(document.getElementById("nbJoueursMax").value)} type="number" min={minJoueurs} max="10" defaultValue={maxJoueurs}/>
+                <button type="button" onClick={() => creationPartie(document.getElementById("choixTypeJeu").value, document.getElementById("nbJoueursMin").value, document.getElementById("nbJoueursMax").value)}>Créer la partie</button>
               </div>
               </>
             ) : (
