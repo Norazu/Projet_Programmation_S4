@@ -2,6 +2,8 @@ import { CarteBoeuf, Abandon, Sauvegarde, PlayerList, Timer, Plateau, Main } fro
 import { useEffect, useState } from "react";
 import { socket } from "./socket.js";
 
+let playerGameId = "";
+
 function LignesCartes(){
     
     const [lignes, setLignes] = useState([]);
@@ -9,7 +11,7 @@ function LignesCartes(){
 
     function ligneChoisie(indexLigne) {
         setChoixLigne(false);
-        socket.emit("ligneChoisie", indexLigne);
+        socket.emit("ligneChoisie", playerGameId, sessionStorage.getItem("sessId"), indexLigne);
         console.log("signal sent");
     }
 
@@ -17,7 +19,8 @@ function LignesCartes(){
         socket.on("reste", reste => {
             setLignes(reste);
         });
-        socket.on("choixLigne", () => {
+        socket.on("choixLigne", (gameId) => {
+            playerGameId = gameId;
             setChoixLigne(true);
         });
 

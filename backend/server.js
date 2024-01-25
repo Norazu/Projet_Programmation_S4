@@ -384,22 +384,26 @@ io.on("connection", (socket) => {
     }
   });
 
-  function waitForSocketEvent() {
-    console.log("waiting response");
-    return new Promise(resolve => {
-      socket.on("ligneChoisie", async(number) => {
-        // Remove the event listener after it's been triggered
-        socket.off("ligneChoisie");
-        resolve(number);
-      });
-    });
-  }
+  socket.on("ligneChoisie",(gameId, idJoueur, indexLigne) => {
+    if (listeParties[gameId].gameIsPaused) {
+      unpauseGame(gameId, listeParties[gameId].idCreateur);
+    }
+    let carte = gameOrderBoeuf[gameId][0][1];
+    while(listeParties[gameId].cartes["reste"][indexLigne].length >0){
+      listeParties[gameId].playerScoreBoeuf[idJoueur] += nbTetes(listeParties[gameId].cartes["reste"][indexLigne].pop());
+    }
+    listeParties[gameId].cartes["reste"][indexLigne].push(carte);
+    gameOrderBoeuf[gameId].splice(0,1);
+    io.to(gameId).emit("reste", listeParties[gameId].cartes["reste"]);
+    tourBoeuf(gameId);
+  });
 
-  async function tourBoeuf(gameId) {
+  function tourBoeuf(gameId) {
     console.log(gameOrderBoeuf);
-    for (let joueur in gameOrderBoeuf[gameId]) {
-      let idJoueur = gameOrderBoeuf[gameId][joueur][0];
-      let carte = gameOrderBoeuf[gameId][joueur][1];
+    let pierre = false;
+    gameOrderBoeuf[gameId].every((joueur) => {
+      let idJoueur = joueur[0];
+      let carte = joueur[1];
       console.log("carte du joueur " + idJoueur + " : " + carte);
       var min = listeParties[gameId].cartes["reste"][0][listeParties[gameId].cartes["reste"][0].length-1];
       var ligneMin = 0;
@@ -415,11 +419,10 @@ io.on("connection", (socket) => {
       });
       console.log(min);
       if(min > carte){
+        io.to(listeParties[gameId].socketsJoueurs[idJoueur]).emit("choixLigne",gameId);
         pauseGame(gameId, listeParties[gameId].idCreateur);
-        io.to(listeParties[gameId].socketsJoueurs[idJoueur]).emit("choixLigne");
-        ligneMin = await waitForSocketEvent();
-        unpauseGame(gameId, listeParties[gameId].idCreateur);
-        console.log("game unpaused");
+        pierre = true;
+        return false;
       }
       if(listeParties[gameId].cartes["reste"][ligneMin].length == 5 || min > carte){
         while(listeParties[gameId].cartes["reste"][ligneMin].length >0){
@@ -428,10 +431,13 @@ io.on("connection", (socket) => {
       }
       listeParties[gameId].cartes["reste"][ligneMin].push(carte);
       io.to(gameId).emit("reste", listeParties[gameId].cartes["reste"]);
+      return true;
+    });
+    if (!pierre) {
+      io.to(gameId).emit("scorePlayer",listeParties[gameId].playerScoreBoeuf);
+      gameOrderBoeuf[gameId] = [];
+      startTimer(gameId);
     }
-    io.to(gameId).emit("scorePlayer",listeParties[gameId].playerScoreBoeuf);
-    gameOrderBoeuf[gameId] = [];
-    startTimer(gameId);
   }
 
   function pickWinner(gameId, cardsToWin) {
