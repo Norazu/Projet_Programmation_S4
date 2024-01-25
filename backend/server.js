@@ -43,9 +43,6 @@ const io = new Server(server, {
   },
 });
 
-//variables du 6 qui prend
-var nbTours = 10;
-
 //objet représentant une partie avec toutes ses infos sur le serveur
 class partie {
   constructor(typeJeu, idCreateur, nbMinJoueurs, nbMaxJoueurs, nbJoueurs, listeJoueurs, timer, secondTimer, cartes) {
@@ -61,7 +58,8 @@ class partie {
     this.cartes = cartes;
     this.status=0; //1 si la partie est démarré
     this.gameIsPaused=false;
-    this.playerScoreBoeuf = {}
+    this.playerScoreBoeuf = {};
+    this.compteToursBoeuf = 8;
   }
 }
 
@@ -218,6 +216,7 @@ io.on("connection", (socket) => {
       nbMaxJoueurs=10;
     }
     listeParties[codepartie] = new partie(type, idCreateur, nbMinJoueurs, nbMaxJoueurs, 1, [idCreateur],0,0,cartes);
+    listeParties[codepartie].playerScoreBoeuf[idCreateur] = 0;
     listeParties[codepartie].socketsJoueurs[idCreateur] = socket.id;
     await socket.join(codepartie.toString());
     console.log("partie " + codepartie + " créée");
@@ -253,6 +252,7 @@ io.on("connection", (socket) => {
             listeParties[idRoomInt].nbJoueurs += 1;
             listeParties[idRoomInt].listeJoueurs.push(idJoueur);
           }
+          listeParties[idRoomInt].playerScoreBoeuf[idJoueur] = 0;
           listeParties[idRoomInt].socketsJoueurs[idJoueur] = socket.id;
           await socket.join(idRoom);
           socket.emit('goToGame', idRoom, listeParties[idRoomInt].typeJeu, () => {
@@ -446,10 +446,21 @@ io.on("connection", (socket) => {
       io.to(gameId).emit("reste", listeParties[gameId].cartes["reste"]);
       return true;
     });
-    if (!pierre) {
+    if (!pierre && !finMancheBoeuf(gameId)) {
       io.to(gameId).emit("scorePlayer",listeParties[gameId].playerScoreBoeuf);
       gameOrderBoeuf[gameId] = [];
-      startTimer(gameId);
+      listeParties[gameId].compteToursBoeuf ++;
+      if (listeParties[gameId].compteToursBoeuf < 10) {
+        startTimer(gameId);
+      } else {
+        setTimeout(() => {
+          listeParties[gameId].cartes = shuffleBoeuf(listeParties[gameId].listeJoueurs);
+          listeParties[gameId].compteToursBoeuf = 0;
+          io.to(gameId).emit("reste", listeParties[gameId].cartes["reste"]);
+          io.to(gameId).emit("cardsChanged");
+          startTimer(gameId);
+        }, 2000);
+      }
     }
   }
 
@@ -685,35 +696,35 @@ io.on("connection", (socket) => {
       cards.push(i);
     }
     playerList.forEach((elem) => 
-    {cartes[elem] = [];
-      while(cartes[elem].length <10){
-      var indexMax = cards.length-1;
-      var selectedIndex = Math.floor(Math.random()*indexMax);
-      cartes[elem].push(cards[selectedIndex]);
-      cards.splice(selectedIndex,1);
-    }
-    cartes["reste"] = []
-    for(i=0;i<4;i++){
-      var indexMax = cards.length-1;
-      var selectedIndex = Math.floor(Math.random()*indexMax);
-      cartes["reste"].push([cards[selectedIndex]]);
-      cards.splice(selectedIndex,1);
-    }
-  })
+      {cartes[elem] = [];
+        while(cartes[elem].length <10){
+        var indexMax = cards.length-1;
+        var selectedIndex = Math.floor(Math.random()*indexMax);
+        cartes[elem].push(cards[selectedIndex]);
+        cards.splice(selectedIndex,1);
+      }
+      cartes["reste"] = []
+      for(i=0;i<4;i++){
+        var indexMax = cards.length-1;
+        var selectedIndex = Math.floor(Math.random()*indexMax);
+        cartes["reste"].push([cards[selectedIndex]]);
+        cards.splice(selectedIndex,1);
+      }
+    });
     return cartes;
   }
 
   function nbTetes(numCarte){
     if (numCarte === 55) {
       return 7;
-    } else if(numCarte%11===0){
-        return 4;
+    } else if(numCarte % 11 === 0){
+      return 4;
     } else if (numCarte % 10 === 0) {
-        return  3;
+      return  3;
     } else if (numCarte % 5 === 0) {
-        return 2;
+      return 2;
     } else {
-        return 1;
+      return 1;
     }
   }
 
@@ -723,7 +734,6 @@ io.on("connection", (socket) => {
     let vainqueurs=[];
     let val;
     for (let cle in listeParties[gameId].playerScoreBoeuf){
-
       val=listeParties[gameId].playerScoreBoeuf[cle];
       if (val > max){
         max=val;
@@ -739,17 +749,13 @@ io.on("connection", (socket) => {
         }
       }
     }
-
     if (max>=66){
-      //enregistrer dans la BDD
-
       io.to(gameId).emit("gameFinished",[]);
       delete listeParties[gameId];
       io.to(gameId).emit("victory",vainqueurs,min);
       return true;
     }
     return false;
-
   }
 
   function pauseGame(gameId, pseudo) {
