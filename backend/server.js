@@ -55,7 +55,7 @@ class partie {
     this.nbMaxJoueurs = nbMaxJoueurs;
     this.nbJoueurs = nbJoueurs;
     this.listeJoueurs = listeJoueurs;
-    this.listeIdentifiants = [];
+    this.socketsJoueurs = {};
     this.timer = timer;
     this.secondTimer = secondTimer;
     this.cartes = cartes;
@@ -159,12 +159,15 @@ io.on("connection", (socket) => {
     //s'assure que si le socket était connecté à une partie, il en soit supprimé
     console.log("deconnexion");
     for (const cle in listeParties) {
-      console.log(listeParties[cle].listeIdentifiants);
-        if (listeParties[cle].listeIdentifiants.includes(socket.id)){
-          let indice = listeParties[cle].listeIdentifiants.indexOf(socket.id);
-          listeParties[cle].listeIdentifiants.splice(indice,1);
+      console.log(listeParties[cle].socketsJoueurs);
+      let partie = listeParties[cle];
+      for (current in partie) {
+        if (partie[current] == socket.id) {
+          delete partie[current];
+          break;
         }
       }
+    }
   });
 
   socket.on("giveUp", (gameId, playerId) => {
@@ -207,7 +210,7 @@ io.on("connection", (socket) => {
     //fonction de création de partie, sous forme de fonction car utilisée plusieurs fois dans le code
     //cette fonction est asynchrone car socket.join est une opération asynchrone
     listeParties[codepartie] = new partie(type, idCreateur, nbMinJoueurs, nbMaxJoueurs, 1, [idCreateur],0,0,cartes);
-    listeParties[codepartie].listeIdentifiants=[socket.id];
+    listeParties[codepartie].socketsJoueurs[idCreateur] = socket.id;
     await socket.join(codepartie.toString());
     console.log("partie " + codepartie + " créée");
     socket.emit("goToGame", codepartie.toString(), listeParties[codepartie].typeJeu, () => {
@@ -237,7 +240,7 @@ io.on("connection", (socket) => {
             listeParties[idRoomInt].nbJoueurs += 1;
             listeParties[idRoomInt].listeJoueurs.push(idJoueur);
           }
-          listeParties[idRoomInt].listeIdentifiants.push(socket.id);
+          listeParties[idRoomInt].socketsJoueurs[idJoueur] = socket.id;
           await socket.join(idRoom);
           socket.emit('goToGame', idRoom, listeParties[idRoomInt].typeJeu, () => {
             io.to(idRoom).emit("setGameId", idRoom);
@@ -381,9 +384,24 @@ io.on("connection", (socket) => {
     }
   });
 
+  socket.on("ligneChoisie",(gameId, idJoueur, indexLigne) => {
+    if (listeParties[gameId].gameIsPaused) {
+      unpauseGame(gameId, listeParties[gameId].idCreateur);
+    }
+    let carte = gameOrderBoeuf[gameId][0][1];
+    while(listeParties[gameId].cartes["reste"][indexLigne].length >0){
+      listeParties[gameId].playerScoreBoeuf[idJoueur] += nbTetes(listeParties[gameId].cartes["reste"][indexLigne].pop());
+    }
+    listeParties[gameId].cartes["reste"][indexLigne].push(carte);
+    gameOrderBoeuf[gameId].splice(0,1);
+    io.to(gameId).emit("reste", listeParties[gameId].cartes["reste"]);
+    tourBoeuf(gameId);
+  });
+
   function tourBoeuf(gameId) {
     console.log(gameOrderBoeuf);
-    gameOrderBoeuf[gameId].forEach((joueur) => {
+    let pierre = false;
+    gameOrderBoeuf[gameId].every((joueur) => {
       let idJoueur = joueur[0];
       let carte = joueur[1];
       console.log("carte du joueur " + idJoueur + " : " + carte);
@@ -401,22 +419,25 @@ io.on("connection", (socket) => {
       });
       console.log(min);
       if(min > carte){
-        socket.emit("choixLigne",carte);
-        //socket à faire
+        io.to(listeParties[gameId].socketsJoueurs[idJoueur]).emit("choixLigne",gameId);
+        pauseGame(gameId, listeParties[gameId].idCreateur);
+        pierre = true;
+        return false;
       }
-      else{
-        if(listeParties[gameId].cartes["reste"][ligneMin].length == 5){
-          while(listeParties[gameId].cartes["reste"][ligneMin].length >0){
-            listeParties[gameId].playerScoreBoeuf[idJoueur] += nbTetes(listeParties[gameId].cartes["reste"][ligneMin].pop());
-          }
+      if(listeParties[gameId].cartes["reste"][ligneMin].length == 5 || min > carte){
+        while(listeParties[gameId].cartes["reste"][ligneMin].length >0){
+          listeParties[gameId].playerScoreBoeuf[idJoueur] += nbTetes(listeParties[gameId].cartes["reste"][ligneMin].pop());
         }
-        listeParties[gameId].cartes["reste"][ligneMin].push(carte);
-        io.to(gameId).emit("reste", listeParties[gameId].cartes["reste"]);
       }
+      listeParties[gameId].cartes["reste"][ligneMin].push(carte);
+      io.to(gameId).emit("reste", listeParties[gameId].cartes["reste"]);
+      return true;
     });
-    io.to(gameId).emit("scorePlayer",listeParties[gameId].playerScoreBoeuf);
-    gameOrderBoeuf[gameId] = [];
-    startTimer(gameId);
+    if (!pierre) {
+      io.to(gameId).emit("scorePlayer",listeParties[gameId].playerScoreBoeuf);
+      gameOrderBoeuf[gameId] = [];
+      startTimer(gameId);
+    }
   }
 
   function pickWinner(gameId, cardsToWin) {
@@ -718,12 +739,7 @@ io.on("connection", (socket) => {
 
   }
 
-
-  socket.on("pauseGame", (gameId, pseudo) => {
-    // => joueur clique sur le bouton "pause"
-    //regarde si le joueur a les permissions et que la partie n'a pas démarrée
-    //met la partie en pause sur le serveur
-    //renvoie le signal conséquent
+  function pauseGame(gameId, pseudo) {
     if (listeParties[gameId].status==1){
       if (listeParties[gameId].idCreateur==pseudo){
         listeParties[gameId].gameIsPaused = true;
@@ -734,6 +750,23 @@ io.on("connection", (socket) => {
     } else {
       socket.emit("pauseGameNotStarted");
     }
+  }
+
+  function unpauseGame(gameId, pseudo) {
+    if (listeParties[gameId].idCreateur==pseudo){
+      listeParties[gameId].gameIsPaused = false;
+      socket.emit("gameReprise");
+    } else{
+      socket.emit("pasPermPause");
+    }
+  }
+
+  socket.on("pauseGame", (gameId, pseudo) => {
+    // => joueur clique sur le bouton "pause"
+    //regarde si le joueur a les permissions et que la partie n'a pas démarrée
+    //met la partie en pause sur le serveur
+    //renvoie le signal conséquent
+    pauseGame(gameId, pseudo);
   });
 
   socket.on("unpauseGame",  (gameId, pseudo) => {
@@ -741,12 +774,7 @@ io.on("connection", (socket) => {
     //regarde si le joueur a les permissions
     //enleve la pause de la partie sur le serveur
     //renvoie le signal conséquent
-    if (listeParties[gameId].idCreateur==pseudo){
-      listeParties[gameId].gameIsPaused = false;
-      socket.emit("gameReprise");
-    } else{
-      socket.emit("pasPermPause");
-    }
+    unpauseGame(gameId, pseudo);
   });
 
   socket.on("launchGame",(gameId, pseudo)=>{

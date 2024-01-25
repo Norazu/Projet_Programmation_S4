@@ -2,26 +2,43 @@ import { CarteBoeuf, Abandon, Sauvegarde, PlayerList, Timer, Plateau, Main } fro
 import { useEffect, useState } from "react";
 import { socket } from "./socket.js";
 
+let playerGameId = "";
+
 function LignesCartes(){
     
     const [lignes, setLignes] = useState([]);
+    const [choixLigne, setChoixLigne] = useState(false);
+
+    function ligneChoisie(indexLigne) {
+        setChoixLigne(false);
+        socket.emit("ligneChoisie", playerGameId, sessionStorage.getItem("sessId"), indexLigne);
+        console.log("signal sent");
+    }
 
     useEffect(() => {
         socket.on("reste", reste => {
             setLignes(reste);
         });
+        socket.on("choixLigne", (gameId) => {
+            playerGameId = gameId;
+            setChoixLigne(true);
+        });
 
         return () => {
             socket.off("reste");
+            socket.off("choixLigne");
         }
     });
 
     return (
         <div className="LignesCartes">
             {lignes.map((cards, index) => (
+                <>
+                {choixLigne ? (<button onClick={() => ligneChoisie(index)}>Choisir cette ligne</button>) : (<></>)}
                 <ul className="LigneCartes" id={index} key={index}>
                     {cards.map((cardNum) => (<li><CarteBoeuf CardNumber={cardNum} disabled={true}/></li>))}
                 </ul>
+                </>
             ))}
         </div>
     );
