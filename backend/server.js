@@ -210,6 +210,10 @@ io.on("connection", (socket) => {
   async function creerPartie(codepartie, type, nbMinJoueurs, nbMaxJoueurs, idCreateur, cartes) {
     //fonction de création de partie, sous forme de fonction car utilisée plusieurs fois dans le code
     //cette fonction est asynchrone car socket.join est une opération asynchrone
+    if (nbMinJoueurs>nbMaxJoueurs || nbMinJoueurs>10 || nbMaxJoueurs>10){
+      nbMinJoueurs=2;
+      nbMaxJoueurs=10;
+    }
     listeParties[codepartie] = new partie(type, idCreateur, nbMinJoueurs, nbMaxJoueurs, 1, [idCreateur],0,0,cartes);
     listeParties[codepartie].listeIdentifiants=[socket.id];
     await socket.join(codepartie.toString());
@@ -228,7 +232,7 @@ io.on("connection", (socket) => {
       socket.emit("maxGames");
     } else {
       codepartie = defCode();
-      creerPartie(codepartie, type, nbMinJoueurs, nbMaxJoueurs, idCreateur, {});
+      creerPartie(codepartie, type, nbMinJoueurs, nbMaxJoueurs, idCreateur, {});      
     }
   });
 
