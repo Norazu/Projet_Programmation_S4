@@ -1,3 +1,4 @@
+import Score from "./Score.js";
 import { useEffect, useState } from "react";
 import { socket } from "./socket.js";
 var type;
@@ -75,8 +76,6 @@ function PartiesSauvegardees() {
   const [savePage, setSavePage] = useState(false);
 
   useEffect(() => {
-    socket.emit("getSavedGames");
-
     socket.on("returnSavedGames", liste => {
       setSavedGames(liste);
       setSavePage(true);
@@ -84,11 +83,11 @@ function PartiesSauvegardees() {
     return () => {
       socket.off("returnSavedGames");
     };
-  }, []);
+  });
   return (
     <div className="playerList">
       {savePage && savedGames.map((partie) => (
-          <Parties code={partie[0]} page={savePage} type={partie[1]}/>
+          <Parties key={partie[0]} code={partie[0]} page={savePage} type={partie[1]}/>
       ))}
     </div>
   );
@@ -98,6 +97,7 @@ function Home({ gameType }) {
   const [showCreateGame, setShowCreateGame] = useState(false);
   const [showGameList, setShowGameList] = useState(false);
   const [savedGames, setSavedGames] = useState(false);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
 
   function joinGame() {
     var identifiant = document.getElementById("idGame").value;
@@ -109,8 +109,14 @@ function Home({ gameType }) {
     socket.emit("loadGame", code);
   }
 
-  function toSavedGames() {
-    setSavedGames(true);
+  function changeSavedGames() {
+    setSavedGames(!savedGames);
+    socket.emit("getSavedGames");
+  }
+
+  function changeShowLeaderboard() {
+    setShowLeaderboard(!showLeaderboard);
+    socket.emit("getLeaderboard");
   }
 
   function afficherCreationPartie() {
@@ -172,71 +178,79 @@ function Home({ gameType }) {
   return (
     <div className="Home">
       <button id="deco" onClick={deconnexion}>Se déconnecter</button>
-        {savedGames ? (
+        {showLeaderboard ? (
           <>
-          <div className="Container1">
-            <input id="loadGame" type="text" placeholder="Code de la partie sauvegardée" />
-            <button type="button" onClick={loadGame}>Charger la partie</button>
-          </div>
-          <div className="Container1">
-            <PartiesSauvegardees />
-          </div>
-          <button type="button" onClick={() => setSavedGames(false)}>Retour</button>
+          <Score/>
+          <button type="button" onClick={changeShowLeaderboard}>Retour</button>
           </>
         ) : (
-          <>
-          <div className="Container1">
-            <button type="button" onClick={toSavedGames}>Charger une partie sauvegardée</button>
-            {showCreateGame ? (
-              <>
-              <button type="button" onClick={afficherCreationPartie}>Masquer le menu de création de partie</button>
-              <div>
-                {/* Contenu de la page de création de partie */}
-                <label htmlFor="choixTypeJeu">A quel jeu voulez-vous jouer ? </label>
-                <select id="choixTypeJeu">
-                  <option value="1">Bataille ouverte</option>
-                  <option value="2">6 qui prend</option>
-                </select>
-                <br/>
-                <label htmlFor="nbJoueursMin">Combien de joueurs minimum voulez-vous ? </label>
-                <input id="nbJoueursMin" onChange={()=>{setMinJoueurs(document.getElementById("nbJoueursMin").value)}} type="number" min="2" max={maxJoueurs} defaultValue={minJoueurs}/>
-                <br/>
-                <label htmlFor="nbJoueursMax">Combien de joueurs maximum voulez-vous ? </label>
-                <input id="nbJoueursMax" onChange={()=>setMaxJoueurs(document.getElementById("nbJoueursMax").value)} type="number" min={minJoueurs} max="10" defaultValue={maxJoueurs}/>
-                <br/>
-                <label htmlFor="timerDuration">Combien de secondes par tour ?</label>
-                <input id="timerDuration" onChange={()=>setTimerValue(document.getElementById("timerDuration").value)} type="number" min="3" max="100" defaultValue="10"/>
-                <button type="button" onClick={() => creationPartie(document.getElementById("choixTypeJeu").value, document.getElementById("nbJoueursMin").value, document.getElementById("nbJoueursMax").value,document.getElementById("timerDuration").value)}>Créer la partie</button>
-              </div>
-              </>
-            ) : (
-              <button type="button" onClick={afficherCreationPartie}>Créer une partie</button>
-            )}
-            <input id="idGame" type="text" placeholder="Identifiant de la partie" />
-            <button onClick={joinGame}>Rejoindre la partie</button>
-          </div>
-          <div className="Container1">
-            {showGameList ? (
-              <div className="Container1">
-                <button type="button" onClick={afficherListeParties}>Masquer la liste des parties</button>
-                {/* Contenu de la liste des parties */}
-                <p>Parties disponibles</p>
-                <ListeDesElements />
-              </div>
-            ) : (
-              <div>
-                <button type="button" onClick={() => afficherListeParties(document.getElementById("choixTypeJeuRecherche").value)}>Afficher la liste des parties</button>
-
-                <label htmlFor="choixTypeJeuRecherche">A quel jeu voulez-vous jouer ? </label>
-                <select id="choixTypeJeuRecherche">
-                  <option value="0">Tout types</option>
-                  <option value="1">Bataille ouverte</option>
-                  <option value="2">6 qui prend</option>
-                </select>
-              </div>
+          savedGames ? (
+            <>
+            <div className="Container1">
+              <input id="loadGame" type="text" placeholder="Code de la partie sauvegardée" />
+              <button type="button" onClick={loadGame}>Charger la partie</button>
+            </div>
+            <div className="Container1">
+              <PartiesSauvegardees />
+            </div>
+            <button type="button" onClick={changeSavedGames}>Retour</button>
+            </>
+          ) : (
+            <>
+            <div className="Container1">
+              <button type="button" onClick={changeSavedGames}>Charger une partie sauvegardée</button>
+              <button onClick={changeShowLeaderboard}>Afficher le tableau des scores</button>
+              {showCreateGame ? (
+                <>
+                <button type="button" onClick={afficherCreationPartie}>Masquer le menu de création de partie</button>
+                <div>
+                  {/* Contenu de la page de création de partie */}
+                  <label htmlFor="choixTypeJeu">A quel jeu voulez-vous jouer ? </label>
+                  <select id="choixTypeJeu">
+                    <option value="1">Bataille ouverte</option>
+                    <option value="2">6 qui prend</option>
+                  </select>
+                  <br/>
+                  <label htmlFor="nbJoueursMin">Combien de joueurs minimum voulez-vous ? </label>
+                  <input id="nbJoueursMin" onChange={()=>{setMinJoueurs(document.getElementById("nbJoueursMin").value)}} type="number" min="2" max={maxJoueurs} defaultValue={minJoueurs}/>
+                  <br/>
+                  <label htmlFor="nbJoueursMax">Combien de joueurs maximum voulez-vous ? </label>
+                  <input id="nbJoueursMax" onChange={()=>setMaxJoueurs(document.getElementById("nbJoueursMax").value)} type="number" min={minJoueurs} max="10" defaultValue={maxJoueurs}/>
+                  <br/>
+                  <label htmlFor="timerDuration">Combien de secondes par tour ?</label>
+                  <input id="timerDuration" onChange={()=>setTimerValue(document.getElementById("timerDuration").value)} type="number" min="3" max="100" defaultValue="10"/>
+                  <button type="button" onClick={() => creationPartie(document.getElementById("choixTypeJeu").value, document.getElementById("nbJoueursMin").value, document.getElementById("nbJoueursMax").value,document.getElementById("timerDuration").value)}>Créer la partie</button>
+                </div>
+                </>
+              ) : (
+                <button type="button" onClick={afficherCreationPartie}>Créer une partie</button>
               )}
-          </div>
-          </>
+              <input id="idGame" type="text" placeholder="Identifiant de la partie" />
+              <button onClick={joinGame}>Rejoindre la partie</button>
+            </div>
+            <div className="Container1">
+              {showGameList ? (
+                <div className="Container1">
+                  <button type="button" onClick={afficherListeParties}>Masquer la liste des parties</button>
+                  {/* Contenu de la liste des parties */}
+                  <p>Parties disponibles</p>
+                  <ListeDesElements />
+                </div>
+              ) : (
+                <div>
+                  <button type="button" onClick={() => afficherListeParties(document.getElementById("choixTypeJeuRecherche").value)}>Afficher la liste des parties</button>
+
+                  <label htmlFor="choixTypeJeuRecherche">A quel jeu voulez-vous jouer ? </label>
+                  <select id="choixTypeJeuRecherche">
+                    <option value="0">Tout types</option>
+                    <option value="1">Bataille ouverte</option>
+                    <option value="2">6 qui prend</option>
+                  </select>
+                </div>
+                )}
+            </div>
+            </>
+          )
         )}
     </div>
   );

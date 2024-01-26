@@ -670,6 +670,20 @@ io.on("connection", (socket) => {
     console.log(liste);
   });
 
+  socket.on("getLeaderboard", async () => {
+    let queryResult;
+    let listeScores = [];
+    try {
+      queryResult = await doQuery("SELECT * FROM scoresboeuf;",[]);
+    } catch (err) {
+      console.log(err);
+    }
+    for (let row of queryResult) {
+      listeScores.push([row.joueur,row.scoreTotal,row.nbPartiesJouees,row.nbPartiesGagnees]);
+    }
+    socket.emit("returnLeaderboard", listeScores);
+  });
+
   function shuffle(playerList){
     //mélange les cartes de tous les joueurs de la playerList
     var cardListe = [];

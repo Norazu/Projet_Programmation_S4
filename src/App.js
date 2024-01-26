@@ -1,5 +1,6 @@
 import "./Style/app.css";
 import "./Style/boeuf.css";
+import "./Style/score.css";
 import Bataille from './Bataille.js';
 import Boeuf from './Boeuf.js';
 import Chat from './Chat.js';
