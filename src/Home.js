@@ -12,21 +12,21 @@ function loadGameByList(code) {
   socket.emit("loadGame", code);
 }
 
-function Parties({code, page,type}){
+function Parties({code, page, type}){
   let type_jeu = "";
   let chemin_img = "";
-  switch (type){
-  case "1":
-    type_jeu = "Bataille ouverte";
-    chemin_img = "./Bataille/cardBack.png";
-    break;
-  case "2":
-    type_jeu = "6 qui prend";
-    chemin_img = "./Boeuf/boeuf.svg";
-    break;
-  default:
-    type_jeu = "Erreur";
-    break;
+  switch (String(type)){
+    case "1":
+      type_jeu = "Bataille ouverte";
+      chemin_img = "./Bataille/cardBack.png";
+      break;
+    case "2":
+      type_jeu = "6 qui prend";
+      chemin_img = "./Boeuf/boeuf.svg";
+      break;
+    default:
+      type_jeu = "Erreur";
+      break;
   }
   return(
     <div className="Parties">
@@ -88,7 +88,7 @@ function PartiesSauvegardees() {
   return (
     <div className="playerList">
       {savePage && savedGames.map((partie) => (
-          <Parties code={partie[0]} page={savePage}/>
+          <Parties code={partie[0]} page={savePage} type={partie[1]}/>
       ))}
     </div>
   );

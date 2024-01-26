@@ -628,21 +628,20 @@ io.on("connection", (socket) => {
     });
   });
 
-  socket.on("getSavedGames", () => {
+  socket.on("getSavedGames", async () => {
     // => joueur clique sur le bouton "charger une partie sauvegardée"
     //renvoie la liste de toutes les parties sauvegardées dans la base de données
-    var queryResult = []
-    connexiondb.query("SELECT * FROM parties", (err, result) => {
-      if (err) {
-        console.error('error on query: ' + err.stack);
-        return;
-      } else {
-        for (row of result) {
-          queryResult.push([row.idGame, row.typeJeu]);
-        }
-        socket.emit("returnSavedGames", queryResult);
-      }
-    });
+    let queryResult;
+    let savedGamesList = [];
+    try {
+      queryResult = await doQuery("SELECT * FROM parties",[]);
+    } catch (err) {
+      console.log(err);
+    }
+    for (row of queryResult) {
+      savedGamesList.push([row.idGame, row.typeJeu]);
+    }
+    socket.emit("returnSavedGames", savedGamesList);
   });
 
   socket.on('recuperationListeParties', (typeJeu) => {

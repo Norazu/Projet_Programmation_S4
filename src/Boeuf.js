@@ -44,7 +44,7 @@ function LignesCartes(){
     );
 }
 
-function Boeuf({gameEnd}){
+function Boeuf({ gameEnd }){
 
     useEffect(() => {
         // Gestionnaire d'événement pour le déchargement de la fenêtr
@@ -59,7 +59,7 @@ function Boeuf({gameEnd}){
             window.alert("Le vainqueur de la partie est "+data);
             setTimeout(function() {
                 gameEnd();
-              }, 7000);
+            }, 7000);
         })
         
         socket.on("victory",(data)=>{
@@ -78,7 +78,7 @@ function Boeuf({gameEnd}){
     return (
         <div className="Game">
             <Abandon gameEnd={gameEnd}/>
-            <Sauvegarde/>
+            <Sauvegarde gameEnd={gameEnd}/>
             <PlayerList showCards={false}/>
             <LignesCartes/>
             <Timer/>

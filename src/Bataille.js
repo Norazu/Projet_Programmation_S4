@@ -18,7 +18,7 @@ function Bataille({ gameEnd }){
             window.alert("Le vainqueur de la partie est "+data);
             setTimeout(function() {
                 gameEnd();
-              }, 7000);
+            }, 7000);
         })
         
         return () => {
