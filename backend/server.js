@@ -45,7 +45,7 @@ const io = new Server(server, {
 
 //objet représentant une partie avec toutes ses infos sur le serveur
 class partie {
-  constructor(typeJeu, idCreateur, nbMinJoueurs, nbMaxJoueurs, nbJoueurs, listeJoueurs, timer, secondTimer, cartes,dureeTour) {
+  constructor(typeJeu, idCreateur, nbMinJoueurs, nbMaxJoueurs, nbJoueurs, listeJoueurs, timer, secondTimer, cartes, dureeTour) {
     this.typeJeu = typeJeu;
     this.idCreateur = idCreateur;
     this.nbMinJoueurs = nbMinJoueurs;
@@ -59,7 +59,7 @@ class partie {
     this.status=0; //1 si la partie est démarré
     this.gameIsPaused=false;
     this.playerScoreBoeuf = {};
-    this.compteToursBoeuf = 8;
+    this.compteToursBoeuf = 0;
     this.dureeTour = dureeTour;
   }
 }
@@ -119,37 +119,35 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("newAccount", (nom, mdp) => {
+  socket.on("newAccount", async (nom, mdp) => {
     // => joueur clique sur le bouton "créer un compte"
     //regarde si le joueur existe déjà
     //renvoie le signal conséquent au client
     var exists = false;
-    connexiondb.query("SELECT pseudo FROM joueurs", function (err, result) {
-      if (err) {
-        console.error('error on query: ' + err.stack);
-        return;
-      } else {
-        for (var row of result) {
-          if (nom === row.pseudo) {
-            exists = true;
-            socket.emit("userAlreadyRegistered");
-          }
-        }
+    let queryResult;
+    try {
+      queryResult = await doQuery("SELECT pseudo FROM joueurs",[]);
+    } catch (err) {
+      console.log(err);
+    }
+    for (var row of queryResult) {
+      if (nom === row.pseudo) {
+        exists = true;
+        socket.emit("userAlreadyRegistered");
       }
-    });
+    }
     if (!exists) {
       const shaObj = new jsSHA("SHA-256", "TEXT", { encoding: "UTF8" });
       shaObj.update(mdp);
       const hashMDP = shaObj.getHash("HEX");
-      connexiondb.query("INSERT INTO joueurs (pseudo, hashMDP) VALUES ('" + nom + "','" + hashMDP + "')", function (err, result) {
-        if (err) {
-          console.error('error on insertion: ' + err.stack);
-          return;
-        } else {
-          socket.emit("accountCreated");
-          console.log(`account created : ${nom}, ${hashMDP}`)
-        }
-      });
+      try {
+        await doQuery("INSERT INTO joueurs (pseudo, hashMDP) VALUES (?, ?);",[nom, hashMDP]);
+        await doQuery("INSERT INTO scoresBoeuf (joueur) VALUES (?);",[nom]);
+      } catch (err) {
+        console.log(err);
+      }
+      socket.emit("accountCreated");
+      console.log(`account created : ${nom}, ${hashMDP}`);
     }
   });
 
@@ -564,20 +562,21 @@ io.on("connection", (socket) => {
       if (partie.status==1){
         if (!gameId == "") {
           try {
-            await doQuery("INSERT INTO parties VALUES (?, ?, ?, ?, ?, ?)", [gameId, partie.typeJeu, partie.nbMinJoueurs, partie.nbMaxJoueurs, "", partie.idCreateur]);
+            await doQuery("INSERT INTO parties VALUES (?, ?, ?, ?, ?, ?, ?, ?)", [gameId, partie.typeJeu, partie.nbMinJoueurs, partie.nbMaxJoueurs, null, partie.idCreateur, partie.dureeTour, null]);
           } catch (err) {
             console.log(err);
           }
           if (partie.typeJeu == 2) {
             try {
               await doQuery("UPDATE parties SET plateau=? WHERE idGame=?", [partie.cartes["reste"].join("|"), gameId]);
+              await doQuery("UPDATE parties SET compteToursBoeuf=? WHERE idGame=?", [partie.compteToursBoeuf, gameId])
             } catch (err) {
               console.log(err);
             }
           }
           for (var joueur of partie.listeJoueurs) {
             try {
-              await doQuery("INSERT INTO partiejoueur VALUES (?, ?, ?)", [gameId, joueur, partie.cartes[joueur].join("|")]);
+              await doQuery("INSERT INTO partiejoueur VALUES (?, ?, ?, ?)", [gameId, joueur, partie.cartes[joueur].join("|"), partie.playerScoreBoeuf[joueur]]);
             } catch (err) {
               console.log(err);
             }
@@ -595,37 +594,41 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("loadGame", (code) => {
+  socket.on("loadGame", async (code) => {
     // => joueur clique sur le bouton "charger la partie"
     //crée une partie avec les données tirées de la base de données
     //rajoute la partie dans les parties en cours du serveur
     //supprime la partie et ses joueurs de la base de données
-    var cartes = {};
-    connexiondb.query("SELECT * FROM parties AS pt JOIN partiejoueur AS ptj ON pt.idGame=ptj.idGame WHERE pt.idGame='" + code + "'", (err, result) => {
-      if (err) {
-        console.error('error on query: ' + err.stack);
-        return;
-      } else {
-        for (row of result) {
-          console.log(row);
-          cartes[row.idJoueur] = row.carte.split("|");
-        }
-        creerPartie(row.idGame, result[0].typeJeu, result[0].nbMinJoueurs, result[0].nbMaxJoueurs, result[0].idCreateur, cartes);
-        connexiondb.query("DELETE FROM partiejoueur WHERE idGame='" + code + "'", (err, result) => {
-          if (err) {
-            console.error('error on delete: ' + err.stack);
-            return;
-          } else {
-            connexiondb.query("DELETE FROM parties WHERE idGame='" + code + "'", (err, result) => {
-              if (err) {
-                console.error('error on delete: ' + err.stack);
-                return;
-              }
-            });
-          }
-        });
+    let queryResult;
+    let cartes = {};
+    let playersScores = {};
+    try {
+      queryResult = await doQuery("SELECT * FROM parties AS pt JOIN partiejoueur AS ptj ON pt.idGame=ptj.idGame WHERE pt.idGame=?", [code]);
+    } catch (err) {
+      console.log(err);
+    }
+    for (row of queryResult) {
+      console.log(row);
+      cartes[row.idJoueur] = row.carte.split("|");
+      if (row.typeJeu == 2) {
+        playersScores[row.idJoueur] = row.scoreBoeuf;
       }
-    });
+    }
+    creerPartie(row.idGame, row.typeJeu, row.nbMinJoueurs, row.nbMaxJoueurs, row.idCreateur, cartes, row.dureeTour);
+    listeParties[code].gameIsPaused = true;
+    socket.emit("gameEnPause");
+    if (row.typeJeu == 2) {
+      cartes["reste"] = row.plateau.split("|");
+      listeParties[code].compteToursBoeuf = row.compteToursBoeuf;
+      listeParties[code].playerScoreBoeuf = playersScores;
+    }
+    console.log(listeParties[row.idGame]);
+    try {
+      await doQuery("DELETE FROM partiejoueur WHERE idGame=?",[code]);
+      await doQuery("DELETE FROM parties WHERE idGame=?",[code]);
+    } catch (err) {
+      console.log(err);
+    }
   });
 
   socket.on("getSavedGames", async () => {
@@ -736,7 +739,7 @@ io.on("connection", (socket) => {
     }
   }
 
-  function finMancheBoeuf(gameId){
+  async function finMancheBoeuf(gameId){
     let max=0;
     let min;
     let vainqueurs=[];
@@ -758,6 +761,20 @@ io.on("connection", (socket) => {
       }
     }
     if (max>=66){
+      for (let joueur in listeParties[gameId].listeJoueurs) {
+        try {
+          await doQuery("UPDATE scoresboeuf SET scoreTotal=scoreTotal+?, nbPartiesJouees=nbPartiesJouees+1 WHERE joueur=?;",[listeParties[gameId].playerScoreBoeuf[joueur], joueur]);
+        } catch (err) {
+          console.log(err);
+        }
+        if (vainqueurs.includes(joueur)) {
+          try {
+            await doQuery("UPDATE scoresboeuf SET nbPartiesGagnees=nbPartiesGagnees+1 WHERE joueur=?;",[joueur]);
+          } catch (err) {
+            console.log(err);
+          }
+        }
+      }
       io.to(gameId).emit("gameFinished",[]);
       delete listeParties[gameId];
       io.to(gameId).emit("victory",vainqueurs,min);
