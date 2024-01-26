@@ -8,7 +8,7 @@ const jsSHA = require("jssha");
 
 //variables globales du serveur
 var timerIsRunning = false;
-var turnDuration = 10;
+//var turnDuration = 10;
 var bataille = {};
 var gameOrderBoeuf = {}
 var joueursConnectes = [];
@@ -45,7 +45,7 @@ const io = new Server(server, {
 
 //objet représentant une partie avec toutes ses infos sur le serveur
 class partie {
-  constructor(typeJeu, idCreateur, nbMinJoueurs, nbMaxJoueurs, nbJoueurs, listeJoueurs, timer, secondTimer, cartes) {
+  constructor(typeJeu, idCreateur, nbMinJoueurs, nbMaxJoueurs, nbJoueurs, listeJoueurs, timer, secondTimer, cartes,dureeTour) {
     this.typeJeu = typeJeu;
     this.idCreateur = idCreateur;
     this.nbMinJoueurs = nbMinJoueurs;
@@ -60,6 +60,7 @@ class partie {
     this.gameIsPaused=false;
     this.playerScoreBoeuf = {};
     this.compteToursBoeuf = 8;
+    this.dureeTour = dureeTour;
   }
 }
 
@@ -208,14 +209,14 @@ io.on("connection", (socket) => {
     return code;
   }
 
-  async function creerPartie(codepartie, type, nbMinJoueurs, nbMaxJoueurs, idCreateur, cartes) {
+  async function creerPartie(codepartie, type, nbMinJoueurs, nbMaxJoueurs, idCreateur, cartes,dureeTour) {
     //fonction de création de partie, sous forme de fonction car utilisée plusieurs fois dans le code
     //cette fonction est asynchrone car socket.join est une opération asynchrone
     if (nbMinJoueurs>nbMaxJoueurs || nbMinJoueurs>10 || nbMaxJoueurs>10){
       nbMinJoueurs=2;
       nbMaxJoueurs=10;
     }
-    listeParties[codepartie] = new partie(type, idCreateur, nbMinJoueurs, nbMaxJoueurs, 1, [idCreateur],0,0,cartes);
+    listeParties[codepartie] = new partie(type, idCreateur, nbMinJoueurs, nbMaxJoueurs, 1, [idCreateur],0,0,cartes,dureeTour);
     listeParties[codepartie].playerScoreBoeuf[idCreateur] = 0;
     listeParties[codepartie].socketsJoueurs[idCreateur] = socket.id;
     await socket.join(codepartie.toString());
@@ -226,7 +227,7 @@ io.on("connection", (socket) => {
     });
   }
 
-  socket.on('creationPartie', (type, nbMinJoueurs, nbMaxJoueurs, idCreateur) => {
+  socket.on('creationPartie', (type, nbMinJoueurs, nbMaxJoueurs, dureeTour,idCreateur) => {
     // => joueur clique sur le bouton "créer la partie"
     //crée la partie avec les infos données sauf si le nombre de partie max est dépassé
     if (Object.keys(listeParties).length>=8999){
@@ -234,7 +235,7 @@ io.on("connection", (socket) => {
       socket.emit("maxGames");
     } else {
       codepartie = defCode();
-      creerPartie(codepartie, type, nbMinJoueurs, nbMaxJoueurs, idCreateur, {});      
+      creerPartie(codepartie, type, nbMinJoueurs, nbMaxJoueurs, idCreateur, {},dureeTour);      
     }
   });
 
@@ -307,7 +308,7 @@ io.on("connection", (socket) => {
   }
 
   function startTimer(gameId){
-    listeParties[gameId].timer = turnDuration;
+    listeParties[gameId].timer =listeParties[gameId].dureeTour;
     if(!timerIsRunning){
       timerIsRunning = true;
       countdown();
@@ -367,7 +368,7 @@ io.on("connection", (socket) => {
   });
 
   function startSecondTimer(gameId, playerList, cardsToWin){
-    listeParties[gameId].secondTimer = turnDuration;
+    listeParties[gameId].secondTimer = listeParties[gameId].dureeTour;
      var secondTimer = setInterval(()=>{
       if(listeParties[gameId].secondTimer!=0){
         listeParties[gameId].secondTimer -= 1;
