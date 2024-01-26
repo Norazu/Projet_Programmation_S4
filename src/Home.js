@@ -117,9 +117,9 @@ function Home({ gameType }) {
     setShowCreateGame(!showCreateGame);
   }
 
-  function creationPartie(typeJeu,min,max) {
+  function creationPartie(typeJeu,min,max,dureeTour) {
     gameType(typeJeu);
-    socket.emit("creationPartie",typeJeu,min,max,sessionStorage.getItem("sessId"));
+    socket.emit("creationPartie",typeJeu,min,max,dureeTour,sessionStorage.getItem("sessId"));
   }
 
   function afficherListeParties(typeJeu) {
@@ -167,6 +167,7 @@ function Home({ gameType }) {
 
   const [maxJoueurs, setMaxJoueurs]  = useState(10);
   const [minJoueurs, setMinJoueurs]  = useState(2);
+  const [timerValue,setTimerValue] = useState(10);
 
   return (
     <div className="Home">
@@ -202,7 +203,10 @@ function Home({ gameType }) {
                 <br/>
                 <label htmlFor="nbJoueursMax">Combien de joueurs maximum voulez-vous ? </label>
                 <input id="nbJoueursMax" onChange={()=>setMaxJoueurs(document.getElementById("nbJoueursMax").value)} type="number" min={minJoueurs} max="10" defaultValue={maxJoueurs}/>
-                <button type="button" onClick={() => creationPartie(document.getElementById("choixTypeJeu").value, document.getElementById("nbJoueursMin").value, document.getElementById("nbJoueursMax").value)}>Créer la partie</button>
+                <br/>
+                <label htmlFor="timerDuration">Combien de secondes par tour ?</label>
+                <input id="timerDuration" onChange={()=>setTimerValue(document.getElementById("timerDuration").value)} type="number" min="3" max="100" defaultValue="10"/>
+                <button type="button" onClick={() => creationPartie(document.getElementById("choixTypeJeu").value, document.getElementById("nbJoueursMin").value, document.getElementById("nbJoueursMax").value,document.getElementById("timerDuration").value)}>Créer la partie</button>
               </div>
               </>
             ) : (
