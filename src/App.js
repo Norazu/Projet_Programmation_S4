@@ -1,6 +1,7 @@
 import "./Style/app.css";
 import "./Style/boeuf.css";
 import "./Style/score.css";
+import 'react-toastify/dist/ReactToastify.css';
 import Bataille from './Bataille.js';
 import Boeuf from './Boeuf.js';
 import Chat from './Chat.js';
@@ -8,9 +9,11 @@ import Home from './Home.js';
 
 import { useEffect, useState } from "react";
 import { socket } from "./socket.js";
+import { ToastContainer, toast } from "react-toastify";
 
 function App() {
   console.log(sessionStorage.getItem("sessId"));
+
   const [connected, setConnected] = useState(false);
   const[inGame, setInGame] = useState(false);
   const[gameId,setGameId] = useState("0000");
@@ -23,7 +26,7 @@ function App() {
   }
 
   function alreadyConnected() {
-    window.alert("Vous êtes déjà connecté sur ce compte");
+    toast.warn("Vous êtes déjà connecté sur ce compte");
   }
 
   function createAccount() {
@@ -33,15 +36,15 @@ function App() {
   }
 
   function notRegistered() {
-    window.alert("Nom d'utilisateur ou mot de passe incorrect ou compte inexistant");
+    toast.error("Nom d'utilisateur ou mot de passe incorrect ou compte inexistant");
   }
 
   function alreadyRegistered() {
-    window.alert("Vous avez déjà un compte, veuillez vous connecter");
+    toast.warn("Vous avez déjà un compte, veuillez vous connecter");
   }
 
   function accountCreated() {
-    window.alert("Compte créé avec succès, veuillez vous connecter");
+    toast.success("Compte créé avec succès, veuillez vous connecter");
   }
 
   function onConnect() {
@@ -103,6 +106,18 @@ function App() {
 
   return (
     <div className="App">
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="dark"
+        />
       {connected ? (
         inGame ? (
           <div className="PartiePage">
