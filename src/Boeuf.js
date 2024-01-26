@@ -45,6 +45,36 @@ function LignesCartes(){
 }
 
 function Boeuf({gameEnd}){
+
+    useEffect(() => {
+        // Gestionnaire d'événement pour le déchargement de la fenêtr
+        const handleUnload = () => {
+            socket.emit("disconnecting")
+            // Déconnectez le socket avant le déchargement de la fenêtre
+            socket.close();
+        };
+        // Ajoutez le gestionnaire d'événement à l'événement unload
+        window.addEventListener('beforeunload', handleUnload);
+        socket.on("victory",(data)=>{
+            window.alert("Le vainqueur de la partie est "+data);
+            setTimeout(function() {
+                gameEnd();
+              }, 7000);
+        })
+        
+        socket.on("victory",(data)=>{
+            window.alert("Le vainqueur de la partie est "+data);
+            setTimeout(function() {
+                gameEnd();
+              }, 7000);
+        })
+        
+        return () => {
+            socket.off("victory");
+            window.removeEventListener('beforeunload', handleUnload);
+        };
+    })
+
     return (
         <div className="Game">
             <Abandon gameEnd={gameEnd}/>

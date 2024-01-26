@@ -22,7 +22,7 @@ export function Abandon({ gameEnd }) {
     );
 }
 
-export function Sauvegarde() {
+export function Sauvegarde({ gameEnd }) {
     const [gameIsPaused, setGameIsPaused] = useState(false);
 
     function gameEnPause() {
@@ -68,6 +68,11 @@ export function Sauvegarde() {
         window.location.reload();
     }
 
+    function partieSaved() {
+        window.alert("Partie sauvegardée avec succès, vous allez être ramené au menu principal");
+        gameEnd();
+    }
+
     useEffect(() => {
         socket.on("quit", id => {
             reload(id);
@@ -77,7 +82,8 @@ export function Sauvegarde() {
         socket.on("gameEnPause", gameEnPause);
         socket.on("gameReprise", gameReprise);
         socket.on("PasPermSauvegarde", pasPermSauvegarde);
-        socket.on("SaveGameNotStarted", saveGameNotStarted)
+        socket.on("SaveGameNotStarted", saveGameNotStarted);
+        socket.on("partieSauvegardee", partieSaved);
         return () => {
             socket.off("quit");
             socket.off("pasPermPause");
@@ -86,6 +92,7 @@ export function Sauvegarde() {
             socket.off("gameReprise");
             socket.off("PasPermSauvegarde");
             socket.off("SaveGameNotStarted");
+            socket.off("partieSauvegardee");
         }
 
     });

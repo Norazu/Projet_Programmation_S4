@@ -5,11 +5,6 @@ import { Abandon, Sauvegarde, PlayerList, Timer, Plateau, Main } from "./Game.js
 
 function Bataille({ gameEnd }){
 
-    function partieSaved() {
-        window.alert("Partie sauvegardée avec succès, vous allez être ramené au menu principal");
-        gameEnd();
-    }
-
     useEffect(() => {
         // Gestionnaire d'événement pour le déchargement de la fenêtr
         const handleUnload = () => {
@@ -25,18 +20,16 @@ function Bataille({ gameEnd }){
                 gameEnd();
               }, 7000);
         })
-        socket.on("partieSauvegardee", partieSaved);
         
         return () => {
             // Retirez le gestionnaire d'événement lors du démontage du composant
             window.removeEventListener('beforeunload', handleUnload);
-            socket.off("partieSauvegardee");
         };
     })
     return(
         <div className="Game">  
             <Abandon gameEnd={gameEnd}/>
-            <Sauvegarde/>
+            <Sauvegarde gameEnd={gameEnd}/>
             <PlayerList showCards={true}/>
             <Timer/>
             <Plateau/>
