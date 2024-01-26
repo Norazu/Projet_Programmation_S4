@@ -544,41 +544,48 @@ io.on("connection", (socket) => {
     }
   }
 
-  socket.on("saveGame", (gameId, pseudo) => {
+  function doQuery(query, arguments) {
+    return new Promise((resolve, reject) => {
+      connexiondb.query(query, arguments, function(err, res) {
+        if (err) {
+          reject(err.stack);
+        } else {
+          resolve(res);
+        }
+      });
+    });
+  }
+
+  socket.on("saveGame", async (gameId, pseudo) => {
     // => joueur clique sur le bouton "sauvegarder la partie"
     //renvoie le signal conséquent à la réussite de la sauvegarde
-    if (pseudo==listeParties[gameId].idCreateur){
-      if (listeParties[gameId].status==1){
+    let partie = listeParties[gameId];
+    if (pseudo==partie.idCreateur){
+      if (partie.status==1){
         if (!gameId == "") {
-          connexiondb.query("INSERT INTO parties VALUES ('" + gameId + "', '" + 1 + "', '" + 2 + "', '" + 10 + "', '" + listeParties[gameId].idCreateur + "')", function(err, result) {
-            if (err) {
-              console.error('error on insertion: ' + err.stack);
-              return;
-            } else {
-              console.log("partie sauvegardée");
-              for (const [key, value] of Object.entries(listeParties)){
-                console.log("Les id des games sont "+key+" avant la suppression");
-              }
-              delete listeParties[gameId]
-              console.log(listeParties);
+          try {
+            await doQuery("INSERT INTO parties VALUES (?, ?, ?, ?, ?, ?)", [gameId, partie.typeJeu, partie.nbMinJoueurs, partie.nbMaxJoueurs, "", partie.idCreateur]);
+          } catch (err) {
+            console.log(err);
+          }
+          if (partie.typeJeu == 2) {
+            try {
+              await doQuery("UPDATE parties SET plateau=? WHERE idGame=?", [partie.cartes["reste"].join("|"), gameId]);
+            } catch (err) {
+              console.log(err);
             }
-          });
-
-          function queryResult(joueur,gameId) {
-            connexiondb.query("INSERT INTO partiejoueur VALUES ('" + gameId + "', '" + joueur + "', '" + listeParties[gameId].cartes[joueur].join("|") + "')", function(err, result) {
-              if (err) {
-                console.error('error on insertion: ' + err.stack);
-                return;
-              } else {
-                console.log(`joueur : ${joueur} et ses cartes ajoutés`);
-                io.to(gameId).emit("partieSauvegardee");
-              }
-            });
           }
-
-          for (var joueur of listeParties[gameId].listeJoueurs) {
-            queryResult(joueur,gameId);
+          for (var joueur of partie.listeJoueurs) {
+            try {
+              await doQuery("INSERT INTO partiejoueur VALUES (?, ?, ?)", [gameId, joueur, partie.cartes[joueur].join("|")]);
+            } catch (err) {
+              console.log(err);
+            }
           }
+          io.to(gameId).emit("partieSauvegardee");
+          console.log("partie sauvegardée");
+          delete listeParties[gameId];
+          console.log(listeParties);
         }
       } else{
         socket.emit("SaveGameNotStarted");
@@ -600,6 +607,7 @@ io.on("connection", (socket) => {
         return;
       } else {
         for (row of result) {
+          console.log(row);
           cartes[row.idJoueur] = row.carte.split("|");
         }
         creerPartie(row.idGame, result[0].typeJeu, result[0].nbMinJoueurs, result[0].nbMaxJoueurs, result[0].idCreateur, cartes);
@@ -630,7 +638,7 @@ io.on("connection", (socket) => {
         return;
       } else {
         for (row of result) {
-          queryResult.push([row.idGame]);
+          queryResult.push([row.idGame, row.typeJeu]);
         }
         socket.emit("returnSavedGames", queryResult);
       }
