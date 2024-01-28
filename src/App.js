@@ -81,6 +81,12 @@ function App() {
     document.getElementById("password").value = "";
   }
 
+  function handleKeyDown(event) {
+    if (event.key === 'Enter') {
+      connect();
+    }
+  }
+
   useEffect(() => {
     if (sessionStorage.getItem("sessId") != null){
       socket.on("connect", () => {
@@ -158,8 +164,8 @@ function App() {
         <div className="ConnectionPage">
           <div className="parallax" onMouseMove={parallax}>
             <div className="ConnectionCard">
-                <input className="connectionField" id="name" type="text" placeholder="Nom"/>
-                <input className="connectionField" id="password" type="password" placeholder="mot de passe"/>
+                <input className="connectionField" id="name" type="text" placeholder="Nom" onKeyDown={handleKeyDown}/>
+                <input className="connectionField" id="password" type="password" placeholder="mot de passe" onKeyDown={handleKeyDown}/>
                 <div className="connectionButtons">
                   <button className="connectionbutton" id="loginbtn" onClick={connect}>Connexion</button>
                   <button className="connectionbutton" id="signinbtn" onClick={createAccount}>Inscription</button>
