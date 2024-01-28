@@ -149,7 +149,7 @@ function App() {
               <h2 id="codeGame">Code de la partie : {gameId}</h2>
               {gameType === "1" ? (<Bataille gameEnd={backFromGame}/>) :(<Boeuf gameEnd={backFromGame}/>)}
             </div>
-            <Chat/>
+            <Chat gameId={gameId} />
           </div>
         ) : (
           <Home gameType={setTypeJeu}/>

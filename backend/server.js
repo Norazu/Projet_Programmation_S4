@@ -274,12 +274,11 @@ io.on("connection", (socket) => {
     rejoindrePartie(idJoueur, idRoom);
   });
 
-  socket.on('mess', (data1,data2) => {
+  socket.on('mess', (message, joueur, gameId) => {
     // => un joueur envoie un message
     //renvoie le message a tous les sockets connectés pour l'afficher
-    console.log(data1 + " : data envoyée à " + socket.id)
-    var res = data2+" : "+data1
-    io.emit('messagerie', res);
+    console.log(message + " : envoyée à " + socket.id);
+    io.to(gameId).emit('messagerie', joueur + " : " + message);
   });
 
   socket.on("getCards", (playerId,gameId) => {
