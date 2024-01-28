@@ -11,32 +11,56 @@ function Row({ row }) {
     );
 }
 
-function Score() {
+function Score({ hide, retour}) {
     const [leaderboard, setLeaderboard] = useState();
+    const [showLeaderboard, setShowLeaderboard] = useState(false);
+
+    function getLeaderboard() {
+        socket.emit("getLeaderboard");
+    }
+
+    function cacherLeaderboard() {
+        setShowLeaderboard(false);
+        retour();
+    }
 
     useEffect(() => {
         socket.on("returnLeaderboard", liste => {
             setLeaderboard(liste);
-            console.log(liste);
+            setShowLeaderboard(true);
+            hide();
         });
         return () => {
             socket.off("returnLeaderboard");
         };
     });
     return (
-        <div className="container">
-            <h2>Leaderboard</h2>
-            <ul className="responsive-table">
-                <li className="table-header">
-                    <div className="col col-1">Pseudo</div>
-                    <div className="col col-2">Score moyen</div>
-                    <div className="col col-3">Winrate</div>
-                </li>
-                {leaderboard.map((joueur) => (
-                    <Row key={joueur[0]} row={joueur}/>
-                ))}
-            </ul>
-        </div>
+        <>
+        {showLeaderboard ? (
+            <>
+            <div className="container">
+                <h2>Leaderboard</h2>
+                <ul className="responsive-table">
+                    <li className="table-header">
+                        <div className="col col-1">Pseudo</div>
+                        <div className="col col-2">Score moyen</div>
+                        <div className="col col-3">Winrate</div>
+                    </li>
+                    {leaderboard.map((joueur) => (
+                        <Row key={joueur[0]} row={joueur}/>
+                    ))}
+                </ul>
+            </div>
+            <button id="retour" onClick={cacherLeaderboard}>Retour</button>
+            </>
+        ) : (
+            <div className="leaderboard" onClick={getLeaderboard}>
+                <span className="crown"></span>
+                <a href="/#">Leaderboard</a>
+                <span></span>
+            </div>
+        )}
+        </>
     );
 }
 

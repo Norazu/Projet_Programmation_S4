@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { socket } from "./socket.js";
+import { toast } from "react-toastify";
 
 var playerGameId = "";
 
@@ -8,7 +9,6 @@ export function Abandon({ gameEnd }) {
         socket.emit("giveUp", gameId, pseudo);
     }
     function partieAbandonnee() {
-        window.alert("Partie abandonnée, vous allez être ramené au menu principal");
         gameEnd();
     }
     useEffect(()=>{
@@ -36,11 +36,11 @@ export function Sauvegarde({ gameEnd }) {
     }
 
     function pauseGameNotStarted() {
-        window.alert("Vous ne pouvez pas mettre en pause la partie si elle n'a pas démarré");
+        toast.error("Vous ne pouvez pas mettre en pause la partie si elle n'a pas démarré");
     }
 
     function pasPermPause() {
-        window.alert("Vous n'avez pas la permission de mettre en pause la partie, seul le créateur de la partie le peut");
+        toast.error("Vous n'avez pas la permission de mettre en pause la partie");
     };
 
     function pause() {
@@ -56,20 +56,20 @@ export function Sauvegarde({ gameEnd }) {
     }
 
     function pasPermSauvegarde() {
-        window.alert("Vous n'avez pas la permission de sauvegarder, seul le créateur de la partie le peut");
+        toast.error("Vous n'avez pas la permission de sauvegarder la partie");
     }
 
     function saveGameNotStarted() {
-        window.alert("Vous ne pouvez pas sauvegarder si la partie n'a pas démarré");
+        toast.error("Vous ne pouvez pas sauvegarder si la partie n'a pas démarré");
     }
 
     function reload(id) {
-        window.alert("Le joueur " + id + " a abandonner");
+        toast.info("Le joueur " + id + " a abandonné");
         window.location.reload();
     }
 
     function partieSaved() {
-        window.alert("Partie sauvegardée avec succès, vous allez être ramené au menu principal");
+        toast.info("Partie sauvegardée avec succès");
         gameEnd();
     }
 
@@ -395,10 +395,10 @@ export function Main({ gameType }) {
 
 export function Plateau() {
     function notEnoughPlayers() {
-        window.alert("Il n'y a pas assez de joueurs pour démarrer une partie");
+        toast.info("Il n'y a pas assez de joueurs pour démarrer une partie");
     }
     function pasDePerms() {
-        window.alert("Vous n'avez pas la permission de démarrer la partie, seul le createur peut");
+        toast.error("Vous n'avez pas la permission de démarrer la partie");
     }
 
     useEffect(() => {
@@ -418,5 +418,31 @@ export function Plateau() {
         <div>
             <button onClick={launchGame}>Lancer la partie</button>
         </div>
+    );
+}
+
+export function WinnerModal({ gameEnd }) {
+    const [winner, setWinner] = useState("");
+    const modalRef = useRef();
+
+    useEffect(() => {
+        socket.on("victory",(data)=>{
+            setWinner(data);
+            const modal = document.getElementById("winnerWinnerChickenDinner");
+            modalRef.current = modal;
+            modal.showModal();
+            setTimeout(() => {
+                gameEnd();
+            }, 10000);
+        });
+        return () => {
+            socket.off("victory");
+        }
+    },[gameEnd]);
+    return (
+        <dialog id="winnerWinnerChickenDinner">
+            <p>{winner}</p>
+            <p id="secondline">a gagné</p>
+        </dialog>
     );
 }

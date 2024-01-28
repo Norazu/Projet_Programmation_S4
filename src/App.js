@@ -62,6 +62,7 @@ function App() {
   }
 
   function backFromGame() {
+    toast.info("Vous avez été ramené au menu principal");
     setInGame(false);
     setGameType(null);
     setGameId("0000");
@@ -104,6 +105,19 @@ function App() {
     }
   }, [gameType]);
 
+  function parallax(e){
+    let elem = document.querySelector(".parallax");
+    let _w = window.innerWidth/2;
+    let _h = window.innerHeight/2;
+    let _mouseX = e.clientX;
+    let _mouseY = e.clientY;
+    let _depth1 = `${50 - (_mouseX - _w) * 0.02}% ${50 - (_mouseY - _h) * 0.02}%`;
+    let _depth2 = `${50 - (_mouseX - _w) * 0.01}% ${50 - (_mouseY - _h) * 0.01}%`;
+    let _depth3 = `50% 50%`;
+    let x = `${_depth3}, ${_depth2}, ${_depth1}`;
+    elem.style.backgroundPosition = x;
+  }
+
   return (
     <div className="App">
       <ToastContainer
@@ -117,6 +131,7 @@ function App() {
         draggable
         pauseOnHover
         theme="dark"
+        limit={5}
         />
       {connected ? (
         inGame ? (
@@ -132,12 +147,15 @@ function App() {
         )
       ) : (
         <div className="ConnectionPage">
-          <div className="Container1">
-            <h1>Connexion / Inscription</h1>
-            <input id="name" type="text" placeholder="Nom"/>
-            <input id="password" type="password"placeholder="mot de passe"/>
-            <button onClick={connect}>Connexion</button>
-            <button onClick={createAccount}>créer un compte</button>
+          <div className="parallax" onMouseMove={parallax}>
+            <div className="ConnectionCard">
+                <input className="connectionField" id="name" type="text" placeholder="Nom"/>
+                <input className="connectionField" id="password" type="password"placeholder="mot de passe"/>
+                <div className="connectionButtons">
+                  <button className="connectionbutton" id="loginbtn" onClick={connect}>Connexion</button>
+                  <button className="connectionbutton" id="signinbtn" onClick={createAccount}>Inscription</button>
+              </div>
+            </div>
           </div>
         </div>
       )}

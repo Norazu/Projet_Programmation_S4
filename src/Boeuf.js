@@ -1,4 +1,4 @@
-import { CarteBoeuf, Abandon, Sauvegarde, PlayerList, Timer, Plateau, Main } from "./Game.js";
+import { CarteBoeuf, Abandon, Sauvegarde, PlayerList, Timer, Plateau, Main, WinnerModal } from "./Game.js";
 import { useEffect, useState } from "react";
 import { socket } from "./socket.js";
 
@@ -55,28 +55,15 @@ function Boeuf({ gameEnd }){
         };
         // Ajoutez le gestionnaire d'événement à l'événement unload
         window.addEventListener('beforeunload', handleUnload);
-        socket.on("victory",(data)=>{
-            window.alert("Le vainqueur de la partie est "+data);
-            setTimeout(function() {
-                gameEnd();
-            }, 7000);
-        })
-        
-        socket.on("victory",(data)=>{
-            window.alert("Le vainqueur de la partie est "+data);
-            setTimeout(function() {
-                gameEnd();
-              }, 7000);
-        })
-        
+
         return () => {
-            socket.off("victory");
             window.removeEventListener('beforeunload', handleUnload);
         };
     })
 
     return (
         <div className="Game">
+            <WinnerModal gameEnd={gameEnd}/>
             <Abandon gameEnd={gameEnd}/>
             <Sauvegarde gameEnd={gameEnd}/>
             <PlayerList showCards={false}/>
