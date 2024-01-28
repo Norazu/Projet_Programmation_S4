@@ -1,6 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { socket } from "./socket.js";
-import { Abandon, Sauvegarde, PlayerList, Timer, Plateau, Main } from "./Game.js";
+import { Abandon, Sauvegarde, PlayerList, Timer, Plateau, Main, WinnerModal } from "./Game.js";
 
 
 function Bataille({ gameEnd }){
@@ -14,12 +14,6 @@ function Bataille({ gameEnd }){
         };
         // Ajoutez le gestionnaire d'événement à l'événement unload
         window.addEventListener('beforeunload', handleUnload);
-        socket.on("victory",(data)=>{
-            window.alert("Le vainqueur de la partie est "+data);
-            setTimeout(function() {
-                gameEnd();
-            }, 7000);
-        })
         
         return () => {
             // Retirez le gestionnaire d'événement lors du démontage du composant
@@ -27,7 +21,8 @@ function Bataille({ gameEnd }){
         };
     })
     return(
-        <div className="Game">  
+        <div className="Game">
+            <WinnerModal gameEnd={gameEnd}/>
             <Abandon gameEnd={gameEnd}/>
             <Sauvegarde gameEnd={gameEnd}/>
             <PlayerList showCards={true}/>

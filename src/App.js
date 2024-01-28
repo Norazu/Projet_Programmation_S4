@@ -1,6 +1,7 @@
 import "./Style/app.css";
 import "./Style/boeuf.css";
 import "./Style/score.css";
+import 'react-toastify/dist/ReactToastify.css';
 import Bataille from './Bataille.js';
 import Boeuf from './Boeuf.js';
 import Chat from './Chat.js';
@@ -8,9 +9,11 @@ import Home from './Home.js';
 
 import { useEffect, useState } from "react";
 import { socket } from "./socket.js";
+import { ToastContainer, toast } from "react-toastify";
 
 function App() {
   console.log(sessionStorage.getItem("sessId"));
+
   const [connected, setConnected] = useState(false);
   const[inGame, setInGame] = useState(false);
   const[gameId,setGameId] = useState("0000");
@@ -23,7 +26,7 @@ function App() {
   }
 
   function alreadyConnected() {
-    window.alert("Vous êtes déjà connecté sur ce compte");
+    toast.warn("Vous êtes déjà connecté sur ce compte");
   }
 
   function createAccount() {
@@ -33,15 +36,15 @@ function App() {
   }
 
   function notRegistered() {
-    window.alert("Nom d'utilisateur ou mot de passe incorrect ou compte inexistant");
+    toast.error("Nom d'utilisateur ou mot de passe incorrect ou compte inexistant");
   }
 
   function alreadyRegistered() {
-    window.alert("Vous avez déjà un compte, veuillez vous connecter");
+    toast.warn("Vous avez déjà un compte, veuillez vous connecter");
   }
 
   function accountCreated() {
-    window.alert("Compte créé avec succès, veuillez vous connecter");
+    toast.success("Compte créé avec succès, veuillez vous connecter");
   }
 
   function onConnect() {
@@ -59,6 +62,7 @@ function App() {
   }
 
   function backFromGame() {
+    toast.info("Vous avez été ramené au menu principal");
     setInGame(false);
     setGameType(null);
     setGameId("0000");
@@ -101,8 +105,34 @@ function App() {
     }
   }, [gameType]);
 
+  function parallax(e){
+    let elem = document.querySelector(".parallax");
+    let _w = window.innerWidth/2;
+    let _h = window.innerHeight/2;
+    let _mouseX = e.clientX;
+    let _mouseY = e.clientY;
+    let _depth1 = `${50 - (_mouseX - _w) * 0.02}% ${50 - (_mouseY - _h) * 0.02}%`;
+    let _depth2 = `${50 - (_mouseX - _w) * 0.01}% ${50 - (_mouseY - _h) * 0.01}%`;
+    let _depth3 = `50% 50%`;
+    let x = `${_depth3}, ${_depth2}, ${_depth1}`;
+    elem.style.backgroundPosition = x;
+  }
+
   return (
     <div className="App">
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="dark"
+        limit={5}
+        />
       {connected ? (
         inGame ? (
           <div className="PartiePage">
@@ -117,12 +147,15 @@ function App() {
         )
       ) : (
         <div className="ConnectionPage">
-          <div className="Container1">
-            <h1>Connexion / Inscription</h1>
-            <input id="name" type="text" placeholder="Nom"/>
-            <input id="password" type="password"placeholder="mot de passe"/>
-            <button onClick={connect}>Connexion</button>
-            <button onClick={createAccount}>créer un compte</button>
+          <div className="parallax" onMouseMove={parallax}>
+            <div className="ConnectionCard">
+                <input className="connectionField" id="name" type="text" placeholder="Nom"/>
+                <input className="connectionField" id="password" type="password"placeholder="mot de passe"/>
+                <div className="connectionButtons">
+                  <button className="connectionbutton" id="loginbtn" onClick={connect}>Connexion</button>
+                  <button className="connectionbutton" id="signinbtn" onClick={createAccount}>Inscription</button>
+              </div>
+            </div>
           </div>
         </div>
       )}

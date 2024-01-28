@@ -1,6 +1,77 @@
+@font-face {
+  font-family: Rubik;
+  src: url("../../public/Rubik.ttf");
+}
+
+@font-face {
+  font-family: CoralCandy;
+  src: url("../../public/CoralCandy.ttf");
+}
+
+* {
+  --white-color : #DCE0E5;
+  --black-color : #2A333B;
+  --blue-color : #8BBBB9;
+  --yellow-color : #E6BB75;
+  --red-color: #C43631;
+  font-family: "Rubik";
+}
+
 body {
   padding: 0%;
   margin: 0%;
+  font-family: "Rubik";
+}
+
+#loginbtn {
+  width: 100%;
+  border-radius: 2em 2em 0 0;
+  margin-bottom: 0;
+  background-color: var(--blue-color);
+  border-color: var(--blue-color);
+  color: var(--black-color);
+}
+
+#signinbtn {
+  width: 100%;
+  border-radius: 0 0 2em 2em;
+  margin-top: 0;
+  background-color: var(--yellow-color);
+  border-color: var(--yellow-color);
+  color: var(--black-color);
+}
+
+#loginbtn:hover, #signinbtn:hover {
+  background-color: var(--white-color);
+  border-color: var(--white-color);
+  color: var(--black-color);
+}
+
+.ConnectionCard {
+  padding: 0;
+  margin: 0;
+  width: 33vh;
+  height: 40%;
+  max-width: 500px;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  border-radius: 1em;
+  background-position: center;
+  background-size: 120%;
+  flex-direction: column;
+}
+
+.connectionField {
+  width: 90%;
+  height: 15%;
+  border-radius: 1.5em;
+  padding: 0;
+  padding-left: 10%;
+}
+
+.connectionButtons {
+  width: 100%;
 }
 
 .App {
@@ -8,19 +79,29 @@ body {
   background-size: cover;
 }
 
-.ConnectionPage,
-.Home {
+.parallax {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  background-image: url(../../public/card_black.svg),url(../../public/card_y.svg),url(../../public/card_b.svg);
+  background-size: auto 60%;
+  background-repeat: no-repeat;
+  background-position: 50% 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.ConnectionPage, .Home {
   height: 100vh;
   width: 100vw;
-  background-image: url("../../public/background_home.jpg");
+  background-image: url("../../public/dark_background.jpg");
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
   display: flex;
   justify-content: center;
-  flex-direction: column;
   align-items: center;
-  flex-wrap: wrap;
 }
 
 .GamePage {
@@ -111,7 +192,15 @@ h1 {
   padding: 1em;
 }
 
-.Container1  {
+.ContainerParent {
+  display: flex;
+  flex-direction: column;
+  align-self: center;
+  justify-content: center;
+  width: 50%;
+}
+
+.Container1, .Container2{
   width: 60%;
   max-width: 500px;
   background-color: rgb(0 0 0 / 0.7);
@@ -124,14 +213,22 @@ h1 {
   margin: 1em;
 }
 
-.Container1 * {
+.Container1 *, .Container2 * {
   width: 80%;
   margin: 1.5em;
 }
 
-.Container1 p,label {
+.Container1 p, label, .Container2 p {
   color: gainsboro;
   font-size: 1.2em;
+}
+
+.Container1 {
+  align-self: flex-end;
+}
+
+.Container2 {
+  align-self: flex-start;
 }
 
 select{
@@ -209,6 +306,9 @@ input{
 }
 
 button {
+  text-align: center;
+  vertical-align: middle;
+  line-height: 0;
   border-radius: 0.5em;
   height: 3em;
   background-color: gainsboro;
@@ -220,22 +320,31 @@ button {
   cursor: pointer;
 }
 
-#deco {
-  border-radius: 0.5em;
-  height: 3em;
-  background-color: gainsboro;
-  border-color: gainsboro;
-  border-style: solid;
-  text-transform: uppercase;
-  font-weight: bold;
-  padding: 1em;
+.icon {
+  background: url("../../public/icone-deco.svg") no-repeat;
+  background-size: contain;
+  float: left;
+  width: 1.25em;
+  height: 1.25em;
+  padding-right: 0.5em;
+}
+
+.deco {
+  color: white;
   position: absolute;
   top: 1em;
   right: 1em;
 }
 
-#deco:hover, #giveUp:hover {
-  background-color: #F2393F;
+.deco:hover, .leaderboard:hover{
+  color: #5b5c5e;
+  cursor: pointer;
+  filter: brightness(0.7);
+}
+
+a {
+  text-decoration: none;
+  color: white;
 }
 
 #pause {
@@ -246,6 +355,10 @@ button {
   position: absolute;
   top: 1em;
   left: 1em;
+}
+
+#giveUp:hover, #retour:hover{
+  background-color: #F2393F;
 }
 
 button:hover {
@@ -376,4 +489,21 @@ button:hover {
   display: flex;
   flex-wrap: wrap;
   width: 100%;
+}
+
+::backdrop {
+  background-image: url("../../public/victory.jpg");
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+}
+
+dialog {
+  color: white;
+  background: none;
+  font-size: 70px;
+  border: none;
+}
+
+#secondline {
+  font-size: 40px;
 }
