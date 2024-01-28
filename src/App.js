@@ -27,6 +27,7 @@ function App() {
 
   function alreadyConnected() {
     toast.warn("Vous êtes déjà connecté sur ce compte");
+    resetFields();
   }
 
   function createAccount() {
@@ -37,14 +38,17 @@ function App() {
 
   function notRegistered() {
     toast.error("Nom d'utilisateur ou mot de passe incorrect ou compte inexistant");
+    resetFields();
   }
 
   function alreadyRegistered() {
     toast.warn("Vous avez déjà un compte, veuillez vous connecter");
+    resetFields();
   }
 
   function accountCreated() {
     toast.success("Compte créé avec succès, veuillez vous connecter");
+    resetFields();
   }
 
   function onConnect() {
@@ -70,6 +74,11 @@ function App() {
 
   function setTypeJeu(type) {
     setGameType(type);
+  }
+
+  function resetFields() {
+    document.getElementById("name").value = "";
+    document.getElementById("password").value = "";
   }
 
   useEffect(() => {
@@ -103,7 +112,7 @@ function App() {
       socket.off("disconnected");
       socket.off("goToGame");
     }
-  }, [gameType]);
+  });
 
   function parallax(e){
     let elem = document.querySelector(".parallax");
@@ -150,7 +159,7 @@ function App() {
           <div className="parallax" onMouseMove={parallax}>
             <div className="ConnectionCard">
                 <input className="connectionField" id="name" type="text" placeholder="Nom"/>
-                <input className="connectionField" id="password" type="password"placeholder="mot de passe"/>
+                <input className="connectionField" id="password" type="password" placeholder="mot de passe"/>
                 <div className="connectionButtons">
                   <button className="connectionbutton" id="loginbtn" onClick={connect}>Connexion</button>
                   <button className="connectionbutton" id="signinbtn" onClick={createAccount}>Inscription</button>
