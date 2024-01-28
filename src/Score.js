@@ -38,8 +38,13 @@ function Score({ hide, retour}) {
         <>
         {showLeaderboard ? (
             <>
+            <div className="leaderboard" onClick={cacherLeaderboard}>
+                <span className="back"></span>
+                <a href="/#">Retour</a>
+                <span></span>
+            </div>
+            <h2 id="boardTitle">Leaderboard</h2>
             <div className="container">
-                <h2>Leaderboard</h2>
                 <ul className="responsive-table">
                     <li className="table-header">
                         <div className="col col-1">Pseudo</div>
@@ -51,7 +56,6 @@ function Score({ hide, retour}) {
                     ))}
                 </ul>
             </div>
-            <button id="retour" onClick={cacherLeaderboard}>Retour</button>
             </>
         ) : (
             <div className="leaderboard" onClick={getLeaderboard}>

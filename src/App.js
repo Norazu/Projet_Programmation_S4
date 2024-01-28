@@ -152,7 +152,10 @@ function App() {
         inGame ? (
           <div className="PartiePage">
             <div className="GamePage">
-              <h2 id="codeGame">Code de la partie : {gameId}</h2>
+              <div className="gameNumber">
+                <h3 id="codeGame">Partie n°</h3>
+                <h2>{gameId}</h2>
+              </div>
               {gameType === "1" ? (<Bataille gameEnd={backFromGame}/>) :(<Boeuf gameEnd={backFromGame}/>)}
             </div>
             <Chat gameId={gameId} />

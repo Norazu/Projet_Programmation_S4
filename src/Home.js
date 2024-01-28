@@ -225,7 +225,9 @@ function Home({ gameType }) {
     setScoreButton(excludedButton === "score");
     setCreateGameButton(excludedButton === "createGame");
     setJoinGameButton(excludedButton === "joinGame");
-    setGamesListButton(excludedButton === "gamesList")
+    setGamesListButton(excludedButton === "gamesList");
+    document.documentElement.style.setProperty("--align-container1", "center");
+    document.documentElement.style.setProperty("--align-container2", "center");
   }
 
   function handleRetour() {
@@ -234,6 +236,8 @@ function Home({ gameType }) {
     setCreateGameButton(true);
     setJoinGameButton(true);
     setGamesListButton(true);
+    document.documentElement.style.setProperty("--align-container1", "flex-end");
+    document.documentElement.style.setProperty("--align-container2", "flex-start");
   }
 
   function roomComplete(){
@@ -259,7 +263,10 @@ function Home({ gameType }) {
     socket.on("roomDontExist", roomDontExist);
     socket.on("gameRunning", gameRunning);
     socket.on("maxGames", maxGames);
-    socket.on("unvalidArguments", unvalidArguments)
+    socket.on("unvalidArguments", unvalidArguments);
+    // Set initial alignment when component mounts
+    document.documentElement.style.setProperty("--align-container1", "flex-end");
+    document.documentElement.style.setProperty("--align-container2", "flex-start");
     return ()=>{
       socket.off("roomComplete");
       socket.off("roomDontExist");
@@ -267,7 +274,7 @@ function Home({ gameType }) {
       socket.off("maxGames");
       socket.off("unvalidArguments");
     }
-  });
+  }, []);
 
   function deconnexion() {
     socket.emit("goodbye", sessionStorage.getItem("sessId"));
@@ -283,8 +290,9 @@ function Home({ gameType }) {
       {scoreButton && (
         <Score hide={() => hide("score")} retour={handleRetour}/>
       )}
+      {(savedGamesButton || createGameButton || joinGameButton) && (
       <div className="ContainerParent">
-        <div className="Container1">
+        <div className="Container1" style={{ alignSelf: "var(--align-container1)" }}>
           {savedGamesButton && (
             <PartiesSauvegardees hide={() => hide("savedGames")} retour={handleRetour}/>
           )}
@@ -292,12 +300,13 @@ function Home({ gameType }) {
             <CreationPartie gameType={gameType} hide={() => hide("createGame")} retour={handleRetour}/>
           )}
         </div>
-        <div className="Container1">
+        <div className="Container1" style={{ alignSelf: "var(--align-container1)" }}>
           {joinGameButton && (
             <RejoindrePartie/>
           )}
         </div>
       </div>
+      )}
       {gamesListButton && (
       <div className="ContainerParent">
         <div className="Container2">

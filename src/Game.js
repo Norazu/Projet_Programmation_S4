@@ -18,7 +18,11 @@ export function Abandon({ gameEnd }) {
         }
     })
     return (
-        <button id="giveUp" onClick={() => giveUp(playerGameId, sessionStorage.getItem("sessId"))}>Abandonner</button>
+        <div className="leaderboard" onClick={() => giveUp(playerGameId, sessionStorage.getItem("sessId"))}>
+            <span className="giveUp"></span>
+            <a href="/#">Abandonner</a>
+            <span></span>
+        </div>
     );
 }
 
@@ -204,7 +208,7 @@ export function PlayerList({ showCards }) {
 
     return (
         <div className="playerList">
-            <h2>Joueurs de la partie : </h2>
+            <h2>Joueurs : </h2>
             {players.map((player, index) => (
                 <Player key={index} pseudo={player} nbCartes={getNbCartes(player)} score={getScore(player)} showCards={showCards} />
             ))}

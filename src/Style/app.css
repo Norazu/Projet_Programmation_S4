@@ -1,3 +1,8 @@
+:root {
+  --align-container1: "flex-end";
+  --align-container2: "flex-start";
+}
+
 @font-face {
   font-family: Rubik;
   src: url("../../public/Rubik.ttf");
@@ -115,6 +120,20 @@ body {
   min-width: 40em;
 }
 
+.gameNumber {
+  align-items: center;
+  flex-wrap: wrap;
+  align-self: flex-end;
+  position: fixed;
+  top: 0.2em;
+}
+
+.gameNumber h2, .gameNumber h3{
+  color: rgb(224, 224, 224);
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
 .PartiePage {
   background-image: url("../../public/background_game.jpg");
   background-position: center;
@@ -141,12 +160,14 @@ body {
 }
 
 .messageSender {
+  position: sticky;
+  bottom: 1em;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
 }
 
-.Chat #messages {
+.messages {
   background-color: transparent;
   resize: none;
   color: gainsboro;
@@ -157,27 +178,29 @@ body {
   padding: 1em;
 }
 
-#messageAffiche {
-  overflow-y: scroll  ;
+.messageAffiche {
+  position: sticky;
+  top: 1em;
+  overflow-y: scroll;
   height: 75%;
   max-height: 75vh;
 }
 
-#messageAffiche::-webkit-scrollbar {
+.messageAffiche::-webkit-scrollbar {
   width: 8px;
 }
 
-#messageAffiche::-webkit-scrollbar-thumb {
+.messageAffiche::-webkit-scrollbar-thumb {
   background-color: #888;
   border-radius: 4px;
 }
 
 /* Piste de la barre de défilement */
-#messageAffiche::-webkit-scrollbar-track {
+.messageAffiche::-webkit-scrollbar-track {
   background-color: transparent;
 }
 
-#messageAffiche p {
+.messageAffiche p {
   color: gainsboro;
 }
 
@@ -224,11 +247,11 @@ h1 {
 }
 
 .Container1 {
-  align-self: flex-end;
+  align-self: var(--align-container1);
 }
 
 .Container2 {
-  align-self: flex-start;
+  align-self: var(--align-container2);
 }
 
 select{
@@ -351,13 +374,17 @@ a {
   margin-right: 1em;
 }
 
-#giveUp {
-  position: absolute;
-  top: 1em;
-  left: 1em;
+.giveUp {
+  background: url("../../public/white-flag.png") no-repeat;
+  background-size: contain;
+  float: left;
+  float: left;
+  width: 2em;
+  height: 2em;
+  padding-right: 0.5em;
 }
 
-#giveUp:hover, #retour:hover{
+#retour:hover {
   background-color: #F2393F;
 }
 
