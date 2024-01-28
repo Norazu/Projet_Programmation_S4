@@ -427,14 +427,18 @@ button:hover {
   }
 }
 
-.Game {
+.plateau {
   width: 100%;
+  display: flex;
+  flex-direction: row;
 }
 
 .playerList {
-  width: 100%;
+  width: 15%;
+  align-self: flex-start;
   display: flex;
   flex-wrap: wrap;
+  flex-direction: column;
   align-items: center;
   justify-content: space-evenly;
 }
@@ -459,7 +463,7 @@ button:hover {
 .pseudo,.score {
   margin: 0.2em;
   padding: 0.3em;
-  font-size: 25px;
+  font-size: 20px;
   font-weight: bold;
   color: red;
   background-color: white;
@@ -480,13 +484,13 @@ button:hover {
     1px 1px 0 white;
 }
 
-.PLayerContainer {
-  margin: 2em;
+.PlayerContainer {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
+  margin-bottom: 20%;
 }
 
 .cardsPlayed {
@@ -496,26 +500,32 @@ button:hover {
   flex-wrap: wrap;
 }
 
-.Parties {
+.Partie {
+  width: 100%;
   display: flex;
   flex-wrap: wrap;
+  flex-direction: column;
+  align-items: center;
+  margin: 0;
 }
 
-.Parties img {
-  margin: 0;
-  align-self: center;
+.Partie img {
+  width: 30%;
+  margin-top: 1em;
+  align-self: auto;
 }
 
-.partieText {
+.PartieText {
   margin: 0;
-
 }
 
 .Type {
-  margin: 5px;
   display: flex;
   flex-wrap: wrap;
+  flex-direction: column;
+  align-items: center;
   width: 100%;
+  margin: 0;
 }
 
 ::backdrop {
@@ -533,4 +543,11 @@ dialog {
 
 #secondline {
   font-size: 40px;
+}
+
+.gamesList {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
 }

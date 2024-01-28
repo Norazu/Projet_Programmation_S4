@@ -222,6 +222,7 @@ io.on("connection", (socket) => {
     socket.emit("goToGame", codepartie.toString(), listeParties[codepartie].typeJeu, () => {
       socket.emit("setGameId", codepartie.toString());
       socket.emit("playersList", listeParties[codepartie].listeJoueurs);
+      io.to(joueursConnectes[idCreateur]).emit("showLaunch");
     });
   }
 
@@ -233,7 +234,7 @@ io.on("connection", (socket) => {
       socket.emit("maxGames");
     } else {
       codepartie = defCode();
-      creerPartie(codepartie, type, nbMinJoueurs, nbMaxJoueurs, idCreateur, {},dureeTour);      
+      creerPartie(codepartie, type, nbMinJoueurs, nbMaxJoueurs, idCreateur, {}, dureeTour);
     }
   });
 
@@ -397,7 +398,7 @@ io.on("connection", (socket) => {
 
   socket.on("ligneChoisie",(gameId, idJoueur, indexLigne) => {
     if (listeParties[gameId].gameIsPaused) {
-      unpauseGame(gameId, listeParties[gameId].idCreateur);
+      unpauseGame(gameId);
     }
     let carte = gameOrderBoeuf[gameId][0][1];
     while(listeParties[gameId].cartes["reste"][indexLigne].length >0){
@@ -430,10 +431,11 @@ io.on("connection", (socket) => {
       });
       console.log(min);
       if(min > carte){
-        if (joueursConnectes[idJoueur] != "") {
+        if (joueursConnectes[idJoueur] !== "") {
           io.to(joueursConnectes[idJoueur]).emit("choixLigne",gameId);
+          pauseGame(gameId);
+          io.to(gameId).emit("playerIsChoosing", idJoueur);
         }
-        pauseGame(gameId, listeParties[gameId].idCreateur);
         pierre = true;
         return false;
       }
@@ -555,43 +557,36 @@ io.on("connection", (socket) => {
     });
   }
 
-  socket.on("saveGame", async (gameId, pseudo) => {
+  socket.on("saveGame", async (gameId) => {
     // => joueur clique sur le bouton "sauvegarder la partie"
     //renvoie le signal conséquent à la réussite de la sauvegarde
     let partie = listeParties[gameId];
-    if (pseudo==partie.idCreateur){
-      if (partie.status==1){
-        if (!gameId == "") {
-          try {
-            await doQuery("INSERT INTO parties VALUES (?, ?, ?, ?, ?, ?, ?, ?)", [gameId, partie.typeJeu, partie.nbMinJoueurs, partie.nbMaxJoueurs, null, partie.idCreateur, partie.dureeTour, null]);
-          } catch (err) {
-            console.log(err);
-          }
-          if (partie.typeJeu == 2) {
-            try {
-              await doQuery("UPDATE parties SET plateau=? WHERE idGame=?", [partie.cartes["reste"].join("|"), gameId]);
-              await doQuery("UPDATE parties SET compteToursBoeuf=? WHERE idGame=?", [partie.compteToursBoeuf, gameId])
-            } catch (err) {
-              console.log(err);
-            }
-          }
-          for (var joueur of partie.listeJoueurs) {
-            try {
-              await doQuery("INSERT INTO partiejoueur VALUES (?, ?, ?, ?)", [gameId, joueur, partie.cartes[joueur].join("|"), partie.playerScoreBoeuf[joueur]]);
-            } catch (err) {
-              console.log(err);
-            }
-          }
-          io.to(gameId).emit("partieSauvegardee");
-          console.log("partie sauvegardée");
-          delete listeParties[gameId];
-          console.log(listeParties);
-        }
-      } else{
-        socket.emit("SaveGameNotStarted");
+
+    if (!gameId == "") {
+      try {
+        await doQuery("INSERT INTO parties VALUES (?, ?, ?, ?, ?, ?, ?, ?)", [gameId, partie.typeJeu, partie.nbMinJoueurs, partie.nbMaxJoueurs, null, partie.idCreateur, partie.dureeTour, null]);
+      } catch (err) {
+        console.log(err);
       }
-    } else{
-      socket.emit("PasPermSauvegarde");
+      if (partie.typeJeu == 2) {
+        try {
+          await doQuery("UPDATE parties SET plateau=? WHERE idGame=?", [partie.cartes["reste"].join("|"), gameId]);
+          await doQuery("UPDATE parties SET compteToursBoeuf=? WHERE idGame=?", [partie.compteToursBoeuf, gameId])
+        } catch (err) {
+          console.log(err);
+        }
+      }
+      for (var joueur of partie.listeJoueurs) {
+        try {
+          await doQuery("INSERT INTO partiejoueur VALUES (?, ?, ?, ?)", [gameId, joueur, partie.cartes[joueur].join("|"), partie.playerScoreBoeuf[joueur]]);
+        } catch (err) {
+          console.log(err);
+        }
+      }
+      io.to(gameId).emit("partieSauvegardee");
+      console.log("partie sauvegardée");
+      delete listeParties[gameId];
+      console.log(listeParties);
     }
   });
 
@@ -802,78 +797,66 @@ io.on("connection", (socket) => {
     return false;
   }
 
-  function pauseGame(gameId, pseudo) {
+  function pauseGame(gameId) {
     if (listeParties[gameId].status==1){
-      if (listeParties[gameId].idCreateur==pseudo){
-        listeParties[gameId].gameIsPaused = true;
-        socket.emit("gameEnPause");
-      } else{
-        socket.emit("pasPermPause");
-      }
+      listeParties[gameId].gameIsPaused = true;
+      socket.emit("gameEnPause");
     } else {
       socket.emit("pauseGameNotStarted");
     }
   }
 
-  function unpauseGame(gameId, pseudo) {
-    if (listeParties[gameId].idCreateur==pseudo){
-      listeParties[gameId].gameIsPaused = false;
-      socket.emit("gameReprise");
-    } else{
-      socket.emit("pasPermPause");
-    }
+  function unpauseGame(gameId) {
+    listeParties[gameId].gameIsPaused = false;
+    socket.emit("gameReprise");
   }
 
-  socket.on("pauseGame", (gameId, pseudo) => {
+  socket.on("pauseGame", (gameId) => {
     // => joueur clique sur le bouton "pause"
     //regarde si le joueur a les permissions et que la partie n'a pas démarrée
     //met la partie en pause sur le serveur
     //renvoie le signal conséquent
-    pauseGame(gameId, pseudo);
+    pauseGame(gameId);
   });
 
-  socket.on("unpauseGame",  (gameId, pseudo) => {
+  socket.on("unpauseGame",  (gameId) => {
     // => joueur clique sur le bouton "retirer la pause"
     //regarde si le joueur a les permissions
     //enleve la pause de la partie sur le serveur
     //renvoie le signal conséquent
-    unpauseGame(gameId, pseudo);
+    unpauseGame(gameId);
   });
 
   socket.on("launchGame",(gameId, pseudo)=>{
     // => joueur clique sur le bouton "lancer la partie"
     //regarde si le joueur a les permissions et s'il y a assez de joueurs présents
     //renvoie le signal conséquent
-    if (pseudo==listeParties[gameId].idCreateur){
-      if (listeParties[gameId].nbJoueurs>=listeParties[gameId].nbMinJoueurs){
-        if (Object.keys(listeParties[gameId].cartes).length === 0) {
-
-          switch (listeParties[gameId].typeJeu) {
-            case "1":
-              listeParties[gameId].cartes = shuffle(listeParties[gameId].listeJoueurs);
-              break;
-            case "2":
-              listeParties[gameId].cartes = shuffleBoeuf(listeParties[gameId].listeJoueurs);
-              io.to(gameId).emit("reste",listeParties[gameId].cartes["reste"]);
-              break;
-            default:
-              break;
-          }
+    if (listeParties[gameId].nbJoueurs>=listeParties[gameId].nbMinJoueurs){
+      io.to(joueursConnectes[pseudo]).emit("gameLaunched");
+      io.to(joueursConnectes[pseudo]).emit("showLaunch");
+      if (Object.keys(listeParties[gameId].cartes).length === 0) {
+        switch (listeParties[gameId].typeJeu) {
+          case "1":
+            listeParties[gameId].cartes = shuffle(listeParties[gameId].listeJoueurs);
+            break;
+          case "2":
+            listeParties[gameId].cartes = shuffleBoeuf(listeParties[gameId].listeJoueurs);
+            io.to(gameId).emit("reste",listeParties[gameId].cartes["reste"]);
+            break;
+          default:
+            break;
         }
-        io.to(gameId).emit("cardsChanged");
-        var nbCartes = {};
-        for (const [key, value] of Object.entries(listeParties[gameId].cartes)) {
-          nbCartes[key] = value.length;
-        }
-        io.to(gameId).emit("nbCartes",nbCartes);
-        startTimer(gameId);
-        listeParties[gameId].status=1;
-      }else {
-        socket.emit("notEnoughPlayers");
       }
-    } else{
-      console.log("vous");
-      socket.emit("PasDePerms");
+      io.to(gameId).emit("cardsChanged");
+      var nbCartes = {};
+      for (const [key, value] of Object.entries(listeParties[gameId].cartes)) {
+        nbCartes[key] = value.length;
+      }
+      io.to(gameId).emit("nbCartes",nbCartes);
+      startTimer(gameId);
+      listeParties[gameId].status=1;
+    } else {
+      socket.emit("notEnoughPlayers");
     }
   });
 });

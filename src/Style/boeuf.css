@@ -9,8 +9,10 @@
     padding: 0;
     position: relative;
     background-color: rgb(255, 255, 255);
-    border-radius: 2px;
+    border-radius: 10px;
     border-color: rgb(53, 53, 53);
+    margin-left: 5px;
+    margin-right: 5px;
 }
 
 .carte_boeuf .carte {
@@ -116,12 +118,14 @@ button:hover[data-etat="disabled"] {
 }
 
 .LignesCartes {
-    width: fit-content;
-    margin: auto;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    margin-left: 10%;
+    margin-top: 2%;
 }
 
 .LigneCartes {
-    align-self: center;
     width: fit-content;
     display: flex;
     list-style-type: none;
