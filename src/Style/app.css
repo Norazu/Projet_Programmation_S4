@@ -83,7 +83,7 @@ body {
   position: relative;
   width: 100%;
   height: 100vh;
-  background-image: url(../../public/card_black.svg),url(../../public/card_y.svg),url(../../public/card_b.svg);
+  background-image: url("../../public/card_black.svg"),url("../../public/card_y.svg"),url("../../public/card_b.svg");
   background-size: auto 60%;
   background-repeat: no-repeat;
   background-position: 50% 50%;

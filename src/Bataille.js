@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { socket } from "./socket.js";
 import { Abandon, Sauvegarde, PlayerList, Timer, Plateau, Main, WinnerModal } from "./Game.js";
 

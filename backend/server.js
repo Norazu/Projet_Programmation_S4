@@ -11,7 +11,7 @@ var timerIsRunning = false;
 //var turnDuration = 10;
 var bataille = {};
 var gameOrderBoeuf = {}
-var joueursConnectes = [];
+var joueursConnectes = {};
 var listeParties = {};
 
 //mise en place et connection à la base de données mysql
@@ -52,7 +52,6 @@ class partie {
     this.nbMaxJoueurs = nbMaxJoueurs;
     this.nbJoueurs = nbJoueurs;
     this.listeJoueurs = listeJoueurs;
-    this.socketsJoueurs = {};
     this.timer = timer;
     this.secondTimer = secondTimer;
     this.cartes = cartes;
@@ -70,7 +69,8 @@ io.on("connection", (socket) => {
   socket.on("hello", (sessId) => {
     // => reçu automatiquement en cas de connexion de socket et assure la reconnexion automatique
     //regarde si le joueur était connecté via son cookie et si il était dans une partie
-    if (joueursConnectes.includes(sessId)) {
+    if (joueursConnectes[sessId] === "") {
+      joueursConnectes[sessId] = socket.id;
       socket.emit("connected");
       for (var pt in listeParties) {
         if (listeParties[pt].listeJoueurs.includes(sessId)) {
@@ -78,7 +78,7 @@ io.on("connection", (socket) => {
         }
       }
     } else {
-      joueursConnectes.push(sessId);
+      joueursConnectes[sessId] = socket.id;
     }
   });
 
@@ -86,20 +86,21 @@ io.on("connection", (socket) => {
     // => lorsque le joueur clique sur le bouton "se déconnecter"
     //supprime le joueur des joueurs connectés
     //renvoie un signal de confirmation au client
-    var index = joueursConnectes.indexOf(sessId)
-    if (index != -1) {
-      joueursConnectes.splice(index, 1);
-      console.log(`${sessId} disconnected`);
-      socket.emit("disconnected");
-    }
+    delete joueursConnectes[sessId];
+    console.log(`${sessId} disconnected`);
+    socket.emit("disconnected");
   });
 
   socket.on("connexion", (nom, mdp) => {
     // => connexion d'un joueur via les champs de texte de la page d'accueil
     //regarde si le joueur est dans la base de données
     //renvoie le signal conséquent au client
-    if (joueursConnectes.includes(nom)) {
-      socket.emit("userAlreadyConnected");
+    if (joueursConnectes[nom] !== undefined) {
+      if (joueursConnectes[nom] !== "") {
+        socket.emit("userAlreadyConnected");
+      } else {
+        socket.emit("connected");
+      }
     } else {
       const shaObj = new jsSHA("SHA-256", "TEXT", { encoding: "UTF8" });
       shaObj.update(mdp);
@@ -123,46 +124,45 @@ io.on("connection", (socket) => {
     // => joueur clique sur le bouton "créer un compte"
     //regarde si le joueur existe déjà
     //renvoie le signal conséquent au client
-    var exists = false;
+    let exists = false;
     let queryResult;
-    try {
-      queryResult = await doQuery("SELECT pseudo FROM joueurs",[]);
-    } catch (err) {
-      console.log(err);
-    }
-    for (var row of queryResult) {
-      if (nom === row.pseudo) {
-        exists = true;
-        socket.emit("userAlreadyRegistered");
-      }
-    }
-    if (!exists) {
-      const shaObj = new jsSHA("SHA-256", "TEXT", { encoding: "UTF8" });
-      shaObj.update(mdp);
-      const hashMDP = shaObj.getHash("HEX");
+    if (nom == "") {
+      socket.emit("userNotRegistered");
+    } else {
       try {
-        await doQuery("INSERT INTO joueurs (pseudo, hashMDP) VALUES (?, ?);",[nom, hashMDP]);
-        await doQuery("INSERT INTO scoresBoeuf (joueur) VALUES (?);",[nom]);
+        queryResult = await doQuery("SELECT pseudo FROM joueurs",[]);
       } catch (err) {
         console.log(err);
       }
-      socket.emit("accountCreated");
-      console.log(`account created : ${nom}, ${hashMDP}`);
+      for (var row of queryResult) {
+        if (nom === row.pseudo) {
+          exists = true;
+          socket.emit("userAlreadyRegistered");
+        }
+      }
+      if (!exists) {
+        const shaObj = new jsSHA("SHA-256", "TEXT", { encoding: "UTF8" });
+        shaObj.update(mdp);
+        const hashMDP = shaObj.getHash("HEX");
+        try {
+          await doQuery("INSERT INTO joueurs (pseudo, hashMDP) VALUES (?, ?);",[nom, hashMDP]);
+          await doQuery("INSERT INTO scoresBoeuf (joueur) VALUES (?);",[nom]);
+        } catch (err) {
+          console.log(err);
+        }
+        socket.emit("accountCreated");
+        console.log(`account created : ${nom}, ${hashMDP}`);
+      }
     }
   });
 
   socket.on('disconnecting', () => {
     // => reçu automatiquement en cas de déconnexion d'un socket
     //s'assure que si le socket était connecté à une partie, il en soit supprimé
-    console.log("deconnexion");
-    for (const cle in listeParties) {
-      console.log(listeParties[cle].socketsJoueurs);
-      let partie = listeParties[cle];
-      for (current in partie) {
-        if (partie[current] == socket.id) {
-          delete partie[current];
-          break;
-        }
+    console.log("deconnexion : ", joueursConnectes);
+    for (let joueur in joueursConnectes) {
+      if (joueursConnectes[joueur] == socket.id) {
+        joueursConnectes[joueur] = "";
       }
     }
   });
@@ -216,7 +216,7 @@ io.on("connection", (socket) => {
     }
     listeParties[codepartie] = new partie(type, idCreateur, nbMinJoueurs, nbMaxJoueurs, 1, [idCreateur],0,0,cartes,dureeTour);
     listeParties[codepartie].playerScoreBoeuf[idCreateur] = 0;
-    listeParties[codepartie].socketsJoueurs[idCreateur] = socket.id;
+    //listeParties[codepartie].socketsJoueurs[idCreateur] = socket.id;
     await socket.join(codepartie.toString());
     console.log("partie " + codepartie + " créée");
     socket.emit("goToGame", codepartie.toString(), listeParties[codepartie].typeJeu, () => {
@@ -252,7 +252,7 @@ io.on("connection", (socket) => {
             listeParties[idRoomInt].listeJoueurs.push(idJoueur);
           }
           listeParties[idRoomInt].playerScoreBoeuf[idJoueur] = 0;
-          listeParties[idRoomInt].socketsJoueurs[idJoueur] = socket.id;
+          //listeParties[idRoomInt].socketsJoueurs[idJoueur] = socket.id;
           await socket.join(idRoom);
           socket.emit('goToGame', idRoom, listeParties[idRoomInt].typeJeu, () => {
             io.to(idRoom).emit("setGameId", idRoom);
@@ -431,7 +431,9 @@ io.on("connection", (socket) => {
       });
       console.log(min);
       if(min > carte){
-        io.to(listeParties[gameId].socketsJoueurs[idJoueur]).emit("choixLigne",gameId);
+        if (joueursConnectes[idJoueur] != "") {
+          io.to(joueursConnectes[idJoueur]).emit("choixLigne",gameId);
+        }
         pauseGame(gameId, listeParties[gameId].idCreateur);
         pierre = true;
         return false;
@@ -753,7 +755,27 @@ io.on("connection", (socket) => {
     }
   }
 
-  async function finMancheBoeuf(gameId){
+  async function finPartieBoeuf(gameId, vainqueurs, min) {
+    for (let joueur in listeParties[gameId].listeJoueurs) {
+      try {
+        await doQuery("UPDATE scoresboeuf SET scoreTotal=scoreTotal+?, nbPartiesJouees=nbPartiesJouees+1 WHERE joueur=?;",[listeParties[gameId].playerScoreBoeuf[joueur], joueur]);
+      } catch (err) {
+        console.log(err);
+      }
+      if (vainqueurs.includes(joueur)) {
+        try {
+          await doQuery("UPDATE scoresboeuf SET nbPartiesGagnees=nbPartiesGagnees+1 WHERE joueur=?;",[joueur]);
+        } catch (err) {
+          console.log(err);
+        }
+      }
+    }
+    io.to(gameId).emit("gameFinished",[]);
+    delete listeParties[gameId];
+    io.to(gameId).emit("victory",vainqueurs,min);
+  }
+
+  function finMancheBoeuf(gameId){
     let max=0;
     let min;
     let vainqueurs=[];
@@ -775,23 +797,7 @@ io.on("connection", (socket) => {
       }
     }
     if (max>=66){
-      for (let joueur in listeParties[gameId].listeJoueurs) {
-        try {
-          await doQuery("UPDATE scoresboeuf SET scoreTotal=scoreTotal+?, nbPartiesJouees=nbPartiesJouees+1 WHERE joueur=?;",[listeParties[gameId].playerScoreBoeuf[joueur], joueur]);
-        } catch (err) {
-          console.log(err);
-        }
-        if (vainqueurs.includes(joueur)) {
-          try {
-            await doQuery("UPDATE scoresboeuf SET nbPartiesGagnees=nbPartiesGagnees+1 WHERE joueur=?;",[joueur]);
-          } catch (err) {
-            console.log(err);
-          }
-        }
-      }
-      io.to(gameId).emit("gameFinished",[]);
-      delete listeParties[gameId];
-      io.to(gameId).emit("victory",vainqueurs,min);
+      finPartieBoeuf(gameId, vainqueurs, min);
       return true;
     }
     return false;
