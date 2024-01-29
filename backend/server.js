@@ -865,6 +865,7 @@ io.on("connection", (socket) => {
       var nbCartes = {};
       for (const [key, value] of Object.entries(listeParties[gameId].cartes)) {
         nbCartes[key] = value.length;
+      }
       io.to(gameId).emit("nbCartes",nbCartes);
       startTimer(gameId);
       listeParties[gameId].status=1;
