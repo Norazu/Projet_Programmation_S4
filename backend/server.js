@@ -60,6 +60,7 @@ class partie {
     this.playerScoreBoeuf = {};
     this.compteToursBoeuf = 0;
     this.dureeTour = dureeTour;
+    this.partieACharger = false;
   }
 }
 
@@ -252,7 +253,7 @@ io.on("connection", (socket) => {
             listeParties[idRoomInt].nbJoueurs += 1;
             listeParties[idRoomInt].listeJoueurs.push(idJoueur);
           }
-          listeParties[idRoomInt].playerScoreBoeuf[idJoueur] = 0;
+          if (!listeParties[idRoomInt].partieACharger) {listeParties[idRoomInt].playerScoreBoeuf[idJoueur] = 0;}
           //listeParties[idRoomInt].socketsJoueurs[idJoueur] = socket.id;
           await socket.join(idRoom);
           socket.emit('goToGame', idRoom, listeParties[idRoomInt].typeJeu, () => {
@@ -611,14 +612,21 @@ io.on("connection", (socket) => {
       }
     }
     creerPartie(row.idGame, row.typeJeu, row.nbMinJoueurs, row.nbMaxJoueurs, row.idCreateur, cartes, row.dureeTour);
-    listeParties[code].gameIsPaused = true;
-    socket.emit("gameEnPause");
     if (row.typeJeu == 2) {
-      cartes["reste"] = row.plateau.split("|");
       listeParties[code].compteToursBoeuf = row.compteToursBoeuf;
       listeParties[code].playerScoreBoeuf = playersScores;
+      console.log(listeParties[code].playerScoreBoeuf);
+      reste = row.plateau.split("|");
+      listeCartes=[];
+      for (let i=0 ; i<4 ; i++){
+        let liste=reste[i].split(",");
+        console.log(liste);
+        listeCartes.push(liste);
+      }
+      listeParties[code].cartes["reste"]=listeCartes;
+      console.log("la liste est" + listeParties[code].cartes["reste"]);
+      listeParties[code].partieACharger = true;
     }
-    console.log(listeParties[row.idGame]);
     try {
       await doQuery("DELETE FROM partiejoueur WHERE idGame=?",[code]);
       await doQuery("DELETE FROM parties WHERE idGame=?",[code]);
@@ -846,12 +854,17 @@ io.on("connection", (socket) => {
           default:
             break;
         }
+      } else {
+        if (listeParties[gameId].typeJeu == 2) {
+          console.log("la liste" + listeParties[gameId].cartes);
+          io.to(gameId).emit("reste",listeParties[gameId].cartes["reste"]);
+          io.to(gameId).emit("scorePlayer",listeParties[gameId].playerScoreBoeuf);
+        }
       }
       io.to(gameId).emit("cardsChanged");
       var nbCartes = {};
       for (const [key, value] of Object.entries(listeParties[gameId].cartes)) {
         nbCartes[key] = value.length;
-      }
       io.to(gameId).emit("nbCartes",nbCartes);
       startTimer(gameId);
       listeParties[gameId].status=1;
