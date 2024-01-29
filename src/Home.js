@@ -13,7 +13,7 @@ function loadGameByList(code) {
   socket.emit("loadGame", code);
 }
 
-function Parties({code, page, type}){
+function Partie({code, page, type}){
   let type_jeu = "";
   let chemin_img = "";
   switch (String(type)){
@@ -30,11 +30,11 @@ function Parties({code, page, type}){
       break;
   }
   return(
-    <div className="Parties">
-      <p className="partieText">Code de la partie :{code}</p>
+    <div className="Partie">
+      <p className="partieText">Partie n°{code}</p>
       <div className="Type">
-        <p className="partieText"> Type de jeu : {type_jeu} </p>
-        <img className="boeuf" src={chemin_img} alt={"Logo " + type_jeu} style={{width : 50+"px"}}/>
+        <p className="PartieText">{type_jeu} </p>
+        <img className="boeuf" src={chemin_img} alt={"Logo " + type_jeu}/>
       </div >
       {page ? (
         <>
@@ -76,10 +76,10 @@ function ListeDesParties({ hide, retour }) {
     {showGameList ? (
       <>
       <p>Parties disponibles</p>
-      <div className="playerList">
-          {parties.map((partie, index) => (
-            <Parties key={index} code={partie[0]} type={partie[1]}/>
-            ))}
+      <div className="gamesList">
+        {parties.map((partie, index) => (
+          <Partie key={index} code={partie[0]} type={partie[1]}/>
+          ))}
       </div>
       <button id="retour" onClick={() => afficherListeParties(false)}>Retour</button>
       </>
@@ -134,9 +134,9 @@ function PartiesSauvegardees({ hide, retour }) {
         <button type="button" onClick={loadGame}>Charger la partie</button>
       </div>
       <div className="Container1">
-        <div className="playerList">
+        <div className="gamesList">
           {savedGames.map((partie) => (
-            <Parties key={partie[0]} code={partie[0]} page={showSavedGames} type={partie[1]}/>
+            <Partie key={partie[0]} code={partie[0]} page={showSavedGames} type={partie[1]}/>
           ))}
         </div>
       </div>

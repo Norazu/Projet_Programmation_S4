@@ -28,43 +28,36 @@ export function Abandon({ gameEnd }) {
 
 export function Sauvegarde({ gameEnd }) {
     const [gameIsPaused, setGameIsPaused] = useState(false);
+    const [showPauseButton, setShowPauseButton] = useState(false);
 
     function gameEnPause() {
         setGameIsPaused(true);
-        document.getElementById("pause").innerText = "Enlever la pause";
+        if (document.getElementById("pause") != null) {
+            document.getElementById("pause").innerText = "Enlever la pause";
+        }
     }
 
     function gameReprise() {
         setGameIsPaused(false);
-        document.getElementById("pause").innerText = "Pause";
+        if (document.getElementById("pause") != null) {
+            document.getElementById("pause").innerText = "Pause";
+        }
     }
 
     function pauseGameNotStarted() {
         toast.error("Vous ne pouvez pas mettre en pause la partie si elle n'a pas démarré");
     }
 
-    function pasPermPause() {
-        toast.error("Vous n'avez pas la permission de mettre en pause la partie");
-    };
-
     function pause() {
         if (!gameIsPaused) {
-            socket.emit("pauseGame", playerGameId, sessionStorage.getItem("sessId"));
+            socket.emit("pauseGame", playerGameId);
         } else {
-            socket.emit("unpauseGame", playerGameId, sessionStorage.getItem("sessId"));
+            socket.emit("unpauseGame", playerGameId);
         }
     };
 
     function saveGame(gameId, pseudo) {
         socket.emit("saveGame", gameId, pseudo);
-    }
-
-    function pasPermSauvegarde() {
-        toast.error("Vous n'avez pas la permission de sauvegarder la partie");
-    }
-
-    function saveGameNotStarted() {
-        toast.error("Vous ne pouvez pas sauvegarder si la partie n'a pas démarré");
     }
 
     function reload(id) {
@@ -81,33 +74,33 @@ export function Sauvegarde({ gameEnd }) {
         socket.on("quit", id => {
             reload(id);
         });
-        socket.on("pasPermPause", pasPermPause);
+        socket.on("gameLaunched", () => setShowPauseButton(true));
         socket.on("pauseGameNotStarted", pauseGameNotStarted);
         socket.on("gameEnPause", gameEnPause);
         socket.on("gameReprise", gameReprise);
-        socket.on("PasPermSauvegarde", pasPermSauvegarde);
-        socket.on("SaveGameNotStarted", saveGameNotStarted);
         socket.on("partieSauvegardee", partieSaved);
         return () => {
             socket.off("quit");
-            socket.off("pasPermPause");
+            socket.off("gameLaunched");
             socket.off("pauseGameNotStarted");
             socket.off("gameEnPause");
             socket.off("gameReprise");
-            socket.off("PasPermSauvegarde");
-            socket.off("SaveGameNotStarted");
             socket.off("partieSauvegardee");
         }
 
     });
 
     return (
-        <>
-            <button id="pause" onClick={() => pause()}>Pause</button>
-            {gameIsPaused && (
-                <button onClick={() => saveGame(playerGameId, sessionStorage.getItem("sessId"))}>Sauvegarder la partie</button>
+        <div className="pauseAndSave">
+            {showPauseButton && (
+                <>
+                <button id="pause" onClick={() => pause()}>Pause</button>
+                {gameIsPaused && (
+                    <button onClick={() => saveGame(playerGameId)}>Sauvegarder la partie</button>
+                )}
+                </>
             )}
-        </>
+        </div>
     );
 }
 
@@ -130,7 +123,7 @@ function Player({ pseudo, nbCartes, showCards, score }) {
     });
     if (showCards) {
         return (
-            <div className="PLayerContainer">
+            <div className="PlayerContainer">
                 <p className="pseudo" style={{ filter: `hue-rotate(${hueRotateValue}deg)` }}>{pseudo}</p>
                 <div className="Player" style={{ filter: `hue-rotate(${hueRotateValue}deg)` }}>
                     <p className="cartes">{nbCartes}</p>
@@ -144,7 +137,7 @@ function Player({ pseudo, nbCartes, showCards, score }) {
         );
     } else {
         return (
-            <div className="PLayerContainer">
+            <div className="PlayerContainer">
                 <p className="pseudo" style={{ filter: `hue-rotate(${hueRotateValue}deg)` }}>{pseudo}</p>
                 <p className="score" style={{ filter: `hue-rotate(${hueRotateValue}deg)` }}>{score}</p>
                 <div className="cardsPlayed">
@@ -156,7 +149,6 @@ function Player({ pseudo, nbCartes, showCards, score }) {
         )
     }
 }
-
 
 export function PlayerList({ showCards }) {
     const [players, setPlayers] = useState([]);
@@ -230,7 +222,7 @@ export function Timer() {
     }, []);
 
     return (
-        <div>
+        <div className="timer">
             <p>Temps Restant : {timer}</p>
         </div>
     );
@@ -397,30 +389,31 @@ export function Main({ gameType }) {
     }
 }
 
-export function Plateau() {
+export function LaunchGame() {
+    const [showLaunchGameButton, setShowLaunchGameButton] = useState(false);
+
     function notEnoughPlayers() {
         toast.info("Il n'y a pas assez de joueurs pour démarrer une partie");
     }
-    function pasDePerms() {
-        toast.error("Vous n'avez pas la permission de démarrer la partie");
-    }
 
     useEffect(() => {
+        socket.on("showLaunch", () => setShowLaunchGameButton(!showLaunchGameButton));
         socket.on("notEnoughPlayers", notEnoughPlayers);
-        socket.on("PasDePerms", pasDePerms);
         return () => {
-            socket.off("notEnoughPlayers")
-            socket.off("PasDePerms")
+            socket.off("showLaunch");
+            socket.off("notEnoughPlayers");
         }
-    })
+    });
 
     function launchGame() {
         socket.emit("launchGame", playerGameId, sessionStorage.getItem("sessId"));
     }
 
     return (
-        <div>
-            <button onClick={launchGame}>Lancer la partie</button>
+        <div className="launchGame">
+            {showLaunchGameButton && (
+                <button onClick={launchGame}>Lancer la partie</button>
+            )}
         </div>
     );
 }

@@ -1,6 +1,7 @@
-import { CarteBoeuf, Abandon, Sauvegarde, PlayerList, Timer, Plateau, Main, WinnerModal } from "./Game.js";
+import { CarteBoeuf, Abandon, Sauvegarde, PlayerList, Timer, LaunchGame, Main, WinnerModal } from "./Game.js";
 import { useEffect, useState } from "react";
 import { socket } from "./socket.js";
+import { toast } from "react-toastify";
 
 let playerGameId = "";
 
@@ -12,7 +13,6 @@ function LignesCartes(){
     function ligneChoisie(indexLigne) {
         setChoixLigne(false);
         socket.emit("ligneChoisie", playerGameId, sessionStorage.getItem("sessId"), indexLigne);
-        console.log("signal sent");
     }
 
     useEffect(() => {
@@ -47,9 +47,13 @@ function LignesCartes(){
 function Boeuf({ gameEnd }){
 
     useEffect(() => {
+        socket.on("playerIsChoosing", idJoueur => {
+            toast.info(idJoueur + " est en train de choisir une ligne");
+        });
+
         // Gestionnaire d'événement pour le déchargement de la fenêtr
         const handleUnload = () => {
-            socket.emit("disconnecting")
+            socket.emit("disconnecting");
             // Déconnectez le socket avant le déchargement de la fenêtre
             socket.close();
         };
@@ -57,21 +61,24 @@ function Boeuf({ gameEnd }){
         window.addEventListener('beforeunload', handleUnload);
 
         return () => {
+            socket.off("playerIsChoosing")
             window.removeEventListener('beforeunload', handleUnload);
         };
-    })
+    });
 
     return (
-        <div className="Game">
-            <WinnerModal gameEnd={gameEnd}/>
-            <Abandon gameEnd={gameEnd}/>
-            <Sauvegarde gameEnd={gameEnd}/>
+        <>
+        <WinnerModal gameEnd={gameEnd}/>
+        <Abandon gameEnd={gameEnd}/>
+        <Sauvegarde gameEnd={gameEnd}/>
+        <div className="plateau">
             <PlayerList showCards={false}/>
             <LignesCartes/>
-            <Timer/>
-            <Plateau/>
-            <Main gameType={2}/>
         </div>
+        <Timer/>
+        <LaunchGame/>
+        <Main gameType={2}/>
+        </>
     )
 }
 
