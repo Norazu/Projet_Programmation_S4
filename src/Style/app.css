@@ -107,6 +107,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .GamePage {
@@ -117,7 +118,6 @@ body {
   align-items: center;
   flex-wrap: wrap;
   margin: 1em;
-  min-width: 40em;
 }
 
 .gameNumber {
@@ -152,7 +152,6 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  width: 20%;
 }
 
 .Chat * {
@@ -216,6 +215,7 @@ h1 {
 }
 
 .ContainerParent {
+  min-width: 360px;
   display: flex;
   flex-direction: column;
   align-self: center;
@@ -224,7 +224,7 @@ h1 {
 }
 
 .Container1, .Container2{
-  width: 60%;
+  min-width: 60%;
   max-width: 500px;
   background-color: rgb(0 0 0 / 0.7);
   backdrop-filter: blur(2em);
@@ -237,7 +237,7 @@ h1 {
 }
 
 .Container1 *, .Container2 * {
-  width: 80%;
+  min-width: 80%;
   margin: 1.5em;
 }
 
