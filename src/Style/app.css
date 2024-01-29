@@ -237,7 +237,7 @@ h1 {
 }
 
 .Container1 *, .Container2 * {
-  min-width: 80%;
+  min-width: 60%;
   margin: 1.5em;
 }
 
@@ -434,7 +434,6 @@ button:hover {
 }
 
 .playerList {
-  width: 15%;
   align-self: flex-start;
   display: flex;
   flex-wrap: wrap;
@@ -524,7 +523,7 @@ button:hover {
   flex-wrap: wrap;
   flex-direction: column;
   align-items: center;
-  width: 100%;
+  width: 60%;
   margin: 0;
 }
 
