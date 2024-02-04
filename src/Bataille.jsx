@@ -1,7 +1,6 @@
 import { useEffect } from "react";
-import { socket } from "./socket.js";
-import { Abandon, Sauvegarde, PlayerList, Timer, LaunchGame, Main, WinnerModal } from "./Game.js";
-
+import { socket } from "./Socket.jsx";
+import { Abandon, Sauvegarde, PlayerList, Timer, LaunchGame, Main, WinnerModal } from "./Game.jsx";
 
 function Bataille({ gameEnd }){
 
@@ -19,7 +18,7 @@ function Bataille({ gameEnd }){
             // Retirez le gestionnaire d'événement lors du démontage du composant
             window.removeEventListener('beforeunload', handleUnload);
         };
-    })
+    });
     return(
         <>
         <WinnerModal gameEnd={gameEnd}/>

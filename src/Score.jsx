@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { socket } from "./socket.js";
+import { socket } from "./Socket.jsx";
 
 function Row({ row }) {
     return (
@@ -27,6 +27,7 @@ function Score({ hide, retour}) {
     useEffect(() => {
         socket.on("returnLeaderboard", liste => {
             setLeaderboard(liste);
+            console.log(leaderboard);
             setShowLeaderboard(true);
             hide();
         });
@@ -38,13 +39,13 @@ function Score({ hide, retour}) {
         <>
         {showLeaderboard ? (
             <>
-            <div className="leaderboard" onClick={cacherLeaderboard}>
+            <div className="retour" onClick={cacherLeaderboard}>
                 <span className="back"></span>
                 <a href="/#">Retour</a>
                 <span></span>
             </div>
-            <h2 id="boardTitle">Leaderboard</h2>
             <div className="container">
+                <h2 id="boardTitle">Leaderboard</h2>
                 <ul className="responsive-table">
                     <li className="table-header">
                         <div className="col col-1">Pseudo</div>

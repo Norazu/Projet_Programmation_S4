@@ -1,11 +1,9 @@
-import Score from "./Score.js";
+import Score from "./Score.jsx";
 import { useEffect, useState } from "react";
-import { socket } from "./socket.js";
+import { socket } from "./Socket.jsx";
 import { toast } from "react-toastify";
 
 function joinGameByList(identifiant){
-  //console.log(typeof(identifiant));
-  //console.log(identifiant);
   socket.emit("joinGame",sessionStorage.getItem("sessId"),identifiant);
 }
 
@@ -30,21 +28,12 @@ function Partie({code, page, type}){
       break;
   }
   return(
-    <div className="Partie">
+    <div className="Partie" onClick={page ? () => loadGameByList(code) : () => joinGameByList(code)}>
       <p className="partieText">Partie n°{code}</p>
       <div className="Type">
         <p className="PartieText">{type_jeu} </p>
         <img className="boeuf" src={chemin_img} alt={"Logo " + type_jeu}/>
       </div >
-      {page ? (
-        <>
-        <button onClick={() => loadGameByList(code)}>Charger la partie</button>
-        </>
-      ) : (
-        <>
-        <button onClick={() => joinGameByList(code)}>Rejoindre la partie</button>
-        </>
-      )}
     </div>
   );
 }
@@ -75,24 +64,30 @@ function ListeDesParties({ hide, retour }) {
     <>
     {showGameList ? (
       <>
-      <p>Parties disponibles</p>
-      <div className="gamesList">
-        {parties.map((partie, index) => (
-          <Partie key={index} code={partie[0]} type={partie[1]}/>
-          ))}
+      <div className="retour" onClick={() => afficherListeParties(false)}>
+          <span className="back"></span>
+          <a href="/#">Retour</a>
+          <span></span>
       </div>
-      <button id="retour" onClick={() => afficherListeParties(false)}>Retour</button>
+      <div className="Container2">
+        <p>Parties disponibles</p>
+        <div className="gamesList">
+          {parties.map((partie, index) => (
+            <Partie key={index} code={partie[0]} type={partie[1]}/>
+            ))}
+        </div>
+      </div>
       </>
     ) : (
-      <>
-      <label htmlFor="choixTypeJeuRecherche">A quel jeu voulez-vous jouer ? </label>
-      <select id="choixTypeJeuRecherche">
-        <option value="0">Tout types</option>
-        <option value="1">Bataille ouverte</option>
-        <option value="2">6 qui prend</option>
-      </select>
-      <button onClick={getListeParties}>Afficher la liste des parties</button>
-      </>
+      <div className="Container2">
+        <label htmlFor="choixTypeJeuRecherche">A quel jeu voulez-vous jouer ? </label>
+        <select id="choixTypeJeuRecherche">
+          <option value="0">Tout types</option>
+          <option value="1">Bataille ouverte</option>
+          <option value="2">6 qui prend</option>
+        </select>
+        <button onClick={getListeParties}>Afficher la liste des parties</button>
+      </div>
     )}
     </>
   );
@@ -129,6 +124,11 @@ function PartiesSauvegardees({ hide, retour }) {
     <>
     {showSavedGames ? (
       <>
+      <div className="retour" onClick={() => afficherPartiesSauvegardees(false)}>
+          <span className="back"></span>
+          <a href="/#">Retour</a>
+          <span></span>
+      </div>
       <div className="Container1">
         <input id="loadGame" type="text" placeholder="Code de la partie sauvegardée" />
         <button type="button" onClick={loadGame}>Charger la partie</button>
@@ -140,10 +140,11 @@ function PartiesSauvegardees({ hide, retour }) {
           ))}
         </div>
       </div>
-      <button id="retour" onClick={() => afficherPartiesSauvegardees(false)}>Retour</button>
       </>
     ) : (
-      <button type="button" onClick={getSavedGames}>Charger une partie sauvegardée</button>
+      <div className="Container1" style={{ alignSelf: "var(--align-container1)" }}>
+        <button type="button" onClick={getSavedGames}>Charger une partie sauvegardée</button>
+      </div>
     )}
     </>
   );
@@ -170,7 +171,12 @@ function CreationPartie({ gameType, hide, retour }) {
     <>
     {showCreateGame ? (
       <>
-      <div>
+      <div className="retour" onClick={() => afficherCreationPartie(false)}>
+          <span className="back"></span>
+          <a href="/#">Retour</a>
+          <span></span>
+      </div>
+      <div className="Container1" id="gameCreatingForm" style={{ alignSelf: "var(--align-container1)" }}>
         {/* Contenu de la page de création de partie */}
         <label htmlFor="choixTypeJeu">A quel jeu voulez-vous jouer ? </label>
         <select id="choixTypeJeu">
@@ -188,10 +194,11 @@ function CreationPartie({ gameType, hide, retour }) {
         <input id="timerDuration" onChange={() => setTimerValue(document.getElementById("timerDuration").value)} type="number" min="3" max="100" defaultValue={timerValue}/>
         <button type="button" onClick={creationPartie}>Créer la partie</button>
       </div>
-      <button id="retour" onClick={() => afficherCreationPartie(false)}>Retour</button>
       </>
     ) : (
-      <button type="button" onClick={() => afficherCreationPartie(true)}>Créer une partie</button>
+      <div className="Container1" style={{ alignSelf: "var(--align-container1)" }}>
+        <button type="button" onClick={() => afficherCreationPartie(true)}>Créer une partie</button>
+      </div>
     )}
     </>
   );
@@ -200,7 +207,7 @@ function CreationPartie({ gameType, hide, retour }) {
 function RejoindrePartie() {
 
   function joinGame() {
-    var identifiant = document.getElementById("idGame").value;
+    let identifiant = document.getElementById("idGame").value;
     socket.emit("joinGame",sessionStorage.getItem("sessId"),identifiant);
   }
 
@@ -283,7 +290,7 @@ function Home({ gameType }) {
   return (
     <div className="Home">
       <div className="deco" onClick={deconnexion}>
-        <span className="icon"></span>
+        <span className="exit"></span>
         <a href="/#">Déconnexion</a>
         <span></span>
       </div>
@@ -292,14 +299,12 @@ function Home({ gameType }) {
       )}
       {(savedGamesButton || createGameButton || joinGameButton) && (
       <div className="ContainerParent">
-        <div className="Container1" style={{ alignSelf: "var(--align-container1)" }}>
-          {savedGamesButton && (
-            <PartiesSauvegardees hide={() => hide("savedGames")} retour={handleRetour}/>
-          )}
-          {createGameButton && (
-            <CreationPartie gameType={gameType} hide={() => hide("createGame")} retour={handleRetour}/>
-          )}
-        </div>
+        {savedGamesButton && (
+          <PartiesSauvegardees hide={() => hide("savedGames")} retour={handleRetour}/>
+        )}
+        {createGameButton && (
+          <CreationPartie gameType={gameType} hide={() => hide("createGame")} retour={handleRetour}/>
+        )}
         <div className="Container1" style={{ alignSelf: "var(--align-container1)" }}>
           {joinGameButton && (
             <RejoindrePartie/>
@@ -309,9 +314,7 @@ function Home({ gameType }) {
       )}
       {gamesListButton && (
       <div className="ContainerParent">
-        <div className="Container2">
-          <ListeDesParties hide={() => hide("gamesList")} retour={handleRetour}/>
-        </div>
+        <ListeDesParties hide={() => hide("gamesList")} retour={handleRetour}/>
       </div>
       )}
     </div>

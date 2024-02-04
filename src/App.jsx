@@ -2,13 +2,13 @@ import "./Style/app.css";
 import "./Style/boeuf.css";
 import "./Style/score.css";
 import 'react-toastify/dist/ReactToastify.css';
-import Bataille from './Bataille.js';
-import Boeuf from './Boeuf.js';
-import Chat from './Chat.js';
-import Home from './Home.js';
+import Bataille from './Bataille.jsx';
+import Boeuf from './Boeuf.jsx';
+import Chat from './Chat.jsx';
+import Home from './Home.jsx';
 
 import { useEffect, useState } from "react";
-import { socket } from "./socket.js";
+import { socket } from "./Socket.jsx";
 import { ToastContainer, toast } from "react-toastify";
 
 function App() {
@@ -20,8 +20,8 @@ function App() {
   const[gameType,setGameType] = useState(null);
 
   function connect(){
-    var nom = document.getElementById("name").value;
-    var mdp = document.getElementById("password").value;
+    let nom = document.getElementById("name").value;
+    let mdp = document.getElementById("password").value;
     socket.emit("connexion",nom,mdp);
   }
 
@@ -31,8 +31,8 @@ function App() {
   }
 
   function createAccount() {
-    var nom = document.getElementById("name").value; 
-    var mdp = document.getElementById("password").value;
+    let nom = document.getElementById("name").value; 
+    let mdp = document.getElementById("password").value;
     socket.emit("newAccount",nom,mdp);
   }
 

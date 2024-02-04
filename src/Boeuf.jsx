@@ -1,6 +1,6 @@
-import { CarteBoeuf, Abandon, Sauvegarde, PlayerList, Timer, LaunchGame, Main, WinnerModal } from "./Game.js";
+import { CarteBoeuf, Abandon, Sauvegarde, PlayerList, Timer, LaunchGame, Main, WinnerModal } from "./Game.jsx";
 import { useEffect, useState } from "react";
-import { socket } from "./socket.js";
+import { socket } from "./Socket.jsx";
 import { toast } from "react-toastify";
 
 let playerGameId = "";
@@ -50,7 +50,6 @@ function Boeuf({ gameEnd }){
         socket.on("playerIsChoosing", idJoueur => {
             toast.info(idJoueur + " est en train de choisir une ligne");
         });
-
         // Gestionnaire d'événement pour le déchargement de la fenêtr
         const handleUnload = () => {
             socket.emit("disconnecting");
@@ -61,7 +60,7 @@ function Boeuf({ gameEnd }){
         window.addEventListener('beforeunload', handleUnload);
 
         return () => {
-            socket.off("playerIsChoosing")
+            socket.off("playerIsChoosing");
             window.removeEventListener('beforeunload', handleUnload);
         };
     });

@@ -1,8 +1,8 @@
 import { useEffect, useState, useRef } from "react";
-import { socket } from "./socket.js";
+import { socket } from "./Socket.jsx";
 import { toast } from "react-toastify";
 
-var playerGameId = "";
+let playerGameId = "";
 
 export function Abandon({ gameEnd }) {
     function giveUp(gameId, pseudo) {
@@ -12,13 +12,21 @@ export function Abandon({ gameEnd }) {
         gameEnd();
     }
     useEffect(()=>{
+        socket.on("quit", id => {
+            toast.info("Le joueur " + id + " a abandonné");
+        });
+        socket.on("newCreator", () => {
+            toast.info("Vous êtes le nouveau chef de la partie");
+        });
         socket.on("gaveUp", partieAbandonnee);
         return () => {
+            socket.off("quit");
+            socket.off("newCreator");
             socket.off("gaveUp");
         }
-    })
+    });
     return (
-        <div className="leaderboard" onClick={() => giveUp(playerGameId, sessionStorage.getItem("sessId"))}>
+        <div className="abandon" onClick={() => giveUp(playerGameId, sessionStorage.getItem("sessId"))}>
             <span className="giveUp"></span>
             <a href="/#">Abandonner</a>
             <span></span>
@@ -60,27 +68,18 @@ export function Sauvegarde({ gameEnd }) {
         socket.emit("saveGame", gameId, pseudo);
     }
 
-    function reload(id) {
-        toast.info("Le joueur " + id + " a abandonné");
-        window.location.reload();
-    }
-
     function partieSaved() {
         toast.info("Partie sauvegardée avec succès");
         gameEnd();
     }
 
     useEffect(() => {
-        socket.on("quit", id => {
-            reload(id);
-        });
         socket.on("gameLaunched", () => setShowPauseButton(true));
         socket.on("pauseGameNotStarted", pauseGameNotStarted);
         socket.on("gameEnPause", gameEnPause);
         socket.on("gameReprise", gameReprise);
         socket.on("partieSauvegardee", partieSaved);
         return () => {
-            socket.off("quit");
             socket.off("gameLaunched");
             socket.off("pauseGameNotStarted");
             socket.off("gameEnPause");
@@ -183,7 +182,7 @@ export function PlayerList({ showCards }) {
     }, []); // Le tableau vide signifie que cela s'exécute une seule fois lors du montage
 
     function getNbCartes(player) {
-        var nbCartesPlayer = 0;
+        let nbCartesPlayer = 0;
         if (nbCartes[player] !== undefined) {
             nbCartesPlayer = nbCartes[player];
         }
@@ -191,7 +190,7 @@ export function PlayerList({ showCards }) {
     }
 
     function getScore(player) {
-        var score = 0;
+        let score = 0;
         if (scores[player] !== undefined) {
             score = scores[player];
         }
@@ -229,9 +228,9 @@ export function Timer() {
 }
 
 function Carte({ cardName, onSelect, isSelected }) {
-    var dir = "./Bataille/Cards/";
-    var ext = ".png";
-    var imgSource = dir + cardName + ext;
+    let dir = "./Bataille/Cards/";
+    let ext = ".png";
+    let imgSource = dir + cardName + ext;
 
     const selectThisCard = () => {
         onSelect(cardName);
@@ -276,8 +275,8 @@ export function CarteBoeuf({ CardNumber, disabled, onSelect, isSelected }) {
         teteNb += 4;
     }
 
-    var tetes = [];
-    for (var i = 0; i < teteNb; i++) {
+    let tetes = [];
+    for (let i = 0; i < teteNb; i++) {
         tetes.push(<div className="tete_boeuf" key={i} />);
     }
 
@@ -419,12 +418,14 @@ export function LaunchGame() {
 }
 
 export function WinnerModal({ gameEnd }) {
-    const [winner, setWinner] = useState("");
+    const [winner, setWinner] = useState([]);
     const modalRef = useRef();
 
     useEffect(() => {
-        socket.on("victory",(data)=>{
-            setWinner(data);
+        socket.on("victory",(vainqueurs, scoreMin) => {
+            for (let i = 0;i < vainqueurs.length;i++) {
+                setWinner(winner => [...winner, [vainqueurs[i],scoreMin]]);
+            }
             const modal = document.getElementById("winnerWinnerChickenDinner");
             modalRef.current = modal;
             modal.showModal();
@@ -435,11 +436,13 @@ export function WinnerModal({ gameEnd }) {
         return () => {
             socket.off("victory");
         }
-    },[gameEnd]);
+    },[gameEnd, winner]);
     return (
         <dialog id="winnerWinnerChickenDinner">
-            <p>{winner}</p>
-            <p id="secondline">a gagné</p>
+            {winner.map((joueur) => (
+                <p>{joueur[0]} : {joueur[1]}</p>
+            ))}
+            <p id="secondline">{winner.length === 1 ? "a" : "ont"} gagné</p>
         </dialog>
     );
 }

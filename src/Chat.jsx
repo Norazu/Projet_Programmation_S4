@@ -1,6 +1,6 @@
 import "./Style/app.css";
 import { useEffect } from "react";
-import { socket } from "./socket.js";
+import { socket } from "./Socket.jsx";
 
 function Chat({ gameId }){
 
