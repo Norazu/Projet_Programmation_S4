@@ -178,11 +178,11 @@ io.on("connection", (socket) => {
 
     console.log("nombre de joueurs dans la partie " + gameId + " : " + listeParties[gameId].nbJoueurs);
 
-    if (listeParties[gameId].idCreateur == playerId) {
-      if (listeParties[gameId].nbJoueurs == 0) {
-        delete listeParties[gameId];
-        console.log("partie " + gameId + " supprimée : " + (!listeParties[gameId]));
-      } else {
+    if (listeParties[gameId].nbJoueurs == 0) {
+      delete listeParties[gameId];
+      console.log("partie " + gameId + " supprimée : " + (!listeParties[gameId]));
+    } else {
+      if (listeParties[gameId].idCreateur == playerId) {
         listeParties[gameId].idCreateur = listeParties[gameId].listeJoueurs[0];
         console.log("créateur de la partie " + gameId + " apres réassignation " + listeParties[gameId].idCreateur);
       }
@@ -199,12 +199,8 @@ io.on("connection", (socket) => {
         default:
           break;
       }
-    } else {
-      if (listeParties[gameId].nbJoueurs == 0) {
-        delete listeParties[gameId];
-        socket.emit("gaveUp");
-      }
     }
+    socket.emit("gaveUp");
   });
 
   socket.on('creationPartie', (type, nbMinJoueurs, nbMaxJoueurs, dureeTour,idCreateur) => {
@@ -309,9 +305,6 @@ io.on("connection", (socket) => {
   });
 
   socket.on("ligneChoisie",(gameId, idJoueur, indexLigne) => {
-    if (listeParties[gameId].gameIsPaused) {
-      unpauseGame(gameId);
-    }
     let carte = gameOrderBoeuf[gameId][0][1];
     while(listeParties[gameId].cartes["reste"][indexLigne].length >0){
       listeParties[gameId].playerScoreBoeuf[idJoueur] += nbTetes(listeParties[gameId].cartes["reste"][indexLigne].pop());
@@ -361,41 +354,45 @@ io.on("connection", (socket) => {
     //rajoute la partie dans les parties en cours du serveur
     //supprime la partie et ses joueurs de la base de données
     let queryResult;
-    let cartes = {};
-    let playersScores = {};
     try {
       queryResult = await doQuery("SELECT * FROM parties AS pt JOIN partiejoueur AS ptj ON pt.idGame=ptj.idGame WHERE pt.idGame=?", [code]);
     } catch (err) {
       console.log(err);
     }
-    for (row of queryResult) {
-      console.log(row);
-      cartes[row.idJoueur] = row.carte.split("|");
+    if (code !== "" && String(code).length <= 4 && queryResult.length > 0) {
+      let cartes = {};
+      let playersScores = {};
+      for (row of queryResult) {
+        console.log(row);
+        cartes[row.idJoueur] = row.carte.split("|");
+        if (row.typeJeu == 2) {
+          playersScores[row.idJoueur] = row.scoreBoeuf;
+        }
+      }
+      creerPartie(row.idGame, row.typeJeu, row.nbMinJoueurs, row.nbMaxJoueurs, row.idCreateur, cartes, row.dureeTour);
       if (row.typeJeu == 2) {
-        playersScores[row.idJoueur] = row.scoreBoeuf;
+        listeParties[code].compteToursBoeuf = row.compteToursBoeuf;
+        listeParties[code].playerScoreBoeuf = playersScores;
+        console.log(listeParties[code].playerScoreBoeuf);
+        reste = row.plateau.split("|");
+        let listeCartes=[];
+        for (let i=0 ; i<4 ; i++){
+          let liste=reste[i].split(",");
+          console.log(liste);
+          listeCartes.push(liste);
+        }
+        listeParties[code].cartes["reste"]=listeCartes;
+        console.log("la liste est" + listeParties[code].cartes["reste"]);
+        listeParties[code].partieACharger = true;
       }
-    }
-    creerPartie(row.idGame, row.typeJeu, row.nbMinJoueurs, row.nbMaxJoueurs, row.idCreateur, cartes, row.dureeTour);
-    if (row.typeJeu == 2) {
-      listeParties[code].compteToursBoeuf = row.compteToursBoeuf;
-      listeParties[code].playerScoreBoeuf = playersScores;
-      console.log(listeParties[code].playerScoreBoeuf);
-      reste = row.plateau.split("|");
-      listeCartes=[];
-      for (let i=0 ; i<4 ; i++){
-        let liste=reste[i].split(",");
-        console.log(liste);
-        listeCartes.push(liste);
+      try {
+        await doQuery("DELETE FROM partiejoueur WHERE idGame=?",[code]);
+        await doQuery("DELETE FROM parties WHERE idGame=?",[code]);
+      } catch (err) {
+        console.log(err);
       }
-      listeParties[code].cartes["reste"]=listeCartes;
-      console.log("la liste est" + listeParties[code].cartes["reste"]);
-      listeParties[code].partieACharger = true;
-    }
-    try {
-      await doQuery("DELETE FROM partiejoueur WHERE idGame=?",[code]);
-      await doQuery("DELETE FROM parties WHERE idGame=?",[code]);
-    } catch (err) {
-      console.log(err);
+    } else {
+      socket.emit("roomDontExist");
     }
   });
 
@@ -859,7 +856,6 @@ io.on("connection", (socket) => {
       if(min > carte){
         if (joueursConnectes[idJoueur] !== "") {
           io.to(joueursConnectes[idJoueur]).emit("choixLigne",gameId);
-          pauseGame(gameId);
           io.to(gameId).emit("playerIsChoosing", idJoueur);
         }
         pierre = true;
@@ -874,7 +870,7 @@ io.on("connection", (socket) => {
       var nbCartes = {};
       for (const [key, value] of Object.entries(listeParties[gameId].cartes)) {
         nbCartes[key] = value.length;
-        }
+      }
       io.to(gameId).emit("cardsChanged");
       var nbCartes = {};
       for (const [key, value] of Object.entries(listeParties[gameId].cartes)) {
