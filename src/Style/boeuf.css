@@ -43,13 +43,8 @@
     filter: hue-rotate(80deg);
 }
 
-.carte_boeuf .carteTop {
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-}
 
-.carte_boeuf .carteBot {
+.carte_boeuf .carteBot, .carte_boeuf .carteTop {
     width: 100%;
     display: flex;
     justify-content: space-between;
@@ -88,7 +83,6 @@
     color: #b378b3;
     -webkit-text-stroke-width: 3px;
     -webkit-text-stroke-color: rgb(37, 37, 37);
-
 }
 
 .carte_boeuf:hover {
