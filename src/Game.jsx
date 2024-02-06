@@ -105,25 +105,43 @@ export function Sauvegarde({ gameEnd }) {
 
 function OtherPlayerCard({ cardName }) {
     return (
-        <img src={"./Cards/" + cardName + ".png"} alt={cardName} width="100" />
+        <img src={"./Bataille/Cards/" + cardName + ".png"} alt={cardName} width="100" />
     );
 }
 
 function Player({ pseudo, nbCartes, showCards, score }) {
     const [cards, setCards] = useState([]);
     const hueRotateValue = Math.floor(Math.random() * 360);
-    socket.on("fight", (winner, allCards) => {
-        setCards([]);
-        allCards.forEach((element) => {
-            if (element[0] === pseudo) {
-                setCards((prevCards) => [...prevCards, element[1]]);
+    const [showPlayedBoeufCard, setShowPlayedBoeufCard] = useState(false);
+    const [flipped, setFlipped] = useState(true);
+
+    useEffect(() => {
+        socket.on("fight", (allCards) => {
+            setFlipped(true);
+            setShowPlayedBoeufCard(true);
+            setCards([]);
+            allCards.forEach((element) => {
+                if (element[0] === pseudo) {
+                    setCards((prevCards) => [...prevCards, element[1]]);
+                }
+            });
+            if (!showCards) {
+                setTimeout(() => {
+                    setFlipped(false);
+                }, 2000);
             }
         });
+
+        return () => {
+            socket.off("fight");
+        }
     });
-    if (showCards) {
-        return (
-            <div className="PlayerContainer">
-                <p className="pseudo" style={{ filter: `hue-rotate(${hueRotateValue}deg)` }}>{pseudo}</p>
+    return (
+        <div className="PlayerContainer">
+        {showCards ? (
+            <>
+            <p className="pseudo" style={{ filter: `hue-rotate(${hueRotateValue}deg)` }}>{pseudo}</p>
+            <div className="allCards">
                 <div className="Player" style={{ filter: `hue-rotate(${hueRotateValue}deg)` }}>
                     <p className="cartes">{nbCartes}</p>
                 </div>
@@ -133,20 +151,26 @@ function Player({ pseudo, nbCartes, showCards, score }) {
                     ))}
                 </div>
             </div>
-        );
-    } else {
-        return (
-            <div className="PlayerContainer">
+            </>
+        ) : (
+            <>
+            <div className="playerInfo">
                 <p className="pseudo" style={{ filter: `hue-rotate(${hueRotateValue}deg)` }}>{pseudo}</p>
                 <p className="score" style={{ filter: `hue-rotate(${hueRotateValue}deg)` }}>{score}</p>
-                <div className="cardsPlayed">
+            </div>
+            {showPlayedBoeufCard ? (
+                <div className="cardsPlayed" id={flipped ? "flipped" : ""}>
                     {cards.map((cardName, index) => (
-                        <OtherPlayerCard cardName={cardName} key={index}/>
+                        <CarteBoeuf CardNumber={cardName} disabled={true} key={index}/>
                     ))}
                 </div>
-            </div>
-        )
-    }
+            ) : (
+                <div className="emptyDiv"></div>
+            )}
+            </>
+        )}
+        </div>
+    );
 }
 
 export function PlayerList({ showCards }) {
@@ -179,7 +203,7 @@ export function PlayerList({ showCards }) {
             socket.off("nbCartes");
             socket.off("scorePlayer");
         };
-    }, []); // Le tableau vide signifie que cela s'exécute une seule fois lors du montage
+    }, []);
 
     function getNbCartes(player) {
         let nbCartesPlayer = 0;
@@ -376,6 +400,7 @@ export function Main({ gameType }) {
                     <h2>Votre main</h2>
                     {cardList.map((cardName) => (
                         <CarteBoeuf
+                            key={cardName}
                             CardNumber={cardName}
                             onSelect={handleSelectCard}
                             isSelected={selectedCard === cardName}

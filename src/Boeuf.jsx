@@ -34,9 +34,15 @@ function LignesCartes(){
         <div className="LignesCartes">
             {lignes.map((cards, index) => (
                 <>
-                {choixLigne ? (<button onClick={() => ligneChoisie(index)}>Choisir cette ligne</button>) : (<></>)}
+                {choixLigne ? (
+                    <button className="chooseLine" onClick={() => ligneChoisie(index)}>Choisir cette ligne</button>
+                ) : (
+                    <></>
+                )}
                 <ul className="LigneCartes" id={index} key={index}>
-                    {cards.map((cardNum) => (<li><CarteBoeuf CardNumber={cardNum} disabled={true}/></li>))}
+                    {cards.map((cardNum, index) => (
+                        <li key={index}><CarteBoeuf CardNumber={cardNum} disabled={true} key={cardNum}/></li>
+                    ))}
                 </ul>
                 </>
             ))}

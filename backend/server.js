@@ -721,7 +721,7 @@ io.on("connection", (socket) => {
         listeParties[gameId].cartes[winner].push(player[1]);
         console.log(winner + " a obtenu la carte " + player[1] + " du joueur "+ player[0]);
       })
-      io.to(gameId).emit("fight",winner, allCards);
+      io.to(gameId).emit("fight", allCards);
       bataille[gameId] = [];
       io.to(gameId).emit("cardsChanged");
       let nbCartes = {};
@@ -836,12 +836,16 @@ io.on("connection", (socket) => {
   function tourBoeuf(gameId) {
     console.log(gameOrderBoeuf);
     let pierre = false;
+
+    // appliquer l'algorithme de jeu sur chaque joueur
     gameOrderBoeuf[gameId].every((joueur) => {
       let idJoueur = joueur[0];
       let carte = joueur[1];
       console.log("carte du joueur " + idJoueur + " : " + carte);
       let min = listeParties[gameId].cartes["reste"][0][listeParties[gameId].cartes["reste"][0].length-1];
       let ligneMin = 0;
+
+      // trouver la tete de ligne la plus proche de la carte du joueur
       listeParties[gameId].cartes["reste"].forEach((list) => {
         if ((carte - min) < 0) {
           min = list[list.length - 1];
@@ -852,6 +856,7 @@ io.on("connection", (socket) => {
           ligneMin = listeParties[gameId].cartes["reste"].indexOf(list);
         }
       });
+
       console.log(min);
       if(min > carte){
         if (joueursConnectes[idJoueur] !== "") {
@@ -861,25 +866,27 @@ io.on("connection", (socket) => {
         pierre = true;
         return false;
       }
+      // ajouter les points si le joueur prend une ligne (volontairement ou non)
       if(listeParties[gameId].cartes["reste"][ligneMin].length == 5 || min > carte){
-        while(listeParties[gameId].cartes["reste"][ligneMin].length >0){
+        while(listeParties[gameId].cartes["reste"][ligneMin].length > 0){
           listeParties[gameId].playerScoreBoeuf[idJoueur] += nbTetes(listeParties[gameId].cartes["reste"][ligneMin].pop());
-      }
-      }
-      io.to(gameId).emit("cardsChanged");
-      var nbCartes = {};
-      for (const [key, value] of Object.entries(listeParties[gameId].cartes)) {
-        nbCartes[key] = value.length;
+        }
       }
       io.to(gameId).emit("cardsChanged");
-      var nbCartes = {};
+      let nbCartes = {};
       for (const [key, value] of Object.entries(listeParties[gameId].cartes)) {
         nbCartes[key] = value.length;
       }
       listeParties[gameId].cartes["reste"][ligneMin].push(carte);
-      io.to(gameId).emit("reste", listeParties[gameId].cartes["reste"]);
       return true;
     });
+    console.log(gameOrderBoeuf[gameId]);
+    io.to(gameId).emit("fight", gameOrderBoeuf[gameId]);
+    setTimeout(() => {
+      io.to(gameId).emit("reste", listeParties[gameId].cartes["reste"]);
+    }, 2000);
+    
+    // continuer le tour si ce n'est pas la fin de manche et qu'un joueur ne doit pas choisir une ligne
     if (!pierre && !finMancheBoeuf(gameId)) {
       io.to(gameId).emit("scorePlayer",listeParties[gameId].playerScoreBoeuf);
       gameOrderBoeuf[gameId] = [];

@@ -525,20 +525,49 @@ button:hover {
     1px 1px 0 white;
 }
 
-.PlayerContainer {
+.playerInfo {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.PlayerContainer {
+  display: flex;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
   margin-bottom: 20%;
 }
 
+.allCards {
+  display: flex;
+  flex-direction: row;
+}
+
 .cardsPlayed {
   display: flex;
+  align-self: flex-end;
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
+}
+
+#flipped .carte_boeuf {
+  background-image: url("../../public/card_black.svg");
+  background-size: cover;
+  transform: rotateY(180deg);
+}
+
+#flipped .carte_boeuf * {
+  display: none;
+}
+
+.emptyDiv {
+  width: 110px;
+  height: 143px;
 }
 
 .Partie {
