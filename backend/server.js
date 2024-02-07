@@ -503,6 +503,17 @@ io.on("connection", (socket) => {
       socket.emit("notEnoughPlayers");
     }
   });
+
+  socket.on("set", cartesJouees => {
+    if (isSet(cartesJouees)) {
+      // ajouter les points
+    } else {
+      // retirer les points si points > 0
+    }
+    // emmettre le signal pour mettre a jour le score
+    // emmetre le signal pour compléter le plateau
+  });
+
   //---------------------------------------------------------------------
   // Fonctions génériques
   
@@ -896,6 +907,29 @@ io.on("connection", (socket) => {
         }, 2000);
       }
     }
+  }
+
+  //---------------------------------------------------------------------
+  // Fonctions pour le SET
+
+  function allSame(arr) {
+    return arr.every(v => v === arr[0]);
+  }
+
+  function allDifferent(arr) {
+    return new Set(arr).size === arr.length;
+  }
+
+  function isSet(cartes) {
+    // cartes : liste de dict, avec chacun couleur, forme, nombre et remplissage
+
+    for (let prop in cartes[0]) {
+      let values = cartes.map(card => card[prop]);
+      if (!(allSame(values) || allDifferent(values))) {
+        return false;
+      }
+    }
+    return true;
   }
 });
 
