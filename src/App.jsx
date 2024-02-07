@@ -1,4 +1,5 @@
 import "./Style/app.css";
+import "./Style/home.scss";
 import "./Style/boeuf.css";
 import "./Style/score.css";
 import 'react-toastify/dist/ReactToastify.css';

@@ -1,0 +1,46 @@
+.homePage {
+  min-width: 100vw;
+  min-height: 100vh;
+  background-image: url(../../public/dark_background.jpg);
+  background-size: cover;
+}
+
+@mixin fan($count, $angle) {
+  $offset: $angle / 2;
+
+  @for $i from 1 through $count {
+    $increment: $angle / ($count + 1);
+
+    div:nth-child(#{$i}) {
+      transform: translate(-50%, -50%) rotate(-$offset + $increment * $i);
+    }
+  }
+}
+
+.games {
+  width: 100%;
+  height: 100%;
+  @include fan(3, 60deg);
+}
+
+.gameDetail {
+  background: white;
+  background-size: cover;
+  height: 220px;
+  width: 150px;
+  border-radius: 5px;
+  position: absolute;
+  box-shadow: 0 0 30px transparentize(black, 0.8);
+  left: 50%;
+  top: 50%;
+  transform-origin: center 200%;
+  transition: transform 0.3s ease-out;
+
+  &:hover {
+    height: 264px;
+    width: 180px;
+    z-index: 1;
+    top: 47%;
+    transition: 0.2s ease-out;
+  }
+}
