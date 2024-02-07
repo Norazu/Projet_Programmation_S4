@@ -23,6 +23,10 @@ function Partie({code, page, type}){
       type_jeu = "6 qui prend";
       chemin_img = "./Boeuf/boeuf.svg";
       break;
+    case "3":
+      type_jeu = "Set";
+      chemin_img = "./Set/vague.svg";
+      break;
     default:
       type_jeu = "Erreur";
       break;
@@ -85,6 +89,7 @@ function ListeDesParties({ hide, retour }) {
           <option value="0">Tout types</option>
           <option value="1">Bataille ouverte</option>
           <option value="2">6 qui prend</option>
+          <option value="3">Set</option>
         </select>
         <button onClick={getListeParties}>Afficher la liste des parties</button>
       </div>
@@ -182,6 +187,7 @@ function CreationPartie({ gameType, hide, retour }) {
         <select id="choixTypeJeu">
           <option value="1">Bataille ouverte</option>
           <option value="2">6 qui prend</option>
+          <option value="3">Set</option>
         </select>
         <br/>
         <label htmlFor="nbJoueursMin">Combien de joueurs minimum voulez-vous ? </label>
