@@ -15,20 +15,35 @@ let joueursConnectes = {};
 let listeParties = {};
 
 //mise en place et connection à la base de données mysql
-let connexiondb = mysql.createConnection({
-  host: 'mysql.etu.umontpellier.fr',
-  user: 'e20220003375',
-  password: 'augustin',
-  database: 'e20220003375'
-});
+let connexiondb;
 
-connexiondb.connect(function (err) {
-  if (err) {
-    console.error('error connecting: ' + err.stack);
-    return;
-  }
-  console.log('connected to database as id ' + connexiondb.threadId);
-});
+function handleDbDisconnect() {
+  connexiondb = mysql.createConnection({
+    host: 'mysql.etu.umontpellier.fr',
+    user: 'e20220003375',
+    password: 'augustin',
+    database: 'e20220003375'
+  });
+
+  connexiondb.connect(function (err) {
+    if (err) {
+      console.error('error on connection : ' + err.stack);
+      setTimeout(handleDbDisconnect, 2000);
+    }
+    console.log('connected to database as id ' + connexiondb.threadId);
+  });
+
+  connexiondb.on('error', function (err) {
+    console.log('db error', err.stack);
+    if (err.code === 'PROTOCOL_CONNECTION_LOST') {
+      handleDbDisconnect();
+    } else {
+      throw err;
+    }
+  });
+}
+
+handleDbDisconnect();
 
 //mise en place et création du serveur
 app.use(cors());
