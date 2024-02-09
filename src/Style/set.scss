@@ -5,9 +5,21 @@ $colors: (
 );
 
 $formes: (
-    vague: url("../../public/Set/vague.svg"),
-    ovale: url("../../public/Set/ovale.svg"),
-    losange: url("../../public/Set/losange.svg")
+    vague: (
+        plein: url("../../public/Set/vaguePlein.svg"),
+        raye: url("../../public/Set/vagueRaye.svg"),
+        vide: url("../../public/Set/vagueVide.svg")
+    ),
+    ovale: (
+        plein: url("../../public/Set/ovalePlein.svg"),
+        raye: url("../../public/Set/ovaleRaye.svg"),
+        vide: url("../../public/Set/ovaleVide.svg")
+    ),
+    losange: (
+        plein: url("../../public/Set/losangePlein.svg"),
+        raye: url("../../public/Set/losangeRaye.svg"),
+        vide: url("../../public/Set/losangeVide.svg")
+    )
 );
 
 @each $color, $filter in $colors {
@@ -16,9 +28,11 @@ $formes: (
     }
 }
 
-@each $forme, $url in $formes {
-    .forme[forme="#{$forme}"] {
-        background-image: $url;
+@each $forme, $type in $formes {
+    @each $type, $url in $type {
+        .forme[forme="#{$forme}"][remplissage="#{$type}"] {
+            background-image: $url;
+        }
     }
 }
 
@@ -52,15 +66,3 @@ $formes: (
     background-position: center;
     background-size: 90%;
 }
-
-/*
-.remplissage {
-    width: 80%;
-    height: 50%;
-    position: absolute;
-    background-image: url("../../public/Set/stripes.svg");
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: 90%;
-}
-*/
