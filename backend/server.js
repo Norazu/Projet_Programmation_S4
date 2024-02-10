@@ -13,6 +13,12 @@ let bataille = {};
 let gameOrderBoeuf = {}
 let joueursConnectes = {};
 let listeParties = {};
+let jeuDeSet = [];
+
+const couleurs = ["rouge", "vert", "violet"];
+const formes = ["vague", "losange", "ovale"];
+const nombres = [1, 2, 3];
+const remplissages = ["vide", "raye", "plein"];
 
 //mise en place et connection à la base de données mysql
 let connexiondb;
@@ -72,7 +78,7 @@ class partie {
     this.cartes = cartes;
     this.status=0; //1 si la partie est démarré
     this.gameIsPaused=false;
-    this.playerScoreBoeuf = {};
+    this.playersScores = {}; // scores des joueurs dans des parties de 6 qui prend et Set, de la forme {joueur: score}
     this.compteToursBoeuf = 0;
     this.dureeTour = dureeTour;
     this.partieACharger = false;
@@ -322,7 +328,7 @@ io.on("connection", (socket) => {
   socket.on("ligneChoisie",(gameId, idJoueur, indexLigne) => {
     let carte = gameOrderBoeuf[gameId][0][1];
     while(listeParties[gameId].cartes["reste"][indexLigne].length >0){
-      listeParties[gameId].playerScoreBoeuf[idJoueur] += nbTetes(listeParties[gameId].cartes["reste"][indexLigne].pop());
+      listeParties[gameId].playersScores[idJoueur] += nbTetes(listeParties[gameId].cartes["reste"][indexLigne].pop());
     }
     listeParties[gameId].cartes["reste"][indexLigne].push(carte);
     gameOrderBoeuf[gameId].splice(0,1);
@@ -351,7 +357,7 @@ io.on("connection", (socket) => {
       }
       for (let joueur of partie.listeJoueurs) {
         try {
-          await doQuery("INSERT INTO partiejoueur VALUES (?, ?, ?, ?)", [gameId, joueur, partie.cartes[joueur].join("|"), partie.playerScoreBoeuf[joueur]]);
+          await doQuery("INSERT INTO partiejoueur VALUES (?, ?, ?, ?)", [gameId, joueur, partie.cartes[joueur].join("|"), partie.playersScores[joueur]]);
         } catch (err) {
           console.log(err);
         }
@@ -376,19 +382,19 @@ io.on("connection", (socket) => {
     }
     if (code !== "" && String(code).length <= 4 && queryResult.length > 0) {
       let cartes = {};
-      let playersScores = {};
+      let scores = {};
       for (row of queryResult) {
         console.log(row);
         cartes[row.idJoueur] = row.carte.split("|");
         if (row.typeJeu == 2) {
-          playersScores[row.idJoueur] = row.scoreBoeuf;
+          scores[row.idJoueur] = row.scoreBoeuf;
         }
       }
       creerPartie(row.idGame, row.typeJeu, row.nbMinJoueurs, row.nbMaxJoueurs, row.idCreateur, cartes, row.dureeTour);
       if (row.typeJeu == 2) {
         listeParties[code].compteToursBoeuf = row.compteToursBoeuf;
-        listeParties[code].playerScoreBoeuf = playersScores;
-        console.log(listeParties[code].playerScoreBoeuf);
+        listeParties[code].playersScores = scores;
+        console.log(listeParties[code].playersScores);
         reste = row.plateau.split("|");
         let listeCartes=[];
         for (let i=0 ; i<4 ; i++){
@@ -496,6 +502,10 @@ io.on("connection", (socket) => {
             listeParties[gameId].cartes = shuffleBoeuf(listeParties[gameId].listeJoueurs);
             io.to(gameId).emit("reste",listeParties[gameId].cartes["reste"]);
             break;
+          case "3":
+            listeParties[gameId].cartes["plateau"] = shuffleSet();
+            io.to(gameId).emit("plateau", listeParties[gameId].cartes["plateau"], gameId);
+            break;
           default:
             break;
         }
@@ -503,7 +513,7 @@ io.on("connection", (socket) => {
         if (listeParties[gameId].typeJeu == 2) {
           console.log("la liste" + listeParties[gameId].cartes);
           io.to(gameId).emit("reste",listeParties[gameId].cartes["reste"]);
-          io.to(gameId).emit("scorePlayer",listeParties[gameId].playerScoreBoeuf);
+          io.to(gameId).emit("scorePlayer",listeParties[gameId].playersScores);
         }
       }
       io.to(gameId).emit("cardsChanged");
@@ -519,14 +529,29 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("set", cartesJouees => {
+  socket.on("set", (cartesJouees, idJoueur, gameId) => {
+    console.log("cartesJouees : ", cartesJouees, " SET ? : ", isSet(cartesJouees));
     if (isSet(cartesJouees)) {
       // ajouter les points
+      listeParties[gameId].playersScores[idJoueur] += 3;
+      socket.emit("foundSet");
+      // Supprimer les cartes du plateau
+      cartesJouees.forEach(carte => {
+        const index = listeParties[gameId].cartes["plateau"].findIndex(c => isEqual(c, carte));
+        if (index !== -1) {
+          listeParties[gameId].cartes["plateau"].splice(index, 1);
+        }
+      });
+      completerPlateau(gameId);
+      io.to(gameId).emit("plateau", listeParties[gameId].cartes["plateau"]);
     } else {
       // retirer les points si points > 0
+      if (listeParties[gameId].playersScores[idJoueur] > 0) {
+        listeParties[gameId].playersScores[idJoueur] -= 3;
+      }
+      socket.emit("notFoundSet");
     }
-    // emmettre le signal pour mettre a jour le score
-    // emmetre le signal pour compléter le plateau
+    io.to(gameId).emit("scorePlayer",listeParties[gameId].playersScores);
   });
 
   //---------------------------------------------------------------------
@@ -573,7 +598,9 @@ io.on("connection", (socket) => {
             listeParties[idRoomInt].nbJoueurs += 1;
             listeParties[idRoomInt].listeJoueurs.push(idJoueur);
           }
-          if (!listeParties[idRoomInt].partieACharger) {listeParties[idRoomInt].playerScoreBoeuf[idJoueur] = 0;}
+          if (!listeParties[idRoomInt].partieACharger) {
+            listeParties[idRoomInt].playersScores[idJoueur] = 0;
+          }
           //listeParties[idRoomInt].socketsJoueurs[idJoueur] = socket.id;
           await socket.join(idRoom);
           socket.emit('goToGame', idRoom, listeParties[idRoomInt].typeJeu, () => {
@@ -598,7 +625,7 @@ io.on("connection", (socket) => {
       nbMaxJoueurs=10;
     }
     listeParties[codepartie] = new partie(type, idCreateur, nbMinJoueurs, nbMaxJoueurs, 1, [idCreateur],0,0,cartes,dureeTour);
-    listeParties[codepartie].playerScoreBoeuf[idCreateur] = 0;
+    listeParties[codepartie].playersScores[idCreateur] = 0;
     //listeParties[codepartie].socketsJoueurs[idCreateur] = socket.id;
     await socket.join(codepartie.toString());
     console.log("partie " + codepartie + " créée");
@@ -815,7 +842,7 @@ io.on("connection", (socket) => {
   async function finPartieBoeuf(gameId, vainqueurs, min) {
     for (let joueur of listeParties[gameId].listeJoueurs) {
       try {
-        await doQuery("UPDATE scoresboeuf SET scoreTotal=scoreTotal+?, nbPartiesJouees=nbPartiesJouees+1 WHERE joueur=?;",[listeParties[gameId].playerScoreBoeuf[joueur], joueur]);
+        await doQuery("UPDATE scoresboeuf SET scoreTotal=scoreTotal+?, nbPartiesJouees=nbPartiesJouees+1 WHERE joueur=?;",[listeParties[gameId].playersScores[joueur], joueur]);
       } catch (err) {
         console.log(err);
       }
@@ -836,8 +863,8 @@ io.on("connection", (socket) => {
     let min;
     let vainqueurs=[];
     let val;
-    for (let cle in listeParties[gameId].playerScoreBoeuf){
-      val=listeParties[gameId].playerScoreBoeuf[cle];
+    for (let cle in listeParties[gameId].playersScores){
+      val=listeParties[gameId].playersScores[cle];
       if (val > max){
         max=val;
       }
@@ -889,13 +916,8 @@ io.on("connection", (socket) => {
       }
       if(listeParties[gameId].cartes["reste"][ligneMin].length == 5 || min > carte){
         while(listeParties[gameId].cartes["reste"][ligneMin].length >0){
-          listeParties[gameId].playerScoreBoeuf[idJoueur] += nbTetes(listeParties[gameId].cartes["reste"][ligneMin].pop());
+          listeParties[gameId].playersScores[idJoueur] += nbTetes(listeParties[gameId].cartes["reste"][ligneMin].pop());
       }
-      }
-      io.to(gameId).emit("cardsChanged");
-      var nbCartes = {};
-      for (const [key, value] of Object.entries(listeParties[gameId].cartes)) {
-        nbCartes[key] = value.length;
       }
       io.to(gameId).emit("cardsChanged");
       var nbCartes = {};
@@ -907,7 +929,7 @@ io.on("connection", (socket) => {
       return true;
     });
     if (!pierre && !finMancheBoeuf(gameId)) {
-      io.to(gameId).emit("scorePlayer",listeParties[gameId].playerScoreBoeuf);
+      io.to(gameId).emit("scorePlayer",listeParties[gameId].playersScores);
       gameOrderBoeuf[gameId] = [];
       listeParties[gameId].compteToursBoeuf ++;
       if (listeParties[gameId].compteToursBoeuf < 10) {
@@ -927,6 +949,15 @@ io.on("connection", (socket) => {
   //---------------------------------------------------------------------
   // Fonctions pour le SET
 
+  function isEqual(carte1, carte2) {
+    for (const key in carte1) {
+      if (carte1[key] !== carte2[key]) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   function allSame(arr) {
     return arr.every(v => v === arr[0]);
   }
@@ -937,7 +968,6 @@ io.on("connection", (socket) => {
 
   function isSet(cartes) {
     // cartes : liste de dict, avec chacun couleur, forme, nombre et remplissage
-
     for (let prop in cartes[0]) {
       let values = cartes.map(card => card[prop]);
       if (!(allSame(values) || allDifferent(values))) {
@@ -945,6 +975,64 @@ io.on("connection", (socket) => {
       }
     }
     return true;
+  }
+
+  function isThereSet(plateau) {
+    const n = plateau.length;
+    // Parcourir chaque combinaison possible de trois cartes dans le plateau
+    for (let i = 0; i < n - 2; i++) {
+      for (let j = i + 1; j < n - 1; j++) {
+        for (let k = j + 1; k < n; k++) {
+          // Vérifier si les trois cartes forment un set
+          if (isSet([plateau[i], plateau[j], plateau[k]])) {
+            // Si un set est trouvé, retourner true
+            return true;
+          }
+        }
+      }
+    }
+    // Si aucun set n'est trouvé, retourner false
+    return false;
+  }
+
+  function shuffleSet(){
+    // remplissage de la variable globale du jeu avec les 81 cartes uniques
+    for (const couleur of couleurs) {
+      for (const forme of formes) {
+        for (const nombre of nombres) {
+          for (const remplissage of remplissages) {
+            jeuDeSet.push({ couleur, forme, nombre, remplissage });
+          }
+        }
+      }
+    }
+    const listeDeCartes = [];
+    // construction du plateau de base, 3 lignes de 4 cartes
+    for (let i = 0; i < 12; i++) {
+      const index = Math.floor(Math.random() * jeuDeSet.length);
+      listeDeCartes.push(jeuDeSet[index]);
+      jeuDeSet.splice(index, 1);
+    }
+    // si il n'y a pas de set dans le plateau, rajouter une ligne
+    if (!isThereSet(listeDeCartes)) {
+      const liste = [];
+      for (let j = 0; j < 3; j++) {
+        const index = Math.floor(Math.random() * jeuDeSet.length);
+        listeDeCartes.push(jeuDeSet[index]);
+        jeuDeSet.splice(index, 1);
+      }
+      listeDeCartes.push(liste);
+    }
+    return listeDeCartes;
+  }
+
+  function completerPlateau(gameId) {
+    if (listeParties[gameId].cartes["plateau"].length < 12) {
+      for (let i = 0; i < 3; i++) {
+        const index = Math.floor(Math.random() * jeuDeSet.length);
+        listeParties[gameId].cartes["plateau"].push(jeuDeSet[index]);
+      }
+    }    
   }
 });
 
