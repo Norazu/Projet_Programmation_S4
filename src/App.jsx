@@ -14,7 +14,7 @@ import { socket } from "./Socket.jsx";
 import { ToastContainer, toast } from "react-toastify";
 
 function App() {
-  console.log(sessionStorage.getItem("sessId"));
+  //console.log(sessionStorage.getItem("sessId"));
 
   const [connected, setConnected] = useState(false);
   const[inGame, setInGame] = useState(false);

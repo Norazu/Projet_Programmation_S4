@@ -504,7 +504,7 @@ io.on("connection", (socket) => {
             break;
           case "3":
             listeParties[gameId].cartes["plateau"] = shuffleSet();
-            io.to(gameId).emit("plateau", listeParties[gameId].cartes["plateau"], gameId);
+            io.to(gameId).emit("plateau", listeParties[gameId].cartes["plateau"]);
             break;
           default:
             break;
@@ -522,7 +522,9 @@ io.on("connection", (socket) => {
         nbCartes[key] = value.length;
       }
       io.to(gameId).emit("nbCartes",nbCartes);
-      startTimer(gameId);
+      if (listeParties[gameId].typeJeu != 3) {
+        startTimer(gameId);
+      }
       listeParties[gameId].status=1;
     } else {
       socket.emit("notEnoughPlayers");
@@ -530,7 +532,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("set", (cartesJouees, idJoueur, gameId) => {
-    console.log("cartesJouees : ", cartesJouees, " SET ? : ", isSet(cartesJouees));
+    let continuer = true;
     if (isSet(cartesJouees)) {
       // ajouter les points
       listeParties[gameId].playersScores[idJoueur] += 3;
@@ -542,8 +544,7 @@ io.on("connection", (socket) => {
           listeParties[gameId].cartes["plateau"].splice(index, 1);
         }
       });
-      completerPlateau(gameId);
-      io.to(gameId).emit("plateau", listeParties[gameId].cartes["plateau"]);
+      continuer = completerPlateau(gameId);
     } else {
       // retirer les points si points > 0
       if (listeParties[gameId].playersScores[idJoueur] > 0) {
@@ -551,7 +552,10 @@ io.on("connection", (socket) => {
       }
       socket.emit("notFoundSet");
     }
-    io.to(gameId).emit("scorePlayer",listeParties[gameId].playersScores);
+    if (continuer) {
+      socket.emit("unselectAll");
+      io.to(gameId).emit("scorePlayer",listeParties[gameId].playersScores);
+    }
   });
 
   //---------------------------------------------------------------------
@@ -908,7 +912,7 @@ io.on("connection", (socket) => {
       console.log(min);
       if(min > carte){
         if (joueursConnectes[idJoueur] !== "") {
-          io.to(joueursConnectes[idJoueur]).emit("choixLigne",gameId);
+          io.to(joueursConnectes[idJoueur]).emit("choixLigne");
           io.to(gameId).emit("playerIsChoosing", idJoueur);
         }
         pierre = true;
@@ -1015,25 +1019,80 @@ io.on("connection", (socket) => {
     }
     // si il n'y a pas de set dans le plateau, rajouter une ligne
     if (!isThereSet(listeDeCartes)) {
-      const liste = [];
       for (let j = 0; j < 3; j++) {
         const index = Math.floor(Math.random() * jeuDeSet.length);
         listeDeCartes.push(jeuDeSet[index]);
         jeuDeSet.splice(index, 1);
       }
-      listeDeCartes.push(liste);
     }
     return listeDeCartes;
   }
 
   function completerPlateau(gameId) {
-    if (listeParties[gameId].cartes["plateau"].length < 12) {
-      for (let i = 0; i < 3; i++) {
-        const index = Math.floor(Math.random() * jeuDeSet.length);
-        listeParties[gameId].cartes["plateau"].push(jeuDeSet[index]);
+    console.log(jeuDeSet.length);
+    if (jeuDeSet.length > 0) {
+      // rajouter des cartes seulement s'il y en a moins de 12 (pour ne pas en rajouter lorsqu'il y avait une ligne en plus)
+      if (listeParties[gameId].cartes["plateau"].length < 12) {
+        for (let i = 0; i < 3; i++) {
+          const index = Math.floor(Math.random() * jeuDeSet.length);
+          listeParties[gameId].cartes["plateau"].push(jeuDeSet[index]);
+          jeuDeSet.splice(index, 1);
+        }
       }
-    }    
+      // si il n'y a pas de set dans le plateau, rajouter une ligne
+      if (!isThereSet(listeParties[gameId].cartes["plateau"])) {
+        for (let j = 0; j < 3; j++) {
+          const index = Math.floor(Math.random() * jeuDeSet.length);
+          listeParties[gameId].cartes["plateau"].push(jeuDeSet[index]);
+          jeuDeSet.splice(index, 1);
+        }
+      }
+      io.to(gameId).emit("plateau", listeParties[gameId].cartes["plateau"]);
+    } else {
+      // si les 81 cartes ont été épuisées, regardez s'il existe un set, si non alors fin
+      if (!isThereSet(listeParties[gameId].cartes["plateau"])) {
+        let vainqueur;
+        let maxPoints = 0;
+        for (const joueur in listeParties[gameId].playersScores) {
+          if (listeParties[gameId].playersScores[joueur] > maxPoints) {
+            maxPoints = listeParties[gameId].playersScores[joueur];
+            vainqueur = joueur;
+          }
+        }
+        console.log("suppression de la partie");
+        delete listeParties[gameId];
+        io.to(gameId).emit("victory", vainqueur, maxPoints);
+        return false;
+      } else {
+        io.to(gameId).emit("plateau", listeParties[gameId].cartes["plateau"]);
+      }
+    }
+    return true;
   }
+
+  function getIndice(gameId) {
+    let plateau = listeParties[gameId].cartes["plateau"];
+    let set;
+    const n = plateau.length;
+    // Parcourir chaque combinaison possible de trois cartes dans le plateau
+    for (let i = 0; i < n - 2; i++) {
+      for (let j = i + 1; j < n - 1; j++) {
+        for (let k = j + 1; k < n; k++) {
+          // Vérifier si les trois cartes forment un set
+          if (isSet([plateau[i], plateau[j], plateau[k]])) {
+            set = [plateau[i], plateau[j], plateau[k]];
+            return set;
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  socket.on("getIndice", (gameId) => {
+    socket.emit("indice", getIndice(gameId));
+  });
+
 });
 
 

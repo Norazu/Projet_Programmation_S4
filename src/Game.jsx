@@ -2,9 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { socket } from "./Socket.jsx";
 import { toast } from "react-toastify";
 
-let playerGameId = "";
-
-export function Abandon({ gameEnd }) {
+export function Abandon({ playerGameId, gameEnd }) {
     function giveUp(gameId, pseudo) {
         socket.emit("giveUp", gameId, pseudo);
     }
@@ -34,7 +32,7 @@ export function Abandon({ gameEnd }) {
     );
 }
 
-export function Sauvegarde({ gameEnd }) {
+export function Sauvegarde({ playerGameId, gameEnd }) {
     const [gameIsPaused, setGameIsPaused] = useState(false);
     const [showPauseButton, setShowPauseButton] = useState(false);
 
@@ -160,10 +158,6 @@ export function PlayerList({ showCards }) {
             setPlayers(list);
         });
 
-        socket.on("setGameId", (idRoom) => {
-            playerGameId = idRoom;
-        });
-
         socket.on("nbCartes", (nbCartesByPlayers) => {
             setNbCartes(nbCartesByPlayers);
         });
@@ -175,7 +169,6 @@ export function PlayerList({ showCards }) {
         // Nettoyage de l'écouteur lorsque le composant est démonté
         return () => {
             socket.off("playersList");
-            socket.off("setGameId");
             socket.off("nbCartes");
             socket.off("scorePlayer");
         };
@@ -299,7 +292,7 @@ export function CarteBoeuf({ CardNumber, disabled, onSelect, isSelected }) {
     );
 }
 
-export function Main({ gameType }) {
+export function Main({ playerGameId, gameType }) {
     const [cardList, setCardList] = useState([]);
     const [selectedCard, setSelectedCard] = useState(null);
 
@@ -318,7 +311,7 @@ export function Main({ gameType }) {
             socket.off("cardsList");
             socket.off("cardsChanged");
         };
-    }, []);
+    });
 
     const handleSelectCard = (cardName) => {
         setSelectedCard(cardName);
@@ -354,7 +347,7 @@ export function Main({ gameType }) {
             socket.off("unselectCard");
             socket.off("secondChoosingEnd");
         };
-    }, [cardList, selectedCard]);
+    }, [cardList, selectedCard, playerGameId]);
     switch (gameType) {
         case 1:
             return (
@@ -388,7 +381,7 @@ export function Main({ gameType }) {
     }
 }
 
-export function LaunchGame() {
+export function LaunchGame({ playerGameId }) {
     const [showLaunchGameButton, setShowLaunchGameButton] = useState(false);
 
     function notEnoughPlayers() {

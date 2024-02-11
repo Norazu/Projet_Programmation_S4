@@ -1,18 +1,25 @@
-import { Abandon, Sauvegarde, PlayerList, Timer, LaunchGame, WinnerModal } from "./Game.jsx";
+import { Abandon, Sauvegarde, PlayerList, LaunchGame, WinnerModal } from "./Game.jsx";
 import { useEffect, useState } from "react";
 import { socket } from "./Socket.jsx";
 import { toast } from "react-toastify";
 
-let playerGameId = "";
-
-function CarteSet({ carte, onSelect, isSelected }) {
+function CarteSet({ carte, onSelect }) {
     const formes = [];
-
-    let etat = isSelected ? "selected" : "default";
+    const [etat, setEtat] = useState("default");
 
     function selectCard() {
+        setEtat(etat === "default" ? "selected" : "default");
         onSelect(carte);
     }
+
+    useEffect(() => {
+        socket.on("unselectAll", () => {
+            setEtat("default");
+        });
+        return () => {
+            socket.off("unselectAll");
+        }
+    });
 
     for (let i = 0; i < carte.nombre; i++) {
         formes.push(
@@ -29,7 +36,7 @@ function CarteSet({ carte, onSelect, isSelected }) {
     );
 }
 
-function LignesCartesSet() {
+function LignesCartesSet({ gameId }) {
     const [cartes, setCartes] = useState([]);
     const [selectedCards, setSelectedCards] = useState([]);
 
@@ -40,15 +47,6 @@ function LignesCartesSet() {
             }
         }
         return true;
-    }
-
-    function isSelected(carte) {
-        for (let item of selectedCards) {
-            if (isEqual(item, carte)) {
-                return true;
-            }
-        }
-        return false
     }
 
     function onSelect(carte) {
@@ -66,11 +64,6 @@ function LignesCartesSet() {
                 return [...prevSelectedCards];
             }
         });
-        setTimeout(() => { // Using setTimeout to ensure state update before signal emission
-            if (selectedCards.length === 3) {
-                socket.emit("set", selectedCards, sessionStorage.getItem("sessId"), playerGameId);
-            }
-        }, 0);
     }
 
     function parsePlateau(plateau) {
@@ -92,8 +85,7 @@ function LignesCartesSet() {
     }
 
     useEffect(() => {
-        socket.on("plateau", (plateau, gameId) => {
-            playerGameId = gameId;
+        socket.on("plateau", plateau => {
             parsePlateau(plateau);
         });
         socket.on("notFoundSet", () => {
@@ -104,6 +96,9 @@ function LignesCartesSet() {
             toast.success("Bravo !!, +3 points");
             setSelectedCards([]);
         });
+        if (selectedCards.length === 3) {
+            socket.emit("set", selectedCards, sessionStorage.getItem("sessId"), gameId);
+        }
         return () => {
             socket.off("plateau");
             socket.off("notFoundSet");
@@ -115,9 +110,9 @@ function LignesCartesSet() {
         <div className="LignesCartes">
             {cartes.map((ligne, index) => (
                 <ul className="LigneCartes" id={index} key={index}>
-                    {ligne.map((carte) => (
+                    {ligne.map((carte, index) => (
                         <li>
-                            <CarteSet key={index} carte={carte} onSelect={onSelect} isSelected={isSelected(carte)}/>
+                            <CarteSet key={index} carte={carte} onSelect={onSelect}/>
                         </li>
                     ))}
                 </ul>
@@ -126,9 +121,51 @@ function LignesCartesSet() {
     );
 }
 
-function Set({ gameEnd }) {
+function Indice({ gameId }) {
+    const [indice, setIndice] = useState(false);
+    const [ligne, setLigne] = useState([]);
+
+    function getIndice() {
+        socket.emit("getIndice", gameId);
+    }
 
     useEffect(() => {
+        socket.on("indice", (set) => {
+            setLigne(set);
+            setIndice(true);
+            setTimeout(() => {
+                setIndice(false);
+            }, 5000);
+        })
+        return () => {
+            socket.off("indice");
+        }
+    });
+
+    return (
+        <>
+        {indice ? (
+            <ul className="LigneCartes">
+                {ligne.map((carte, index) => (
+                    <li>
+                        <CarteSet key={index} carte={carte}/>
+                    </li>
+                ))}
+            </ul>
+        ) : (
+            <button onClick={getIndice}>Indice</button>
+        )}
+        </>
+    );
+}
+
+function Set({ gameEnd }) {
+    const [gameId, setGameId] = useState("");
+
+    useEffect(() => {
+        socket.on("setGameId", idRoom => {
+            setGameId(idRoom);
+        });
         // Gestionnaire d'événement pour le déchargement de la fenêtre
         const handleUnload = () => {
             socket.emit("disconnecting");
@@ -146,14 +183,14 @@ function Set({ gameEnd }) {
     return (
         <>
         <WinnerModal gameEnd={gameEnd}/>
-        <Abandon gameEnd={gameEnd}/>
-        <Sauvegarde gameEnd={gameEnd}/>
+        <Abandon playerGameId={gameId} gameEnd={gameEnd}/>
+        <Sauvegarde playerGameId={gameId} gameEnd={gameEnd}/>
         <div className="plateau">
             <PlayerList showCards={false}/>
-            <LignesCartesSet/>
+            <LignesCartesSet gameId={gameId}/>
+            <Indice gameId={gameId}/>
         </div>
-        <Timer/>
-        <LaunchGame/>
+        <LaunchGame playerGameId={gameId}/>
         </>
     );
 }

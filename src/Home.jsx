@@ -25,7 +25,7 @@ function Partie({code, page, type}){
       break;
     case "3":
       type_jeu = "Set";
-      chemin_img = "./Set/vague.svg";
+      chemin_img = "./Set/vaguePlein.svg";
       break;
     default:
       type_jeu = "Erreur";
@@ -36,7 +36,7 @@ function Partie({code, page, type}){
       <p className="partieText">Partie n°{code}</p>
       <div className="Type">
         <p className="PartieText">{type_jeu} </p>
-        <img className="boeuf" src={chemin_img} alt={"Logo " + type_jeu}/>
+        <img src={chemin_img} alt={"Logo " + type_jeu}/>
       </div >
     </div>
   );
