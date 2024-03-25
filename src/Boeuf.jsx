@@ -3,9 +3,7 @@ import { useEffect, useState } from "react";
 import { socket } from "./Socket.jsx";
 import { toast } from "react-toastify";
 
-let playerGameId = "";
-
-function LignesCartes(){
+function LignesCartes({ playerGameId }){
     
     const [lignes, setLignes] = useState([]);
     const [choixLigne, setChoixLigne] = useState(false);
@@ -19,8 +17,7 @@ function LignesCartes(){
         socket.on("reste", reste => {
             setLignes(reste);
         });
-        socket.on("choixLigne", (gameId) => {
-            playerGameId = gameId;
+        socket.on("choixLigne", () => {
             setChoixLigne(true);
         });
 
@@ -45,8 +42,12 @@ function LignesCartes(){
 }
 
 function Boeuf({ gameEnd }){
+    const [gameId, setGameId] = useState("");
 
     useEffect(() => {
+        socket.on("setGameId", idRoom => {
+            setGameId(idRoom);
+        });
         socket.on("playerIsChoosing", idJoueur => {
             toast.info(idJoueur + " est en train de choisir une ligne");
         });
@@ -60,6 +61,7 @@ function Boeuf({ gameEnd }){
         window.addEventListener('beforeunload', handleUnload);
 
         return () => {
+            socket.off("setGameId");
             socket.off("playerIsChoosing");
             window.removeEventListener('beforeunload', handleUnload);
         };
@@ -68,15 +70,15 @@ function Boeuf({ gameEnd }){
     return (
         <>
         <WinnerModal gameEnd={gameEnd}/>
-        <Abandon gameEnd={gameEnd}/>
-        <Sauvegarde gameEnd={gameEnd}/>
+        <Abandon playerGameId={gameId} gameEnd={gameEnd}/>
+        <Sauvegarde playerGameId={gameId} gameEnd={gameEnd}/>
         <div className="plateau">
             <PlayerList showCards={false}/>
-            <LignesCartes/>
+            <LignesCartes playerGameId={gameId}/>
         </div>
         <Timer/>
-        <LaunchGame/>
-        <Main gameType={2}/>
+        <LaunchGame playerGameId={gameId}/>
+        <Main playerGameId={gameId} gameType={2}/>
         </>
     )
 }

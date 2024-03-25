@@ -1,0 +1,68 @@
+$colors: (
+    "violet": invert(11%) sepia(64%) saturate(7053%) hue-rotate(281deg) brightness(99%) contrast(124%),
+    "rouge": invert(13%) sepia(64%) saturate(7197%) hue-rotate(3deg) brightness(100%) contrast(122%),
+    "vert": invert(41%) sepia(73%) saturate(1796%) hue-rotate(89deg) brightness(109%) contrast(111%)
+);
+
+$formes: (
+    vague: (
+        plein: url("../../public/Set/vaguePlein.svg"),
+        raye: url("../../public/Set/vagueRaye.svg"),
+        vide: url("../../public/Set/vagueVide.svg")
+    ),
+    ovale: (
+        plein: url("../../public/Set/ovalePlein.svg"),
+        raye: url("../../public/Set/ovaleRaye.svg"),
+        vide: url("../../public/Set/ovaleVide.svg")
+    ),
+    losange: (
+        plein: url("../../public/Set/losangePlein.svg"),
+        raye: url("../../public/Set/losangeRaye.svg"),
+        vide: url("../../public/Set/losangeVide.svg")
+    )
+);
+
+@each $color, $filter in $colors {
+    .forme[couleur="#{$color}"] {
+        filter: $filter;
+    }
+}
+
+@each $forme, $type in $formes {
+    @each $type, $url in $type {
+        .forme[forme="#{$forme}"][remplissage="#{$type}"] {
+            background-image: $url;
+        }
+    }
+}
+
+.carteSet {
+    width: 8vw;
+    height: 25vh;
+    padding: 0.75%;
+    position: relative;
+    background-color: rgb(255, 255, 255);
+    border-radius: 10px;
+    border-color: rgb(53, 53, 53);
+    margin-left: 5px;
+    margin-right: 5px;
+    display: flex;
+    flex-direction: column;
+}
+
+.formeContainer {
+    width: 100%;
+    height: 100%;
+}
+
+.forme {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    position: relative;
+    flex-direction: column;
+    justify-content: space-between;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 90%;
+}

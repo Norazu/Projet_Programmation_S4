@@ -1,10 +1,14 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { socket } from "./Socket.jsx";
 import { Abandon, Sauvegarde, PlayerList, Timer, LaunchGame, Main, WinnerModal } from "./Game.jsx";
 
 function Bataille({ gameEnd }){
+    const [gameId, setGameId] = useState("");
 
     useEffect(() => {
+        socket.on("setGameId", idRoom => {
+            setGameId(idRoom);
+        });
         // Gestionnaire d'événement pour le déchargement de la fenêtr
         const handleUnload = () => {
             socket.emit("disconnecting");
@@ -15,6 +19,7 @@ function Bataille({ gameEnd }){
         window.addEventListener('beforeunload', handleUnload);
         
         return () => {
+            socket.off("setGameId");
             // Retirez le gestionnaire d'événement lors du démontage du composant
             window.removeEventListener('beforeunload', handleUnload);
         };
@@ -22,14 +27,14 @@ function Bataille({ gameEnd }){
     return(
         <>
         <WinnerModal gameEnd={gameEnd}/>
-        <Abandon gameEnd={gameEnd}/>
-        <Sauvegarde gameEnd={gameEnd}/>
+        <Abandon playerGameId={gameId} gameEnd={gameEnd}/>
+        <Sauvegarde playerGameId={gameId} gameEnd={gameEnd}/>
         <div className="plateau">
             <PlayerList showCards={true}/>
         </div>
         <Timer/>
-        <LaunchGame/>
-        <Main gameType={1}/>
+        <LaunchGame playerGameId={gameId}/>
+        <Main playerGameId={gameId} gameType={1}/>
         </>
     );
 }

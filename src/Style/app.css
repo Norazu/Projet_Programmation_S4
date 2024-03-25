@@ -564,6 +564,10 @@ button:hover {
   align-self: auto;
 }
 
+.Partie img[alt="Logo Set"] {
+  filter: invert(11%) sepia(64%) saturate(7053%) hue-rotate(281deg) brightness(99%) contrast(124%);
+}
+
 .PartieText {
   margin: 0;
 }

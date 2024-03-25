@@ -1,23 +1,31 @@
 import "./Style/app.css";
 import "./Style/boeuf.css";
 import "./Style/score.css";
+import "./Style/set.scss";
 import 'react-toastify/dist/ReactToastify.css';
 import Bataille from './Bataille.jsx';
 import Boeuf from './Boeuf.jsx';
 import Chat from './Chat.jsx';
 import Home from './Home.jsx';
+import Set from './Set.jsx';
 
 import { useEffect, useState } from "react";
 import { socket } from "./Socket.jsx";
 import { ToastContainer, toast } from "react-toastify";
 
 function App() {
-  console.log(sessionStorage.getItem("sessId"));
+  //console.log(sessionStorage.getItem("sessId"));
 
   const [connected, setConnected] = useState(false);
   const[inGame, setInGame] = useState(false);
   const[gameId,setGameId] = useState("0000");
   const[gameType,setGameType] = useState(null);
+
+  const gameComponents = {
+    "1": <Bataille gameEnd={backFromGame}/>,
+    "2": <Boeuf gameEnd={backFromGame}/>,
+    "3": <Set gameEnd={backFromGame}/>
+  }
 
   function connect(){
     let nom = document.getElementById("name").value;
@@ -156,9 +164,9 @@ function App() {
                 <h3 id="codeGame">Partie n°</h3>
                 <h2>{gameId}</h2>
               </div>
-              {gameType === "1" ? (<Bataille gameEnd={backFromGame}/>) :(<Boeuf gameEnd={backFromGame}/>)}
+              {gameComponents[gameType]}
             </div>
-            <Chat gameId={gameId} />
+            <Chat gameId={gameId}/>
           </div>
         ) : (
           <Home gameType={setTypeJeu}/>
