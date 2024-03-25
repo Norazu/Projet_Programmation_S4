@@ -1056,7 +1056,7 @@ io.on("connection", (socket) => {
         for (const joueur in listeParties[gameId].playersScores) {
           if (listeParties[gameId].playersScores[joueur] > maxPoints) {
             maxPoints = listeParties[gameId].playersScores[joueur];
-            vainqueur = joueur;
+            vainqueur = joueur; // a réparer
           }
         }
         console.log("suppression de la partie");
