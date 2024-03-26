@@ -624,7 +624,9 @@ io.on("connection", (socket) => {
   async function creerPartie(codepartie, type, nbMinJoueurs, nbMaxJoueurs, idCreateur, cartes,dureeTour) {
     //fonction de création de partie, sous forme de fonction car utilisée plusieurs fois dans le code
     //cette fonction est asynchrone car socket.join est une opération asynchrone
-    if (nbMinJoueurs>nbMaxJoueurs || nbMinJoueurs>10 || nbMaxJoueurs>10){
+    
+    //Si les valeurs du nombre minimum et maximum de joueurs rentrées par l'utilisateur sont incorrecte on créer la partie avec 2 et 10 joueurs
+    if (nbMinJoueurs>nbMaxJoueurs || nbMinJoueurs>10 || nbMaxJoueurs>10 || nbMinJoueurs<2){
       nbMinJoueurs=2;
       nbMaxJoueurs=10;
     }
