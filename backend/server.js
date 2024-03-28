@@ -630,6 +630,9 @@ io.on("connection", (socket) => {
       nbMinJoueurs=2;
       nbMaxJoueurs=10;
     }
+    if (dureeTour<3){
+      dureeTour=3;
+    }
     listeParties[codepartie] = new partie(type, idCreateur, nbMinJoueurs, nbMaxJoueurs, 1, [idCreateur],0,0,cartes,dureeTour);
     listeParties[codepartie].playersScores[idCreateur] = 0;
     //listeParties[codepartie].socketsJoueurs[idCreateur] = socket.id;
