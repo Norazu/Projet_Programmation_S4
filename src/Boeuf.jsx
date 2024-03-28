@@ -51,6 +51,9 @@ function Boeuf({ gameEnd }){
         socket.on("playerIsChoosing", idJoueur => {
             toast.info(idJoueur + " est en train de choisir une ligne");
         });
+        socket.on("pauseImpossible", () => {
+            toast.info("Impossible de mettre en pause, un joueur doit choisir une ligne")
+        });
         // Gestionnaire d'événement pour le déchargement de la fenêtr
         const handleUnload = () => {
             socket.emit("disconnecting");
@@ -63,6 +66,7 @@ function Boeuf({ gameEnd }){
         return () => {
             socket.off("setGameId");
             socket.off("playerIsChoosing");
+            socket.off("pauseImpossible")
             window.removeEventListener('beforeunload', handleUnload);
         };
     });

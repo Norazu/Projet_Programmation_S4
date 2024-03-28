@@ -82,6 +82,7 @@ class partie {
     this.compteToursBoeuf = 0;
     this.dureeTour = dureeTour;
     this.partieACharger = false;
+    this.choixEnCours = false; //Pour le 6 qui prend variable qui permet de savoir si un utilisateur est entrain de choisir une ligne
   }
 }
 
@@ -332,6 +333,7 @@ io.on("connection", (socket) => {
     }
     listeParties[gameId].cartes["reste"][indexLigne].push(carte);
     gameOrderBoeuf[gameId].splice(0,1);
+    listeParties[gameId].choixEnCours = false;
     io.to(gameId).emit("reste", listeParties[gameId].cartes["reste"]);
     tourBoeuf(gameId);
   });
@@ -563,8 +565,13 @@ io.on("connection", (socket) => {
   
   function pauseGame(gameId) {
     if (listeParties[gameId].status==1){
-      listeParties[gameId].gameIsPaused = true;
-      socket.emit("gameEnPause");
+      if (listeParties[gameId].choixEnCours){
+        socket.emit("pauseImpossible");
+      } else{
+        listeParties[gameId].gameIsPaused = true;
+        socket.emit("gameEnPause");
+      }
+      
     } else {
       socket.emit("pauseGameNotStarted");
     }
@@ -919,6 +926,7 @@ io.on("connection", (socket) => {
         if (joueursConnectes[idJoueur] !== "") {
           io.to(joueursConnectes[idJoueur]).emit("choixLigne");
           io.to(gameId).emit("playerIsChoosing", idJoueur);
+          listeParties[gameId].choixEnCours = true;
         }
         pierre = true;
         return false;
